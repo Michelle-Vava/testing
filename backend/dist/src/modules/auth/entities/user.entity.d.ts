@@ -1,0 +1,32 @@
+export declare class UserEntity {
+    id: string;
+    email: string;
+    name: string;
+    phone?: string | null;
+    roles: string[];
+    onboardingComplete: boolean;
+    providerOnboardingComplete: boolean;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zipCode?: string | null;
+    businessName?: string | null;
+    serviceTypes: string[];
+    yearsInBusiness?: number | null;
+    certifications?: string[];
+    shopAddress?: string | null;
+    shopCity?: string | null;
+    shopState?: string | null;
+    shopZipCode?: string | null;
+    serviceArea?: string[];
+    isMobileService: boolean;
+    isShopService: boolean;
+    isVerified: boolean;
+    shopPhotos: string[];
+    rating?: number | null;
+    reviewCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+    password: string;
+    constructor(partial: Partial<UserEntity> | any);
+}

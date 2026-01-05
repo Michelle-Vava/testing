@@ -1,0 +1,1325 @@
+openapi: 3.0.0
+paths:
+  /auth/signup:
+    post:
+      operationId: AuthController_signup
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupDto'
+      responses:
+        '201':
+          description: ''
+      summary: Sign up a new user
+      tags: &ref_0
+        - auth
+  /auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '201':
+          description: ''
+      summary: Login user
+      tags: *ref_0
+  /auth/me:
+    get:
+      operationId: AuthController_getMe
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEntity'
+      security:
+        - bearer: []
+      summary: Get current user profile
+      tags: *ref_0
+  /auth/profile:
+    put:
+      operationId: AuthController_updateProfile
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileDto'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEntity'
+      security:
+        - bearer: []
+      summary: Update user profile
+      tags: *ref_0
+  /auth/forgot-password:
+    post:
+      operationId: AuthController_forgotPassword
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordDto'
+      responses:
+        '201':
+          description: ''
+      summary: Request password reset email
+      tags: *ref_0
+  /auth/reset-password:
+    post:
+      operationId: AuthController_resetPassword
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordDto'
+      responses:
+        '201':
+          description: ''
+      summary: Reset password with token
+      tags: *ref_0
+  /vehicles:
+    get:
+      operationId: VehiclesController_findAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: 'Page number (default: 1)'
+          schema:
+            minimum: 1
+            default: 1
+            example: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: 'Items per page (default: 20, max: 100)'
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+            type: number
+      responses:
+        '200':
+          description: Paginated list of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleResponseDto'
+      security: &ref_1
+        - bearer: []
+      summary: Get all vehicles for current user
+      tags: &ref_2
+        - vehicles
+    post:
+      operationId: VehiclesController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVehicleDto'
+      responses:
+        '201':
+          description: Vehicle created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponseDto'
+      security: *ref_1
+      summary: Create a new vehicle
+      tags: *ref_2
+  /vehicles/{id}:
+    get:
+      operationId: VehiclesController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vehicle details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponseDto'
+      security: *ref_1
+      summary: Get a specific vehicle by ID
+      tags: *ref_2
+    put:
+      operationId: VehiclesController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVehicleDto'
+      responses:
+        '200':
+          description: Vehicle updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponseDto'
+      security: *ref_1
+      summary: Update a vehicle
+      tags: *ref_2
+    delete:
+      operationId: VehiclesController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      security: *ref_1
+      summary: Delete a vehicle
+      tags: *ref_2
+  /vehicles/{id}/mileage:
+    patch:
+      operationId: VehiclesController_updateMileage
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMileageDto'
+      responses:
+        '200':
+          description: Mileage updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponseDto'
+      security: *ref_1
+      summary: Update vehicle mileage
+      tags: *ref_2
+  /requests/public/recent:
+    get:
+      operationId: RequestsController_findPublicRecent
+      parameters: []
+      responses:
+        '200':
+          description: Return recent public requests.
+      summary: Get recent public service requests (no auth required)
+      tags: &ref_3
+        - requests
+  /requests:
+    get:
+      operationId: RequestsController_findAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: 'Page number (default: 1)'
+          schema:
+            minimum: 1
+            default: 1
+            example: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: 'Items per page (default: 20, max: 100)'
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+            type: number
+      responses:
+        '200':
+          description: Paginated list of service requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RequestResponseDto'
+      security:
+        - bearer: []
+      summary: Get all service requests (owners see theirs, providers see all open)
+      tags: *ref_3
+    post:
+      operationId: RequestsController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequestDto'
+      responses:
+        '201':
+          description: Service request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponseDto'
+      security:
+        - bearer: []
+      summary: Create a new service request
+      tags: *ref_3
+  /requests/{id}:
+    get:
+      operationId: RequestsController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponseDto'
+        '404':
+          description: Request not found.
+      security:
+        - bearer: []
+      summary: Get a specific service request by ID
+      tags: *ref_3
+    put:
+      operationId: RequestsController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequestDto'
+      responses:
+        '200':
+          description: Service request updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponseDto'
+        '404':
+          description: Request not found.
+      security:
+        - bearer: []
+      summary: Update a service request
+      tags: *ref_3
+  /quotes/request/{requestId}:
+    get:
+      operationId: QuotesController_findByRequest
+      parameters:
+        - name: requestId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+      security: &ref_4
+        - bearer: []
+      summary: Get all quotes for a service request
+      tags: &ref_5
+        - quotes
+  /quotes:
+    post:
+      operationId: QuotesController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteDto'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      security: *ref_4
+      summary: Create a new quote (providers only)
+      tags: *ref_5
+  /quotes/{id}/accept:
+    post:
+      operationId: QuotesController_accept
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      security: *ref_4
+      summary: Accept a quote (creates a job)
+      tags: *ref_5
+  /quotes/{id}/reject:
+    post:
+      operationId: QuotesController_reject
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      security: *ref_4
+      summary: Reject a quote
+      tags: *ref_5
+  /jobs:
+    get:
+      operationId: JobsController_findAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: 'Page number (default: 1)'
+          schema:
+            minimum: 1
+            default: 1
+            example: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: 'Items per page (default: 20, max: 100)'
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+            type: number
+      responses:
+        '200':
+          description: Paginated list of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobResponseDto'
+      security: &ref_6
+        - bearer: []
+      summary: Get all jobs (owners see theirs, providers see theirs)
+      tags: &ref_7
+        - jobs
+  /jobs/{id}:
+    get:
+      operationId: JobsController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponseDto'
+        '403':
+          description: Forbidden.
+        '404':
+          description: Job not found.
+      security: *ref_6
+      summary: Get a specific job by ID
+      tags: *ref_7
+  /jobs/{id}/status:
+    put:
+      operationId: JobsController_updateStatus
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJobStatusDto'
+      responses:
+        '200':
+          description: Job status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponseDto'
+        '403':
+          description: Forbidden.
+        '404':
+          description: Job not found.
+      security: *ref_6
+      summary: Update job status (providers only)
+      tags: *ref_7
+  /payments:
+    get:
+      operationId: PaymentsController_listTransactions
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+      security: &ref_8
+        - bearer: []
+      summary: Get all payments/transactions
+      tags: &ref_9
+        - payments
+  /payments/charge/{jobId}:
+    post:
+      operationId: PaymentsController_createCharge
+      parameters:
+        - name: jobId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      security: *ref_8
+      summary: Create a payment charge for a completed job
+      tags: *ref_9
+  /payments/payout/{jobId}:
+    post:
+      operationId: PaymentsController_createPayout
+      parameters:
+        - name: jobId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      security: *ref_8
+      summary: Request payout for a paid job (providers only)
+      tags: *ref_9
+  /providers/public/featured:
+    get:
+      operationId: ProvidersController_findFeatured
+      parameters: []
+      responses:
+        '200':
+          description: Return featured providers.
+      summary: Get featured providers (no auth required)
+      tags: &ref_10
+        - providers
+  /providers:
+    get:
+      operationId: ProvidersController_findAll
+      parameters:
+        - name: serviceType
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: mobileService
+          required: false
+          in: query
+          schema:
+            type: boolean
+        - name: shopService
+          required: false
+          in: query
+          schema:
+            type: boolean
+        - name: minRating
+          required: false
+          in: query
+          schema:
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      summary: Get all providers with optional filters
+      tags: *ref_10
+  /providers/{id}:
+    get:
+      operationId: ProvidersController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      summary: Get provider by ID with full profile
+      tags: *ref_10
+  /services:
+    get:
+      operationId: ServicesController_findAll
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      summary: Get all active services
+      tags: &ref_11
+        - services
+  /services/popular:
+    get:
+      operationId: ServicesController_findPopular
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      summary: Get popular services for dashboard
+      tags: *ref_11
+  /services/{id}:
+    get:
+      operationId: ServicesController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      summary: Get service by ID
+      tags: *ref_11
+  /notifications:
+    get:
+      operationId: NotificationsController_findAll
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security: &ref_12
+        - bearer: []
+      summary: Get all notifications for current user
+      tags: &ref_13
+        - notifications
+  /notifications/unread-count:
+    get:
+      operationId: NotificationsController_getUnreadCount
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security: *ref_12
+      summary: Get unread notification count
+      tags: *ref_13
+  /notifications/{id}/read:
+    put:
+      operationId: NotificationsController_markAsRead
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      security: *ref_12
+      summary: Mark notification as read
+      tags: *ref_13
+  /notifications/read-all:
+    put:
+      operationId: NotificationsController_markAllAsRead
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      security: *ref_12
+      summary: Mark all notifications as read
+      tags: *ref_13
+  /activities:
+    get:
+      operationId: ActivitiesController_findAll
+      parameters:
+        - name: limit
+          required: false
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Get activity timeline for current user
+      tags:
+        - activities
+  /vehicles/{vehicleId}/maintenance:
+    get:
+      operationId: MaintenanceController_findAll
+      parameters:
+        - name: vehicleId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of maintenance records
+      security: &ref_14
+        - bearer: []
+      summary: Get maintenance history for a vehicle
+      tags: &ref_15
+        - maintenance
+    post:
+      operationId: MaintenanceController_create
+      parameters:
+        - name: vehicleId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMaintenanceRecordDto'
+      responses:
+        '201':
+          description: Maintenance record created successfully
+      security: *ref_14
+      summary: Add a maintenance record to a vehicle
+      tags: *ref_15
+  /maintenance/{id}:
+    delete:
+      operationId: MaintenanceController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Maintenance record deleted successfully
+      security: *ref_14
+      summary: Delete a maintenance record
+      tags: *ref_15
+  /health:
+    get:
+      operationId: HealthController_check
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      summary: Health check endpoint
+      tags:
+        - health
+  /platform/stats:
+    get:
+      operationId: PlatformController_getStats
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Get platform statistics (Admin only)
+      tags: &ref_16
+        - platform
+  /platform/settings:
+    get:
+      operationId: PlatformController_getSettings
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      summary: Get platform settings (public)
+      tags: *ref_16
+info:
+  title: Shanda Automotive API
+  description: Marketplace connecting vehicle owners with service providers
+  version: '1.0'
+  contact: {}
+tags: []
+servers:
+  - url: http://localhost:4201
+    description: Local Development
+components:
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+  schemas:
+    SignupDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        phone:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - email
+        - password
+    LoginDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+    UserEntity:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+        onboardingComplete:
+          type: boolean
+        providerOnboardingComplete:
+          type: boolean
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        zipCode:
+          type: string
+          nullable: true
+        businessName:
+          type: string
+          nullable: true
+        serviceTypes:
+          type: array
+          items:
+            type: string
+        yearsInBusiness:
+          type: number
+          nullable: true
+        certifications:
+          type: array
+          items:
+            type: string
+        shopAddress:
+          type: string
+          nullable: true
+        shopCity:
+          type: string
+          nullable: true
+        shopState:
+          type: string
+          nullable: true
+        shopZipCode:
+          type: string
+          nullable: true
+        serviceArea:
+          type: array
+          items:
+            type: string
+        isMobileService:
+          type: boolean
+        isShopService:
+          type: boolean
+        isVerified:
+          type: boolean
+        shopPhotos:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          nullable: true
+        reviewCount:
+          type: number
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        password:
+          type: string
+      required:
+        - id
+        - email
+        - name
+        - roles
+        - onboardingComplete
+        - providerOnboardingComplete
+        - serviceTypes
+        - isMobileService
+        - isShopService
+        - isVerified
+        - shopPhotos
+        - reviewCount
+        - createdAt
+        - updatedAt
+        - password
+    UpdateProfileDto:
+      type: object
+      properties:
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+        businessName:
+          type: string
+        serviceTypes:
+          type: array
+          items:
+            type: string
+        yearsInBusiness:
+          type: number
+        onboardingComplete:
+          type: boolean
+    ForgotPasswordDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+      required:
+        - email
+    ResetPasswordDto:
+      type: object
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 6
+      required:
+        - token
+        - newPassword
+    VehicleResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        ownerId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174001
+        make:
+          type: string
+          example: Toyota
+        model:
+          type: string
+          example: Camry
+        year:
+          type: number
+          example: 2022
+        vin:
+          type: string
+          example: 1HGBH41JXMN109186
+        licensePlate:
+          type: string
+          nullable: true
+          example: ABC123
+        mileage:
+          type: number
+          nullable: true
+          example: 45000
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - ownerId
+        - make
+        - model
+        - year
+        - vin
+        - createdAt
+        - updatedAt
+    CreateVehicleDto:
+      type: object
+      properties:
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: number
+          minimum: 1900
+        vin:
+          type: string
+        licensePlate:
+          type: string
+        color:
+          type: string
+        mileage:
+          type: number
+          minimum: 0
+      required:
+        - make
+        - model
+        - year
+    UpdateVehicleDto:
+      type: object
+      properties:
+        licensePlate:
+          type: string
+        color:
+          type: string
+        mileage:
+          type: number
+          minimum: 0
+    UpdateMileageDto:
+      type: object
+      properties:
+        mileage:
+          type: number
+          minimum: 0
+          description: Current mileage in kilometers
+          example: 50000
+      required:
+        - mileage
+    RequestResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        ownerId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174001
+        vehicleId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174002
+        serviceType:
+          type: string
+          example: oil_change
+        description:
+          type: string
+          example: Need oil change and filter replacement
+        urgency:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - urgent
+          example: medium
+        preferredLocation:
+          type: string
+          nullable: true
+          example: 123 Main St, City, State 12345
+        preferredDate:
+          format: date-time
+          type: string
+          nullable: true
+        status:
+          enum:
+            - open
+            - quoted
+            - accepted
+            - in_progress
+            - completed
+            - cancelled
+          type: string
+          example: open
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - ownerId
+        - vehicleId
+        - serviceType
+        - description
+        - urgency
+        - status
+        - createdAt
+        - updatedAt
+    CreateRequestDto:
+      type: object
+      properties:
+        vehicleId:
+          type: string
+          format: uuid
+          description: ID of the vehicle
+        title:
+          type: string
+          description: Title of the request
+        description:
+          type: string
+          description: Detailed description of the issue
+        urgency:
+          enum: &ref_17
+            - low
+            - medium
+            - high
+            - urgent
+          type: string
+          description: Urgency level
+      required:
+        - vehicleId
+        - title
+        - description
+        - urgency
+    UpdateRequestDto:
+      type: object
+      properties:
+        vehicleId:
+          type: string
+          format: uuid
+          description: ID of the vehicle
+        title:
+          type: string
+          description: Title of the request
+        description:
+          type: string
+          description: Detailed description of the issue
+        urgency:
+          enum: *ref_17
+          type: string
+          description: Urgency level
+    CreateQuoteDto:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        estimatedDuration:
+          type: string
+        description:
+          type: string
+        includesWarranty:
+          type: boolean
+      required:
+        - requestId
+        - amount
+        - estimatedDuration
+    JobResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+        requestId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174001
+        ownerId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174002
+        ownerName:
+          type: string
+          example: John Doe
+        providerId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174003
+        providerName:
+          type: string
+          example: Jane Smith Auto Service
+        quoteId:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174004
+        agreedPrice:
+          type: number
+          example: 150
+        description:
+          type: string
+          example: Oil change and filter replacement
+        status:
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - cancelled
+          type: string
+          example: pending
+        scheduledDate:
+          format: date-time
+          type: string
+          nullable: true
+        completedAt:
+          format: date-time
+          type: string
+          nullable: true
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - requestId
+        - ownerId
+        - ownerName
+        - providerId
+        - providerName
+        - quoteId
+        - agreedPrice
+        - description
+        - status
+        - createdAt
+        - updatedAt
+    UpdateJobStatusDto:
+      type: object
+      properties:
+        status:
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - cancelled
+          type: string
+          description: The new status of the job
+      required:
+        - status
+    CreateMaintenanceRecordDto:
+      type: object
+      properties:
+        serviceType:
+          type: string
+          description: Type of service performed
+          example: Oil Change
+        serviceDate:
+          type: string
+          description: Date when service was performed
+          example: '2026-01-04'
+        mileage:
+          type: number
+          minimum: 1
+          description: Mileage at time of service (km)
+          example: 50000
+        cost:
+          type: number
+          description: Cost of service
+          example: 89.99
+        notes:
+          type: string
+          description: Additional notes about the service
+        performedBy:
+          type: string
+          description: Name of shop or mechanic who performed service
+      required:
+        - serviceType
+        - serviceDate

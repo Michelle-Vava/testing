@@ -1,0 +1,46 @@
+import { Exclude, Expose, Transform } from 'class-transformer';
+
+@Expose()
+export class UserEntity {
+  id!: string;
+  email!: string;
+  name!: string;
+  phone?: string | null;
+  roles!: string[];
+  onboardingComplete!: boolean;
+  providerOnboardingComplete!: boolean;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  businessName?: string | null;
+  serviceTypes!: string[];
+  yearsInBusiness?: number | null;
+  certifications?: string[];
+  shopAddress?: string | null;
+  shopCity?: string | null;
+  shopState?: string | null;
+  shopZipCode?: string | null;
+  serviceArea?: string[];
+  isMobileService!: boolean;
+  isShopService!: boolean;
+  isVerified!: boolean;
+  shopPhotos!: string[];
+  @Transform(({ value }) => value ? Number(value) : null)
+  rating?: number | null;
+  reviewCount!: number;
+  createdAt!: Date;
+  updatedAt!: Date;
+
+  @Exclude()
+  password!: string;
+
+  constructor(partial: Partial<UserEntity> | any) {
+    Object.assign(this, partial);
+    
+    // Handle Decimal to number conversion for rating if needed
+    if (this.rating && typeof this.rating === 'object' && 'toNumber' in (this.rating as any)) {
+      this.rating = (this.rating as any).toNumber();
+    }
+  }
+}

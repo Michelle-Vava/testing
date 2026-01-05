@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  /* Hide default password reveal button in Edge/IE */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+}

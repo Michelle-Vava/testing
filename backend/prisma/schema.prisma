@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                          String   @id @default(uuid())
+  email                       String   @unique
+  name                        String
+  password                    String
+  phone                       String?
+  roles                       String[] @default(["owner"])
+  onboardingComplete          Boolean  @default(false)
+  providerOnboardingComplete  Boolean  @default(false)
+  
+  // Profile fields
+  address                     String?
+  city                        String?
+  state                       String?
+  zipCode                     String?
+  avatarUrl                   String?
+  bio                         String?
+  
+  // Provider-specific fields
+  businessName                String?
+  serviceTypes                String[] @default([])
+  yearsInBusiness             Int?
+  certifications              String[] @default([])
+  shopAddress                 String?
+  shopCity                    String?
+  shopState                   String?
+  shopZipCode                 String?
+  serviceArea                 String[] @default([]) // Cities/regions served
+  isMobileService             Boolean  @default(false)
+  isShopService               Boolean  @default(false)
+  isVerified                  Boolean  @default(false)
+  shopPhotos                  String[] @default([])
+  rating                      Decimal? @db.Decimal(3, 2)
+  reviewCount                 Int      @default(0)
+  
+  // Password reset
+  resetToken                  String?
+  resetTokenExpiry            DateTime?
+  emailVerified               Boolean @default(false)
+  emailVerificationToken      String?
+  
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  // Relations
+  ownedVehicles               Vehicle[]        @relation("VehicleOwner")
+  serviceRequests             ServiceRequest[] @relation("RequestOwner")
+  providedQuotes              Quote[]          @relation("QuoteProvider")
+  providerJobs                Job[]            @relation("JobProvider")
+  ownerJobs                   Job[]            @relation("JobOwner")
+  ownerPayments               Payment[]        @relation("PaymentOwner")
+  providerPayments            Payment[]        @relation("PaymentProvider")
+  notifications               Notification[]
+  activities                  Activity[]
+
+  @@map("users")
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  ownerId      String
+  make         String
+  model        String
+  year         Int
+  vin          String?
+  licensePlate String?
+  color        String?
+  mileage      Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  owner               User                 @relation("VehicleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  serviceRequests     ServiceRequest[]
+  maintenanceRecords  MaintenanceRecord[]
+
+  @@map("vehicles")
+}
+
+model ServiceRequest {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  ownerId     String
+  title       String
+  description String
+  urgency     String   // 'low' | 'medium' | 'high' | 'urgent'
+  status      String   @default("open") // 'open' | 'quoted' | 'accepted' | 'in_progress' | 'completed' | 'cancelled'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  owner   User    @relation("RequestOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  quotes  Quote[]
+  jobs    Job[]
+
+  @@map("service_requests")
+}
+
+model Quote {
+  id                String   @id @default(uuid())
+  requestId         String
+  providerId        String
+  amount            Decimal  @db.Decimal(10, 2)
+  estimatedDuration String
+  notes             String?  // Deprecated - use description instead
+  description       String?
+  includesWarranty  Boolean  @default(false)
+  status            String   @default("pending") // 'pending' | 'accepted' | 'rejected' | 'expired'
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  request  ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider User           @relation("QuoteProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  jobs     Job[]
+
+  @@map("quotes")
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  quoteId     String
+  requestId   String
+  providerId  String
+  ownerId     String
+  status      String    @default("pending") // 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  quote    Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  request  ServiceRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider User             @relation("JobProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  owner    User             @relation("JobOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@map("jobs")
+}
+
+model Payment {
+  id                    String    @id @default(uuid())
+  jobId                 String
+  ownerId               String
+  providerId            String
+  amount                Decimal   @db.Decimal(10, 2)
+  stripePaymentIntentId String?   @unique
+  status                String    @default("pending") // 'pending' | 'processing' | 'succeeded' | 'failed' | 'refunded'
+  paidAt                DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  job      Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  owner    User @relation("PaymentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  provider User @relation("PaymentProvider", fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // Icon name/emoji
+  isPopular   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("services")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // 'quote_received' | 'request_updated' | 'booking_confirmed' | 'setup_reminder'
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?  // Optional link to related resource
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // 'vehicle_added' | 'request_created' | 'quote_received' | 'job_completed'
+  description String
+  metadata    Json?    // Additional data about the activity
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+model MaintenanceRecord {
+  id            String    @id @default(uuid())
+  vehicleId     String
+  serviceType   String    // e.g., 'Oil Change', 'Tire Rotation', 'Brake Service'
+  serviceDate   DateTime
+  mileage       Int?
+  cost          Decimal?  @db.Decimal(10, 2)
+  notes         String?
+  performedBy   String?   // Shop name or provider
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_records")
+}
