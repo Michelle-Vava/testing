@@ -63,7 +63,7 @@ export function QuoteCard({ quote, onAccept, onReject }: QuoteCardProps) {
             <div className="flex items-center gap-2 text-sm mb-1">
               <div className="flex items-center">
                 <span className="text-yellow-500 mr-1">★</span>
-                <span className="font-semibold">{quote.provider.rating.toFixed(1)}</span>
+                <span className="font-semibold">{Number(quote.provider.rating).toFixed(1)}</span>
                 <span className="text-gray-500 ml-1">({quote.provider.reviewCount} reviews)</span>
               </div>
             </div>
@@ -71,6 +71,11 @@ export function QuoteCard({ quote, onAccept, onReject }: QuoteCardProps) {
           <p className="text-sm text-gray-600">
             {quote.provider?.phone || quote.provider?.email}
           </p>
+          {quote.createdAt && (
+            <p className="text-xs text-gray-500 mt-1">
+              Quoted {new Date(quote.createdAt).toLocaleDateString()}
+            </p>
+          )}
         </div>
         {/* Price Display */}
         <div className="text-right ml-4">

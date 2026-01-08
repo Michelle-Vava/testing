@@ -3,6 +3,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 export declare class PaymentsService {
     private configService;
     private prisma;
+    private readonly logger;
     private stripe;
     constructor(configService: ConfigService, prisma: PrismaService);
     createCharge(jobId: string, userId: string): Promise<{
@@ -10,8 +11,8 @@ export declare class PaymentsService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            ownerId: string;
             status: string;
+            ownerId: string;
             providerId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
             jobId: string;
@@ -20,6 +21,18 @@ export declare class PaymentsService {
         };
         clientSecret: string | null;
     }>;
+    completePayment(paymentId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: string;
+        ownerId: string;
+        providerId: string;
+        amount: import("@prisma/client/runtime/library").Decimal;
+        jobId: string;
+        stripePaymentIntentId: string | null;
+        paidAt: Date | null;
+    }>;
     createPayout(jobId: string, userId: string): Promise<{
         message: string;
         amount: import("@prisma/client/runtime/library").Decimal;
@@ -27,8 +40,8 @@ export declare class PaymentsService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            ownerId: string;
             status: string;
+            ownerId: string;
             providerId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
             jobId: string;
@@ -37,21 +50,11 @@ export declare class PaymentsService {
         };
     }>;
     listTransactions(userId: string, userRoles: string[]): Promise<({
-        owner: {
-            id: string;
-            name: string;
-            email: string;
-        };
-        provider: {
-            id: string;
-            name: string;
-            email: string;
-        };
         job: {
             quote: {
                 id: string;
-                description: string | null;
                 createdAt: Date;
+                description: string | null;
                 updatedAt: Date;
                 status: string;
                 requestId: string;
@@ -65,49 +68,68 @@ export declare class PaymentsService {
                 vehicle: {
                     id: string;
                     createdAt: Date;
+                    deletedAt: Date | null;
                     updatedAt: Date;
+                    year: number;
                     make: string;
                     model: string;
-                    year: number;
                     vin: string | null;
                     licensePlate: string | null;
                     color: string | null;
                     mileage: number | null;
                     ownerId: string;
+                    imageUrls: string[];
                 };
             } & {
                 id: string;
-                description: string;
                 createdAt: Date;
-                updatedAt: Date;
-                ownerId: string;
-                vehicleId: string;
+                description: string;
                 title: string;
-                urgency: string;
+                deletedAt: Date | null;
+                updatedAt: Date;
                 status: string;
+                ownerId: string;
+                imageUrls: string[];
+                vehicleId: string;
+                urgency: string;
             };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            ownerId: string;
             status: string;
+            ownerId: string;
             requestId: string;
             providerId: string;
             startedAt: Date | null;
             completedAt: Date | null;
             quoteId: string;
         };
+        owner: {
+            id: string;
+            name: string;
+            email: string;
+        };
+        provider: {
+            id: string;
+            name: string;
+            email: string;
+        };
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        ownerId: string;
         status: string;
+        ownerId: string;
         providerId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
         jobId: string;
         stripePaymentIntentId: string | null;
         paidAt: Date | null;
     })[]>;
+    handleWebhook(rawBody: Buffer, signature: string): Promise<{
+        received: boolean;
+    }>;
+    private handlePaymentIntentSucceeded;
+    private handlePaymentIntentFailed;
 }

@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProvidersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
+const client_1 = require("@prisma/client");
 let ProvidersService = ProvidersService_1 = class ProvidersService {
     prisma;
     logger = new common_1.Logger(ProvidersService_1.name);
@@ -23,10 +24,9 @@ let ProvidersService = ProvidersService_1 = class ProvidersService {
         this.logger.debug('Finding featured providers');
         const providers = await this.prisma.user.findMany({
             where: {
-                roles: {
-                    has: 'provider',
-                },
-                providerOnboardingComplete: true,
+                roles: { has: 'provider' },
+                providerStatus: client_1.ProviderStatus.ACTIVE,
+                rating: { not: null },
             },
             take: 4,
             select: {
@@ -34,32 +34,24 @@ let ProvidersService = ProvidersService_1 = class ProvidersService {
                 name: true,
                 businessName: true,
                 serviceTypes: true,
-                yearsInBusiness: true,
                 city: true,
                 state: true,
                 rating: true,
                 reviewCount: true,
                 isVerified: true,
-                _count: {
-                    select: {
-                        providedQuotes: true,
-                        providerJobs: true,
-                    },
-                },
             },
-            orderBy: {
-                rating: 'desc',
-            },
+            orderBy: [
+                { rating: 'desc' },
+                { reviewCount: 'desc' },
+            ],
         });
         return providers.map(provider => ({
             id: provider.id,
             name: provider.businessName || provider.name,
-            rating: provider.rating || 4.8,
-            reviewCount: provider.reviewCount || provider._count.providedQuotes + provider._count.providerJobs,
+            rating: Number(provider.rating) || 0,
+            reviewCount: provider.reviewCount,
             isVerified: provider.isVerified,
             specialties: provider.serviceTypes.slice(0, 3),
-            distance: `${(Math.random() * 5 + 1).toFixed(1)} miles`,
-            responseTime: '< 2 hours',
             city: provider.city,
             state: provider.state,
         }));
@@ -67,7 +59,7 @@ let ProvidersService = ProvidersService_1 = class ProvidersService {
     async findAll(filters) {
         const where = {
             roles: { has: 'provider' },
-            providerOnboardingComplete: true,
+            providerStatus: client_1.ProviderStatus.ACTIVE,
         };
         if (filters.serviceType) {
             where.serviceTypes = { has: filters.serviceType };

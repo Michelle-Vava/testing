@@ -5,17 +5,26 @@
  * Marketplace connecting vehicle owners with service providers
  * OpenAPI spec version: 1.0
  */
+import type { RequestsControllerFindAllSort } from './requestsControllerFindAllSort';
 
 export type RequestsControllerFindAllParams = {
 /**
- * Page number (default: 1)
+ * Page number
  * @minimum 1
  */
 page?: number;
 /**
- * Items per page (default: 20, max: 100)
+ * Items per page
  * @minimum 1
  * @maximum 100
  */
 limit?: number;
+/**
+ * Filter by status (open, quoted, in_progress, completed, cancelled)
+ */
+status?: string;
+/**
+ * Sort order
+ */
+sort?: RequestsControllerFindAllSort;
 };

@@ -4,14 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { env } from '@/config/env';
+import { AXIOS_INSTANCE } from '@/lib/axios';
 
 export function About() {
   const { data: statsData } = useQuery({
     queryKey: ['platform-stats'],
     queryFn: async () => {
-      const response = await axios.get(`${env.API_URL}/platform/stats`);
+      const response = await AXIOS_INSTANCE.get('/platform/stats');
       return response.data;
     },
   });

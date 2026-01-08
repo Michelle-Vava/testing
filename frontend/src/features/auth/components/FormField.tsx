@@ -1,40 +1,36 @@
+import React, { forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface FormFieldProps {
+interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
-  type?: string;
   error?: string;
-  placeholder?: string;
-  autoComplete?: string;
-  name?: string;
-  onChange?: any;
-  onBlur?: any;
-  ref?: any;
 }
 
 /**
  * Animated form field with error display
  */
-export function FormField({
+export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(({
   id,
   label,
   type = 'text',
   error,
   placeholder,
   autoComplete,
+  className,
   ...rest
-}: FormFieldProps) {
+}, ref) => {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-2">
         {label}
       </label>
       <motion.input
+        ref={ref}
         id={id}
         type={type}
         {...rest}
-        className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+        className={`w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all ${className || ''}`}
         placeholder={placeholder}
         autoComplete={autoComplete}
         whileFocus={{ scale: 1.01 }}
@@ -54,4 +50,6 @@ export function FormField({
       </AnimatePresence>
     </div>
   );
-}
+});
+
+FormField.displayName = 'FormField';

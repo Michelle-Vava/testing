@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
+const requests_query_dto_1 = require("./dto/requests-query.dto");
 const enums_1 = require("../../shared/enums");
 let RequestsService = RequestsService_1 = class RequestsService {
     prisma;
@@ -22,14 +23,18 @@ let RequestsService = RequestsService_1 = class RequestsService {
     }
     async findPublicRecent() {
         this.logger.debug('Finding recent public requests');
-        return this.prisma.serviceRequest.findMany({
+        const requests = await this.prisma.serviceRequest.findMany({
             where: {
-                status: {
-                    in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED],
-                },
+                status: { in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED] },
             },
             take: 4,
-            include: {
+            select: {
+                id: true,
+                title: true,
+                description: true,
+                urgency: true,
+                status: true,
+                createdAt: true,
                 vehicle: {
                     select: {
                         make: true,
@@ -37,27 +42,44 @@ let RequestsService = RequestsService_1 = class RequestsService {
                         year: true,
                     },
                 },
-                _count: {
-                    select: {
-                        quotes: true,
-                    },
+                quotes: {
+                    select: { id: true },
+                    take: 1,
                 },
             },
             orderBy: { createdAt: 'desc' },
         });
+        return requests.map(req => ({
+            ...req,
+            quoteCount: req.quotes?.length || 0,
+            quotes: undefined,
+        }));
     }
-    async findAll(userId, userRoles, paginationDto) {
+    async findAll(userId, userRoles, query) {
         this.logger.debug(`Finding all requests for user ${userId}`);
         const isProvider = userRoles && userRoles.includes('provider');
-        const { skip, take } = paginationDto;
+        const { page, limit, status, sort } = query;
+        const skip = (page - 1) * limit;
+        const take = limit;
+        const orderBy = {};
+        if (sort === requests_query_dto_1.RequestSort.OLDEST) {
+            orderBy.createdAt = 'asc';
+        }
+        else {
+            orderBy.createdAt = 'desc';
+        }
         if (isProvider) {
+            const where = {
+                status: {
+                    in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED],
+                },
+            };
+            if (status) {
+                where.status = status;
+            }
             const [requests, total] = await Promise.all([
                 this.prisma.serviceRequest.findMany({
-                    where: {
-                        status: {
-                            in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED],
-                        },
-                    },
+                    where,
                     include: {
                         vehicle: {
                             select: {
@@ -78,32 +100,34 @@ let RequestsService = RequestsService_1 = class RequestsService {
                             },
                         },
                     },
-                    orderBy: { createdAt: 'desc' },
+                    orderBy,
                     skip,
                     take,
                 }),
                 this.prisma.serviceRequest.count({
-                    where: {
-                        status: {
-                            in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED],
-                        },
-                    },
+                    where,
                 }),
             ]);
             return {
                 data: requests,
                 meta: {
                     total,
-                    page: paginationDto.page,
-                    limit: paginationDto.limit,
-                    totalPages: Math.ceil(total / paginationDto.limit),
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit),
                 },
             };
         }
         else {
+            const where = {
+                ownerId: userId,
+            };
+            if (status) {
+                where.status = status;
+            }
             const [requests, total] = await Promise.all([
                 this.prisma.serviceRequest.findMany({
-                    where: { ownerId: userId },
+                    where,
                     include: {
                         vehicle: true,
                         _count: {
@@ -112,19 +136,19 @@ let RequestsService = RequestsService_1 = class RequestsService {
                             },
                         },
                     },
-                    orderBy: { createdAt: 'desc' },
+                    orderBy,
                     skip,
                     take,
                 }),
-                this.prisma.serviceRequest.count({ where: { ownerId: userId } }),
+                this.prisma.serviceRequest.count({ where }),
             ]);
             return {
                 data: requests,
                 meta: {
                     total,
-                    page: paginationDto.page,
-                    limit: paginationDto.limit,
-                    totalPages: Math.ceil(total / paginationDto.limit),
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit),
                 },
             };
         }
@@ -135,10 +159,10 @@ let RequestsService = RequestsService_1 = class RequestsService {
             where: { id: requestData.vehicleId },
         });
         if (!vehicle) {
-            throw new common_1.NotFoundException('Vehicle not found');
+            throw new common_1.NotFoundException(`Vehicle with ID ${requestData.vehicleId} not found`);
         }
         if (vehicle.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only create requests for your own vehicles');
+            throw new common_1.ForbiddenException(`Access denied: You can only create service requests for vehicles you own (Vehicle ID: ${requestData.vehicleId})`);
         }
         return this.prisma.serviceRequest.create({
             data: {
@@ -180,12 +204,12 @@ let RequestsService = RequestsService_1 = class RequestsService {
             },
         });
         if (!request) {
-            throw new common_1.NotFoundException('Service request not found');
+            throw new common_1.NotFoundException(`Service request with ID ${id} not found`);
         }
         const isOwner = request.ownerId === userId;
         const isProvider = userRoles.includes('provider');
         if (!isOwner && !isProvider) {
-            throw new common_1.ForbiddenException('You do not have access to this request');
+            throw new common_1.ForbiddenException(`Access denied: You do not have access to service request ${id}`);
         }
         return request;
     }
@@ -194,14 +218,45 @@ let RequestsService = RequestsService_1 = class RequestsService {
             where: { id },
         });
         if (!request) {
-            throw new common_1.NotFoundException('Service request not found');
+            throw new common_1.NotFoundException(`Service request with ID ${id} not found`);
         }
         if (request.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only update your own requests');
+            throw new common_1.ForbiddenException(`Access denied: Service request ${id} belongs to another user`);
         }
         return this.prisma.serviceRequest.update({
             where: { id },
             data: updateData,
+        });
+    }
+    async addImages(id, imageUrls) {
+        const request = await this.prisma.serviceRequest.findUnique({
+            where: { id },
+        });
+        if (!request) {
+            throw new common_1.NotFoundException(`Service request with ID ${id} not found`);
+        }
+        return this.prisma.serviceRequest.update({
+            where: { id },
+            data: {
+                imageUrls: {
+                    push: imageUrls,
+                },
+            },
+        });
+    }
+    async removeImage(id, imageUrl) {
+        const request = await this.prisma.serviceRequest.findUnique({
+            where: { id },
+        });
+        if (!request) {
+            throw new common_1.NotFoundException(`Service request with ID ${id} not found`);
+        }
+        const updatedImageUrls = request.imageUrls.filter(url => url !== imageUrl);
+        return this.prisma.serviceRequest.update({
+            where: { id },
+            data: {
+                imageUrls: updatedImageUrls,
+            },
         });
     }
 };

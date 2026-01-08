@@ -1,27 +1,13 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { Sidebar } from '@/components/layout/sidebar';
 import { LayoutDashboard, Users, Settings, Activity } from 'lucide-react';
+import { requireAuth } from '@/features/auth/utils/guards';
 
 export const Route = createFileRoute('/admin/_layout')({
-  beforeLoad: ({ context: _context }) => {
-    // We can't use hooks here, so we rely on the auth context passed or check localStorage
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      throw redirect({ to: '/auth/login' });
-    }
-    
-    try {
-      const user = JSON.parse(userStr);
-      if (user.role !== 'admin') {
-        // Redirect non-admins to their respective dashboards
-        if (user.role === 'provider') {
-          throw redirect({ to: '/provider/dashboard' });
-        } else {
-          throw redirect({ to: '/owner/dashboard' });
-        }
-      }
-    } catch (e) {
-      throw redirect({ to: '/auth/login' });
+  beforeLoad: () => {
+    const user = requireAuth();
+    if (user.role !== 'admin') {
+      throw redirect({ to: '/unauthorized' });
     }
   },
   component: AdminLayout,

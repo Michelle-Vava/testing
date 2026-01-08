@@ -10,5 +10,16 @@ export declare class UpdateProfileDto {
     businessName?: string;
     serviceTypes?: string[];
     yearsInBusiness?: number;
+    shopAddress?: string;
+    shopCity?: string;
+    shopState?: string;
+    shopZipCode?: string;
+    serviceArea?: string[];
+    isMobileService?: boolean;
+    isShopService?: boolean;
+    hourlyRate?: number;
+    website?: string;
+    certifications?: string[];
+    insuranceInfo?: string;
     onboardingComplete?: boolean;
 }

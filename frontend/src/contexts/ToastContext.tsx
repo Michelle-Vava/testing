@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { eventBus, EVENTS, ToastEvent } from '@/lib/event-bus';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -63,6 +64,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const warning = useCallback((message: string, duration?: number) => {
     showToast(message, 'warning', duration);
+  }, [showToast]);
+
+  // Subscribe to global events
+  useEffect(() => {
+    const unsubscribe = eventBus.on(EVENTS.SHOW_TOAST, (data: ToastEvent) => {
+      showToast(data.message, data.type, data.duration);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, [showToast]);
 
   return (
@@ -155,6 +167,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
       <button
         onClick={onRemove}
+        aria-label="Close notification"
         className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { RequestResponseDtoUrgency } from './requestResponseDtoUrgency';
+import type { RequestResponseDtoPreferredLocation } from './requestResponseDtoPreferredLocation';
+import type { RequestResponseDtoPreferredDate } from './requestResponseDtoPreferredDate';
 import type { RequestResponseDtoStatus } from './requestResponseDtoStatus';
 
 export interface RequestResponseDto {
@@ -16,10 +18,11 @@ export interface RequestResponseDto {
   description: string;
   urgency: RequestResponseDtoUrgency;
   /** @nullable */
-  preferredLocation?: string | null;
+  preferredLocation?: RequestResponseDtoPreferredLocation;
   /** @nullable */
-  preferredDate?: string | null;
+  preferredDate?: RequestResponseDtoPreferredDate;
   status: RequestResponseDtoStatus;
+  imageUrls?: string[];
   createdAt: string;
   updatedAt: string;
 }

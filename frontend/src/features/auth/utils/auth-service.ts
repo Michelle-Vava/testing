@@ -24,27 +24,27 @@ export class AuthService {
   }
 
   /**
-   * Get the current auth token
+   * Get the current auth token from cookie
+   * Tokens are now in httpOnly cookies, but we can check for csrf_token
    */
   static getToken(): string | null {
-    return localStorage.getItem('access_token');
+    // Deprecated: We use httpOnly cookies now, so we can't read tokens from JS
+    return null;
   }
 
   /**
    * Check if user is authenticated
    */
   static isAuthenticated(): boolean {
-    return !!this.getToken() && !!this.getUser();
+    return !!this.getUser();
   }
-
   /**
    * Require authentication - throws redirect if not authenticated
    */
   static requireAuth(): User {
     const user = this.getUser();
-    const token = this.getToken();
     
-    if (!user || !token) {
+    if (!user) {
       throw redirect({
         to: '/auth/login',
         search: {

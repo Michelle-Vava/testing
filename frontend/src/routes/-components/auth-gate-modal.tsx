@@ -51,7 +51,7 @@ export function AuthGateModal() {
     const action = intent?.action;
 
     if (isProviderIntent) {
-      const title = action === 'apply as a mechanic' 
+      const title = action === 'apply as a provider' 
         ? 'Apply as a Mechanic'
         : 'Sign in to submit a quote';
       

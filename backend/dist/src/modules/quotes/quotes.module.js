@@ -10,11 +10,13 @@ exports.QuotesModule = void 0;
 const common_1 = require("@nestjs/common");
 const quotes_controller_1 = require("./quotes.controller");
 const quotes_service_1 = require("./quotes.service");
+const notifications_module_1 = require("../notifications/notifications.module");
 let QuotesModule = class QuotesModule {
 };
 exports.QuotesModule = QuotesModule;
 exports.QuotesModule = QuotesModule = __decorate([
     (0, common_1.Module)({
+        imports: [notifications_module_1.NotificationsModule],
         controllers: [quotes_controller_1.QuotesController],
         providers: [quotes_service_1.QuotesService],
     })

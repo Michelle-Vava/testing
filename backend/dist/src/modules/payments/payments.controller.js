@@ -29,6 +29,9 @@ let PaymentsController = class PaymentsController {
     async createCharge(req, jobId) {
         return this.paymentsService.createCharge(jobId, req.user.sub);
     }
+    async completePayment(paymentId) {
+        return this.paymentsService.completePayment(paymentId);
+    }
     async createPayout(req, jobId) {
         return this.paymentsService.createPayout(jobId, req.user.sub);
     }
@@ -53,6 +56,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "createCharge", null);
+__decorate([
+    (0, common_1.Post)('complete/:paymentId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Manually complete a payment (Dev/Test only)' }),
+    openapi.ApiResponse({ status: 201 }),
+    __param(0, (0, common_1.Param)('paymentId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "completePayment", null);
 __decorate([
     (0, common_1.Post)('payout/:jobId'),
     (0, swagger_1.ApiOperation)({ summary: 'Request payout for a paid job (providers only)' }),

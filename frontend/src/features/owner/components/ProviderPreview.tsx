@@ -43,7 +43,7 @@ export function ProviderPreview() {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900">Top-Rated Mechanics</h3>
+        <h3 className="text-lg font-semibold text-slate-900">Top-Rated Providers</h3>
         <Button
           variant="ghost"
           onClick={() => navigate({ to: '/owner/providers' })}
@@ -67,7 +67,7 @@ export function ProviderPreview() {
                 <div className="flex items-center gap-1 mt-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="text-sm font-medium text-slate-900">
-                    {provider.rating?.toFixed(1) || '0.0'}
+                    {provider.rating ? Number(provider.rating).toFixed(1) : '0.0'}
                   </span>
                   <span className="text-sm text-slate-500">
                     ({provider.reviewCount || 0})

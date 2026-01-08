@@ -6,14 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface CreateVehicleDto {
-  make: string;
-  model: string;
-  /** @minimum 1900 */
-  year: number;
-  vin?: string;
-  licensePlate?: string;
-  color?: string;
-  /** @minimum 0 */
-  mileage?: number;
-}
+export interface CreateVehicleDto { [key: string]: unknown }

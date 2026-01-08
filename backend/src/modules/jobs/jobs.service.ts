@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../../shared/services/email.service';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
 import { JobStatus, RequestStatus } from '../../shared/enums';
@@ -8,7 +10,11 @@ import { JobStatus, RequestStatus } from '../../shared/enums';
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private emailService: EmailService,
+  ) {}
 
   async findAll(userId: string, userRoles: string[], paginationDto: PaginationDto) {
     this.logger.debug(`Finding all jobs for user ${userId} with roles ${userRoles}`);
@@ -153,6 +159,61 @@ export class JobsService {
 
       return updated;
     });
+
+    // Notify owner if job is completed
+    if (statusData.status === JobStatus.COMPLETED) {
+      await this.notificationsService.create(
+        job.ownerId,
+        'job_completed',
+        'Job Completed',
+        `Your job has been marked as completed. Please review and pay.`,
+        `/jobs/${job.id}`
+      );
+    }
+
+    // Send email notification for status change
+    const jobDetails = await this.prisma.job.findUnique({
+      where: { id },
+      include: {
+        request: { select: { title: true } },
+        owner: { select: { email: true, name: true } },
+        provider: { select: { email: true, name: true } },
+      },
+    });
+
+    if (jobDetails) {
+      // Notify owner about status change
+      await this.emailService.sendJobStatusUpdateEmail({
+        recipientEmail: jobDetails.owner.email,
+        recipientName: jobDetails.owner.name,
+        jobTitle: jobDetails.request.title,
+        oldStatus: job.status,
+        newStatus: statusData.status,
+        jobId: id,
+        isOwner: true,
+      });
+
+      // If completed, send review reminder email immediately
+      // TODO: In production, use a cron job or task scheduler to send after 24 hours
+      if (statusData.status === JobStatus.COMPLETED) {
+        try {
+          await this.emailService.sendReviewReminderEmail({
+            ownerEmail: jobDetails.owner.email,
+            ownerName: jobDetails.owner.name,
+            providerName: jobDetails.provider.name,
+            jobTitle: jobDetails.request.title,
+            jobId: id,
+          });
+          this.logger.log(`Sent review reminder email for job ${id}`);
+        } catch (error) {
+          this.logger.error(
+            `Failed to send review reminder for job ${id}`,
+            error instanceof Error ? error.stack : String(error)
+          );
+          // Don't fail the job update if email fails
+        }
+      }
+    }
 
     return updatedJob;
   }

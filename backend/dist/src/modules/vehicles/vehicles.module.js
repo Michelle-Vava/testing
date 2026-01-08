@@ -10,13 +10,14 @@ exports.VehiclesModule = void 0;
 const common_1 = require("@nestjs/common");
 const vehicles_controller_1 = require("./vehicles.controller");
 const vehicles_service_1 = require("./vehicles.service");
+const upload_service_1 = require("../../shared/services/upload.service");
 let VehiclesModule = class VehiclesModule {
 };
 exports.VehiclesModule = VehiclesModule;
 exports.VehiclesModule = VehiclesModule = __decorate([
     (0, common_1.Module)({
         controllers: [vehicles_controller_1.VehiclesController],
-        providers: [vehicles_service_1.VehiclesService],
+        providers: [vehicles_service_1.VehiclesService, upload_service_1.UploadService],
     })
 ], VehiclesModule);
 //# sourceMappingURL=vehicles.module.js.map

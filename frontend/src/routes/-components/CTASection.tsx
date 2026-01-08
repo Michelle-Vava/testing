@@ -25,7 +25,7 @@ export function CTASection() {
           transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
           className="text-xl mb-8 text-slate-300 max-w-2xl mx-auto"
         >
-          Get transparent pricing from competing mechanics. No spam. No obligation. Just fair quotes.
+          Get transparent pricing from competing providers. No spam. No obligation. Just fair quotes.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -49,7 +49,7 @@ export function CTASection() {
           transition={{ duration: 0.4, ease: 'easeOut', delay: 0.3 }}
           className="mt-6 text-sm text-slate-400"
         >
-          Launching with verified mechanics across Nova Scotia, Ontario, and British Columbia
+          Launching with verified providers across Nova Scotia, Ontario, and British Columbia
         </motion.p>
       </div>
     </section>

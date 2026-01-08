@@ -13,12 +13,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const email_service_1 = require("../../shared/services/email.service");
 const enums_1 = require("../../shared/enums");
 let JobsService = JobsService_1 = class JobsService {
     prisma;
+    notificationsService;
+    emailService;
     logger = new common_1.Logger(JobsService_1.name);
-    constructor(prisma) {
+    constructor(prisma, notificationsService, emailService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
+        this.emailService = emailService;
     }
     async findAll(userId, userRoles, paginationDto) {
         this.logger.debug(`Finding all jobs for user ${userId} with roles ${userRoles}`);
@@ -102,10 +108,10 @@ let JobsService = JobsService_1 = class JobsService {
             },
         });
         if (!job) {
-            throw new common_1.NotFoundException('Job not found');
+            throw new common_1.NotFoundException(`Job with ID ${id} not found`);
         }
         if (job.ownerId !== userId && job.providerId !== userId) {
-            throw new common_1.ForbiddenException('You do not have access to this job');
+            throw new common_1.ForbiddenException(`Access denied: Job ${id} belongs to another user`);
         }
         return job;
     }
@@ -115,10 +121,13 @@ let JobsService = JobsService_1 = class JobsService {
             where: { id },
         });
         if (!job) {
-            throw new common_1.NotFoundException('Job not found');
+            throw new common_1.NotFoundException(`Job with ID ${id} not found`);
         }
         if (job.providerId !== userId) {
-            throw new common_1.ForbiddenException('Only the provider can update job status');
+            throw new common_1.ForbiddenException(`Update denied: Only the assigned provider can update job ${id} status`);
+        }
+        if (job.status === enums_1.JobStatus.COMPLETED && statusData.status !== enums_1.JobStatus.COMPLETED) {
+            throw new common_1.BadRequestException(`Job ${id} is already completed and cannot be modified`);
         }
         const updateData = { status: statusData.status };
         if (statusData.status === enums_1.JobStatus.IN_PROGRESS && !job.startedAt) {
@@ -140,12 +149,51 @@ let JobsService = JobsService_1 = class JobsService {
             }
             return updated;
         });
+        if (statusData.status === enums_1.JobStatus.COMPLETED) {
+            await this.notificationsService.create(job.ownerId, 'job_completed', 'Job Completed', `Your job has been marked as completed. Please review and pay.`, `/jobs/${job.id}`);
+        }
+        const jobDetails = await this.prisma.job.findUnique({
+            where: { id },
+            include: {
+                request: { select: { title: true } },
+                owner: { select: { email: true, name: true } },
+                provider: { select: { email: true, name: true } },
+            },
+        });
+        if (jobDetails) {
+            await this.emailService.sendJobStatusUpdateEmail({
+                recipientEmail: jobDetails.owner.email,
+                recipientName: jobDetails.owner.name,
+                jobTitle: jobDetails.request.title,
+                oldStatus: job.status,
+                newStatus: statusData.status,
+                jobId: id,
+                isOwner: true,
+            });
+            if (statusData.status === enums_1.JobStatus.COMPLETED) {
+                try {
+                    await this.emailService.sendReviewReminderEmail({
+                        ownerEmail: jobDetails.owner.email,
+                        ownerName: jobDetails.owner.name,
+                        providerName: jobDetails.provider.name,
+                        jobTitle: jobDetails.request.title,
+                        jobId: id,
+                    });
+                    this.logger.log(`Sent review reminder email for job ${id}`);
+                }
+                catch (error) {
+                    this.logger.error(`Failed to send review reminder for job ${id}`, error instanceof Error ? error.stack : String(error));
+                }
+            }
+        }
         return updatedJob;
     }
 };
 exports.JobsService = JobsService;
 exports.JobsService = JobsService = JobsService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService,
+        email_service_1.EmailService])
 ], JobsService);
 //# sourceMappingURL=jobs.service.js.map

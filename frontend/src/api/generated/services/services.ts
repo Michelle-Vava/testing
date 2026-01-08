@@ -20,10 +20,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import type {
-  ServicesControllerFindOne200
-} from '.././model';
-
 import { customInstance } from '../../../lib/axios';
 
 
@@ -224,7 +220,7 @@ export const servicesControllerFindOne = (
 ) => {
       
       
-      return customInstance<ServicesControllerFindOne200>(
+      return customInstance<void>(
       {url: `/services/${id}`, method: 'GET', signal
     },
       options);

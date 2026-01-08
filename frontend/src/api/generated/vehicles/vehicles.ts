@@ -477,4 +477,127 @@ export const useVehiclesControllerUpdateMileage = <TError = unknown,
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * @summary Upload images for a vehicle
+ */
+export const vehiclesControllerUploadImages = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<VehicleResponseDto>(
+      {url: `/vehicles/${id}/images`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getVehiclesControllerUploadImagesMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vehiclesControllerUploadImages>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof vehiclesControllerUploadImages>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['vehiclesControllerUploadImages'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof vehiclesControllerUploadImages>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  vehiclesControllerUploadImages(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VehiclesControllerUploadImagesMutationResult = NonNullable<Awaited<ReturnType<typeof vehiclesControllerUploadImages>>>
+    
+    export type VehiclesControllerUploadImagesMutationError = unknown
+
+    /**
+ * @summary Upload images for a vehicle
+ */
+export const useVehiclesControllerUploadImages = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vehiclesControllerUploadImages>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof vehiclesControllerUploadImages>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getVehiclesControllerUploadImagesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Delete an image from a vehicle
+ */
+export const vehiclesControllerDeleteImage = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<VehicleResponseDto>(
+      {url: `/vehicles/${id}/images`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getVehiclesControllerDeleteImageMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vehiclesControllerDeleteImage>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof vehiclesControllerDeleteImage>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['vehiclesControllerDeleteImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof vehiclesControllerDeleteImage>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  vehiclesControllerDeleteImage(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VehiclesControllerDeleteImageMutationResult = NonNullable<Awaited<ReturnType<typeof vehiclesControllerDeleteImage>>>
+    
+    export type VehiclesControllerDeleteImageMutationError = unknown
+
+    /**
+ * @summary Delete an image from a vehicle
+ */
+export const useVehiclesControllerDeleteImage = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vehiclesControllerDeleteImage>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof vehiclesControllerDeleteImage>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getVehiclesControllerDeleteImageMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
     

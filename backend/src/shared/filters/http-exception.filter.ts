@@ -36,6 +36,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error: typeof message === 'object' ? (message as any).error : undefined,
     };
 
+    // In production, do not leak internal server error details
+    if (process.env.NODE_ENV === 'production' && status === HttpStatus.INTERNAL_SERVER_ERROR) {
+      errorResponse.message = 'Internal server error';
+      errorResponse.error = undefined;
+    }
+
     const reset = '\x1b[0m';
     const red = '\x1b[31m';
     const yellow = '\x1b[33m';

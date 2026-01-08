@@ -4,7 +4,7 @@ import { authGateStore } from '@/features/auth/stores/auth-gate-store';
 import { Footer } from '@/components/layout/footer';
 import { HeroSection } from '@/routes/-components/HeroSection';
 import { HowItWorksSection } from '@/routes/-components/HowItWorksSection';
-import { MechanicSection } from '@/routes/-components/MechanicSection';
+import { ProviderSection } from '@/routes/-components/ProviderSection';
 import { TopProvidersSection } from '@/routes/-components/TopProvidersSection';
 import { RecentRequestsSection } from '@/routes/-components/RecentRequestsSection';
 import { CTASection } from '@/routes/-components/CTASection';
@@ -29,7 +29,7 @@ export function Landing() {
     <div className="min-h-screen">
       <HeroSection />
       <HowItWorksSection />
-      <MechanicSection />
+      <ProviderSection />
       <TopProvidersSection
         providers={providers}
         handleRequestQuote={handleRequestQuote}

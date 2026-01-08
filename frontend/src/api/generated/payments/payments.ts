@@ -24,10 +24,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import type {
-  PaymentsControllerListTransactions200Item
-} from '.././model';
-
 import { customInstance } from '../../../lib/axios';
 
 
@@ -44,7 +40,7 @@ export const paymentsControllerListTransactions = (
 ) => {
       
       
-      return customInstance<PaymentsControllerListTransactions200Item[]>(
+      return customInstance<void>(
       {url: `/payments`, method: 'GET', signal
     },
       options);
@@ -186,6 +182,68 @@ export const usePaymentsControllerCreateCharge = <TError = unknown,
       > => {
 
       const mutationOptions = getPaymentsControllerCreateChargeMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Manually complete a payment (Dev/Test only)
+ */
+export const paymentsControllerCompletePayment = (
+    paymentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/payments/complete/${paymentId}`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsControllerCompletePaymentMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCompletePayment>>, TError,{paymentId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCompletePayment>>, TError,{paymentId: string}, TContext> => {
+
+const mutationKey = ['paymentsControllerCompletePayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerCompletePayment>>, {paymentId: string}> = (props) => {
+          const {paymentId} = props ?? {};
+
+          return  paymentsControllerCompletePayment(paymentId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerCompletePaymentMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerCompletePayment>>>
+    
+    export type PaymentsControllerCompletePaymentMutationError = unknown
+
+    /**
+ * @summary Manually complete a payment (Dev/Test only)
+ */
+export const usePaymentsControllerCompletePayment = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCompletePayment>>, TError,{paymentId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerCompletePayment>>,
+        TError,
+        {paymentId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerCompletePaymentMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

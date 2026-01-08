@@ -23,6 +23,12 @@ export class PaymentsController {
     return this.paymentsService.createCharge(jobId, req.user.sub);
   }
 
+  @Post('complete/:paymentId')
+  @ApiOperation({ summary: 'Manually complete a payment (Dev/Test only)' })
+  async completePayment(@Param('paymentId') paymentId: string) {
+    return this.paymentsService.completePayment(paymentId);
+  }
+
   @Post('payout/:jobId')
   @ApiOperation({ summary: 'Request payout for a paid job (providers only)' })
   async createPayout(@Request() req: AuthenticatedRequest, @Param('jobId') jobId: string) {

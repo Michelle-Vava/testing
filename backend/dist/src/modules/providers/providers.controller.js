@@ -18,11 +18,17 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const providers_service_1 = require("./providers.service");
+const provider_status_service_1 = require("./provider-status.service");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const provider_status_guard_1 = require("../../shared/guards/provider-status.guard");
+const client_1 = require("@prisma/client");
 let ProvidersController = ProvidersController_1 = class ProvidersController {
     providersService;
+    providerStatusService;
     logger = new common_1.Logger(ProvidersController_1.name);
-    constructor(providersService) {
+    constructor(providersService, providerStatusService) {
         this.providersService = providersService;
+        this.providerStatusService = providerStatusService;
     }
     async findFeatured() {
         this.logger.log('Fetching featured providers for landing page');
@@ -31,8 +37,8 @@ let ProvidersController = ProvidersController_1 = class ProvidersController {
     async findAll(serviceType, mobileService, shopService, minRating, limit) {
         const filters = {
             serviceType,
-            mobileService: mobileService === 'true',
-            shopService: shopService === 'true',
+            mobileService: mobileService !== undefined ? mobileService === 'true' : undefined,
+            shopService: shopService !== undefined ? shopService === 'true' : undefined,
             minRating: minRating ? parseFloat(minRating) : undefined,
             limit: limit ? parseInt(limit, 10) : undefined,
         };
@@ -40,6 +46,15 @@ let ProvidersController = ProvidersController_1 = class ProvidersController {
     }
     async findOne(id) {
         return this.providersService.findOne(id);
+    }
+    async getOnboardingStatus(req) {
+        return this.providerStatusService.getOnboardingStatus(req.user.sub);
+    }
+    async completeOnboarding(req) {
+        return this.providerStatusService.completeOnboarding(req.user.sub);
+    }
+    async startOnboarding(req) {
+        return this.providerStatusService.updateStatus(req.user.sub, client_1.ProviderStatus.DRAFT, 'Started onboarding');
     }
 };
 exports.ProvidersController = ProvidersController;
@@ -79,9 +94,44 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ProvidersController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Get)('onboarding/status'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get provider onboarding status and checklist' }),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProvidersController.prototype, "getOnboardingStatus", null);
+__decorate([
+    (0, common_1.Post)('onboarding/complete'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, provider_status_guard_1.ProviderStatusGuard),
+    (0, provider_status_guard_1.RequireProviderStatus)(client_1.ProviderStatus.DRAFT, client_1.ProviderStatus.NONE),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Complete provider onboarding' }),
+    openapi.ApiResponse({ status: 201 }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProvidersController.prototype, "completeOnboarding", null);
+__decorate([
+    (0, common_1.Put)('onboarding/start'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Start provider onboarding (NONE → DRAFT)' }),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProvidersController.prototype, "startOnboarding", null);
 exports.ProvidersController = ProvidersController = ProvidersController_1 = __decorate([
     (0, swagger_1.ApiTags)('providers'),
     (0, common_1.Controller)('providers'),
-    __metadata("design:paramtypes", [providers_service_1.ProvidersService])
+    __metadata("design:paramtypes", [providers_service_1.ProvidersService,
+        provider_status_service_1.ProviderStatusService])
 ], ProvidersController);
 //# sourceMappingURL=providers.controller.js.map

@@ -1,13 +1,32 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { Sidebar } from '@/components/layout/sidebar';
-import { requireOnboarding } from '@/features/auth/utils/guards';
+import { ProviderHeader } from '@/components/layout/ProviderHeader';
+import { Footer } from '@/components/layout/footer';
+import { AuthService } from '@/features/auth/utils/auth-service';
 
 export const Route = createFileRoute('/provider/_layout')({
-  beforeLoad: () => {
-    const user = requireOnboarding();
-    if (user.role !== 'provider') {
-      throw new Error('Access denied');
+  beforeLoad: async () => {
+    // Require authentication
+    const user = AuthService.requireAuth();
+    
+    // Check provider status instead of boolean flag
+    const providerStatus = (user as any).providerStatus || 'NONE';
+    
+    // Route based on provider status
+    if (providerStatus === 'NONE' || providerStatus === 'DRAFT') {
+      // Not started or incomplete onboarding → redirect to onboarding
+      throw redirect({ to: '/provider/onboarding' });
     }
+    
+    if (providerStatus === 'SUSPENDED') {
+      // Account suspended → show suspension page
+      throw redirect({ to: '/provider/suspended' });
+    }
+    
+    // LIMITED or ACTIVE status can access dashboard
+    // LIMITED users may have restricted features (enforced by backend)
+    
+    return { user, providerStatus };
   },
   component: ProviderLayout,
 });
@@ -32,14 +51,29 @@ function ProviderLayout() {
         </svg>
       ),
     },
+    {
+      to: '/messages',
+      label: 'Messages',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <div className="flex">
+    <div className="flex h-screen bg-slate-50">
       <Sidebar links={sidebarLinks} />
-      <main className="flex-1 p-8">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <ProviderHeader />
+        <div className="flex-1 overflow-y-auto flex flex-col">
+          <main className="flex-1 p-8">
+            <Outlet />
+          </main>
+          <Footer />
+        </div>
+      </div>
     </div>
   );
 }

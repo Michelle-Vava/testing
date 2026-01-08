@@ -29,6 +29,9 @@ export class RequestResponseDto {
   @ApiProperty({ enum: RequestStatus, example: RequestStatus.OPEN })
   status: RequestStatus;
 
+  @ApiProperty({ type: [String], example: ['https://example.com/image1.jpg'], required: false })
+  imageUrls?: string[];
+
   @ApiProperty()
   createdAt: Date;
 

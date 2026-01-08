@@ -188,4 +188,60 @@ export class VehiclesService {
       data: { mileage },
     });
   }
+
+  /**
+   * Add images to a vehicle
+   * 
+   * Appends new image URLs to the vehicle's imageUrls array.
+   * 
+   * @param id - Vehicle UUID
+   * @param imageUrls - Array of Cloudinary URLs to add
+   * @returns Updated vehicle entity
+   */
+  async addImages(id: string, imageUrls: string[]) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException(`Vehicle with ID ${id} not found`);
+    }
+
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: {
+        imageUrls: {
+          push: imageUrls,
+        },
+      },
+    });
+  }
+
+  /**
+   * Remove an image from a vehicle
+   * 
+   * Removes a specific image URL from the vehicle's imageUrls array.
+   * 
+   * @param id - Vehicle UUID
+   * @param imageUrl - URL to remove
+   * @returns Updated vehicle entity
+   */
+  async removeImage(id: string, imageUrl: string) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException(`Vehicle with ID ${id} not found`);
+    }
+
+    const updatedImageUrls = vehicle.imageUrls.filter(url => url !== imageUrl);
+
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: {
+        imageUrls: updatedImageUrls,
+      },
+    });
+  }
 }

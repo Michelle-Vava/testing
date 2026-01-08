@@ -18,20 +18,26 @@ interface MaintenanceRecord {
 interface MaintenanceHistoryProps {
   records: MaintenanceRecord[];
   isLoading: boolean;
+  error?: Error | null;
   onAddRecord: () => void;
 }
 
 /**
  * Displays vehicle maintenance history
  */
-export function MaintenanceHistory({ records, isLoading, onAddRecord }: MaintenanceHistoryProps) {
+export function MaintenanceHistory({ records, isLoading, error, onAddRecord }: MaintenanceHistoryProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Maintenance History</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {error ? (
+          <div className="text-center py-8 text-red-500">
+            <p>Failed to load maintenance history.</p>
+            <p className="text-sm mt-2">{error.message}</p>
+          </div>
+        ) : isLoading ? (
           <p className="text-center text-gray-500 py-8">Loading history...</p>
         ) : !records || records.length === 0 ? (
           <div className="text-center py-8">
@@ -50,9 +56,9 @@ export function MaintenanceHistory({ records, isLoading, onAddRecord }: Maintena
                 <div className="flex-grow">
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="font-medium text-gray-900">{record.serviceType}</h4>
-                    {record.cost && (
+                    {record.cost != null && !isNaN(Number(record.cost)) && (
                       <span className="text-sm font-medium text-gray-900">
-                        {formatCurrency(record.cost)}
+                        {formatCurrency(Number(record.cost))}
                       </span>
                     )}
                   </div>

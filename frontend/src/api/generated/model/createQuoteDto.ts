@@ -6,10 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface CreateQuoteDto {
-  requestId: string;
-  amount: string;
-  estimatedDuration: string;
-  description?: string;
-  includesWarranty?: boolean;
-}
+export interface CreateQuoteDto { [key: string]: unknown }

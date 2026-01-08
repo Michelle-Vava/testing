@@ -3,8 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, MapPin, Clock, Shield, Phone, Mail } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { customInstance } from '@/lib/axios';
+import { useProvidersControllerFindOne } from '@/api/generated/providers/providers';
+import { useReviewsControllerFindByProvider } from '@/api/generated/reviews/reviews';
+import { ReviewCard } from '@/features/reviews/components/ReviewCard';
 
 export const Route = createFileRoute('/owner/_layout/providers/$providerId')({
   component: ProviderProfilePage,
@@ -32,22 +33,19 @@ interface Provider {
   shopPhotos?: string[];
 }
 
-function useProvider(providerId: string) {
-  return useQuery({
-    queryKey: ['providers', providerId],
-    queryFn: () => customInstance<Provider>({
-      url: `/providers/${providerId}`,
-      method: 'GET'
-    }),
-    enabled: !!providerId
-  });
-}
-
 function ProviderProfilePage() {
   const { providerId } = Route.useParams();
-  const { data: provider, isLoading } = useProvider(providerId);
 
-  if (isLoading) {
+  const { data: provider, isLoading: isLoadingProvider } = useProvidersControllerFindOne(providerId, {
+    query: { enabled: !!providerId },
+  });
+
+  const { data: reviewsData, isLoading: isLoadingReviews } = useReviewsControllerFindByProvider(providerId, {
+    params: { page: 1, limit: 10 },
+    query: { enabled: !!providerId },
+  });
+
+  if (isLoadingProvider) {
     return (
       <div className="max-w-4xl mx-auto">
         <Card className="animate-pulse">
@@ -115,7 +113,7 @@ function ProviderProfilePage() {
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                   <span className="font-semibold text-lg text-slate-900">
-                    {provider.rating?.toFixed(1) || 'N/A'}
+                    {provider.rating ? Number(provider.rating).toFixed(1) : 'N/A'}
                   </span>
                   <span className="text-slate-500">
                     ({provider.reviewCount || 0} reviews)
@@ -238,6 +236,53 @@ function ProviderProfilePage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Reviews Section */}
+      <Card className="shadow-md border border-slate-200">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-slate-900">
+              Customer Reviews
+            </h2>
+            {provider.reviewCount > 0 && (
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <span className="font-semibold text-lg">
+                  {provider.rating ? Number(provider.rating).toFixed(1) : 'N/A'}
+                </span>
+                <span className="text-slate-500">
+                  ({provider.reviewCount} {provider.reviewCount === 1 ? 'review' : 'reviews'})
+                </span>
+              </div>
+            )}
+          </div>
+
+          {isLoadingReviews ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse border border-gray-200 rounded-lg p-4">
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                </div>
+              ))}
+            </div>
+          ) : reviewsData?.reviews && reviewsData.reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviewsData.reviews.map((review: any) => (
+                <ReviewCard key={review.id} review={review} showJobInfo />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No reviews yet</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Be the first to review this provider after completing a job!
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Shop Photos */}
       {provider.shopPhotos && provider.shopPhotos.length > 0 && (

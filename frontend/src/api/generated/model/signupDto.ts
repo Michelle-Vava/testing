@@ -6,11 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface SignupDto {
-  name: string;
-  email: string;
-  /** @minLength 6 */
-  password: string;
-  phone?: string;
-  roles?: string[];
-}
+export interface SignupDto { [key: string]: unknown }

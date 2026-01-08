@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { useVehicles } from '@/features/vehicles/hooks/use-vehicles';
 import { useRequests } from '@/features/requests/hooks/use-requests';
@@ -10,17 +12,62 @@ import { HowItWorksCard } from './HowItWorksCard';
 import { ActivityFeed } from './ActivityFeed';
 import { PopularServices } from './PopularServices';
 import { ProviderPreview } from './ProviderPreview';
+import { Bell, MessageSquare, CheckCircle } from 'lucide-react';
 
 export function OwnerDashboard() {
   const { user: _user } = useAuth();
   const { vehicles = [] } = useVehicles();
   const { requests = [] } = useRequests();
   const activeRequests = requests.filter((r: any) => r.status === 'OPEN' || r.status === 'QUOTED');
+  
+  // Calculate requests with pending quotes
+  const requestsWithQuotes = requests.filter((r: any) => 
+    r.status === 'QUOTED' && r.quotes && r.quotes.some((q: any) => q.status === 'pending')
+  );
+  const totalPendingQuotes = requestsWithQuotes.reduce((sum: number, r: any) => 
+    sum + (r.quotes?.filter((q: any) => q.status === 'pending').length || 0), 0
+  );
 
   const hasVehicles = vehicles.length > 0;
 
   return (
     <div className="max-w-7xl space-y-6">
+      {/* Pending Quotes Alert */}
+      {totalPendingQuotes > 0 && (
+        <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-xl p-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
+              <Bell className="w-6 h-6 text-white animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                {totalPendingQuotes} New Quote{totalPendingQuotes > 1 ? 's' : ''} Waiting!
+              </h3>
+              <p className="text-sm text-gray-700 mb-3">
+                Providers have responded to your service request{requestsWithQuotes.length > 1 ? 's' : ''}. Review and accept the best quote to get started.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {requestsWithQuotes.slice(0, 3).map((req: any) => (
+                  <Link key={req.id} to="/owner/requests/$requestId" params={{ requestId: req.id }}>
+                    <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      {req.title} ({req.quotes?.filter((q: any) => q.status === 'pending').length})
+                    </Button>
+                  </Link>
+                ))}
+                {requestsWithQuotes.length > 3 && (
+                  <Link to="/owner/requests">
+                    <Button size="sm" variant="outline">
+                      View All Requests
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* ZONE 1: Orientation - What should I do right now? */}
       <section>
         {/* Stats Bar - Only show if user has vehicles (Returning Owner) */}

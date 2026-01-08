@@ -1,12 +1,20 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../../shared/services/email.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteStatusDto } from './dto/update-quote-status.dto';
 import { QuoteStatus, RequestStatus, JobStatus } from '../../shared/enums';
 
+import { QuoteEntity } from './entities/quote.entity';
+
 @Injectable()
 export class QuotesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private emailService: EmailService,
+  ) {}
 
   async findByRequest(requestId: string, userId: string, userRoles: string[]) {
     const request = await this.prisma.serviceRequest.findUnique({
@@ -14,7 +22,7 @@ export class QuotesService {
     });
 
     if (!request) {
-      throw new NotFoundException('Service request not found');
+      throw new NotFoundException(`Service request with ID ${requestId} not found`);
     }
 
     const isOwner = request.ownerId === userId;
@@ -24,7 +32,7 @@ export class QuotesService {
       throw new ForbiddenException('You do not have access to these quotes');
     }
 
-    return this.prisma.quote.findMany({
+    const quotes = await this.prisma.quote.findMany({
       where: { requestId },
       include: {
         provider: {
@@ -38,6 +46,8 @@ export class QuotesService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return quotes.map(quote => new QuoteEntity(quote));
   }
 
   async create(userId: string, userRoles: string[], quoteData: CreateQuoteDto) {
@@ -50,11 +60,11 @@ export class QuotesService {
     });
 
     if (!request) {
-      throw new NotFoundException('Service request not found');
+      throw new NotFoundException(`Service request with ID ${quoteData.requestId} not found`);
     }
 
     if (request.status === 'completed' || request.status === 'in_progress') {
-      throw new BadRequestException('This request is no longer accepting quotes');
+      throw new BadRequestException(`Service request ${quoteData.requestId} is no longer accepting quotes (status: ${request.status})`);
     }
 
     const quote = await this.prisma.quote.create({
@@ -82,7 +92,34 @@ export class QuotesService {
       });
     }
 
-    return quote;
+    // Notify the request owner
+    await this.notificationsService.create(
+      request.ownerId,
+      'quote_received',
+      'New Quote Received',
+      `You have received a new quote for your request: ${request.title}`,
+      `/requests/${request.id}`
+    );
+
+    // Send email notification to owner
+    const owner = await this.prisma.user.findUnique({
+      where: { id: request.ownerId },
+      select: { email: true, name: true },
+    });
+
+    if (owner) {
+      await this.emailService.sendQuoteReceivedEmail({
+        ownerEmail: owner.email,
+        ownerName: owner.name,
+        providerName: quote.provider.name,
+        requestTitle: request.title,
+        amount: quote.amount.toString(),
+        estimatedDuration: quote.estimatedDuration,
+        requestId: request.id,
+      });
+    }
+
+    return new QuoteEntity(quote);
   }
 
   async accept(quoteId: string, userId: string) {
@@ -142,6 +179,37 @@ export class QuotesService {
 
       return { quote: updatedQuote, job };
     });
+
+    // Notify the provider
+    await this.notificationsService.create(
+      quote.providerId,
+      'quote_accepted',
+      'Quote Accepted',
+      `Your quote for ${quote.request.title} has been accepted!`,
+      `/jobs/${result.job.id}`
+    );
+
+    // Send email notification to provider
+    const provider = await this.prisma.user.findUnique({
+      where: { id: quote.providerId },
+      select: { email: true, name: true },
+    });
+
+    const owner = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    if (provider && owner) {
+      await this.emailService.sendQuoteAcceptedEmail({
+        providerEmail: provider.email,
+        providerName: provider.name,
+        ownerName: owner.name,
+        requestTitle: quote.request.title,
+        amount: quote.amount.toString(),
+        jobId: result.job.id,
+      });
+    }
 
     return result;
   }

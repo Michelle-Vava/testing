@@ -6,16 +6,20 @@
  * OpenAPI spec version: 1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -308,3 +312,219 @@ export function useProvidersControllerFindOne<TData = Awaited<ReturnType<typeof 
 
 
 
+/**
+ * @summary Get provider onboarding status and checklist
+ */
+export const providersControllerGetOnboardingStatus = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/providers/onboarding/status`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getProvidersControllerGetOnboardingStatusQueryKey = () => {
+    return [
+    `/providers/onboarding/status`
+    ] as const;
+    }
+
+    
+export const getProvidersControllerGetOnboardingStatusQueryOptions = <TData = Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProvidersControllerGetOnboardingStatusQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>> = ({ signal }) => providersControllerGetOnboardingStatus(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ProvidersControllerGetOnboardingStatusQueryResult = NonNullable<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>>
+export type ProvidersControllerGetOnboardingStatusQueryError = unknown
+
+
+export function useProvidersControllerGetOnboardingStatus<TData = Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>,
+          TError,
+          Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProvidersControllerGetOnboardingStatus<TData = Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>,
+          TError,
+          Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProvidersControllerGetOnboardingStatus<TData = Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get provider onboarding status and checklist
+ */
+
+export function useProvidersControllerGetOnboardingStatus<TData = Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof providersControllerGetOnboardingStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProvidersControllerGetOnboardingStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Complete provider onboarding
+ */
+export const providersControllerCompleteOnboarding = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/providers/onboarding/complete`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getProvidersControllerCompleteOnboardingMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof providersControllerCompleteOnboarding>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof providersControllerCompleteOnboarding>>, TError,void, TContext> => {
+
+const mutationKey = ['providersControllerCompleteOnboarding'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof providersControllerCompleteOnboarding>>, void> = () => {
+          
+
+          return  providersControllerCompleteOnboarding(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProvidersControllerCompleteOnboardingMutationResult = NonNullable<Awaited<ReturnType<typeof providersControllerCompleteOnboarding>>>
+    
+    export type ProvidersControllerCompleteOnboardingMutationError = unknown
+
+    /**
+ * @summary Complete provider onboarding
+ */
+export const useProvidersControllerCompleteOnboarding = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof providersControllerCompleteOnboarding>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof providersControllerCompleteOnboarding>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getProvidersControllerCompleteOnboardingMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Start provider onboarding (NONE → DRAFT)
+ */
+export const providersControllerStartOnboarding = (
+    
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/providers/onboarding/start`, method: 'PUT'
+    },
+      options);
+    }
+  
+
+
+export const getProvidersControllerStartOnboardingMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof providersControllerStartOnboarding>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof providersControllerStartOnboarding>>, TError,void, TContext> => {
+
+const mutationKey = ['providersControllerStartOnboarding'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof providersControllerStartOnboarding>>, void> = () => {
+          
+
+          return  providersControllerStartOnboarding(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProvidersControllerStartOnboardingMutationResult = NonNullable<Awaited<ReturnType<typeof providersControllerStartOnboarding>>>
+    
+    export type ProvidersControllerStartOnboardingMutationError = unknown
+
+    /**
+ * @summary Start provider onboarding (NONE → DRAFT)
+ */
+export const useProvidersControllerStartOnboarding = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof providersControllerStartOnboarding>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof providersControllerStartOnboarding>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getProvidersControllerStartOnboardingMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

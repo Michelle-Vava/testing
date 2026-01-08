@@ -7,13 +7,17 @@ interface AuthFormLayoutProps {
   children: React.ReactNode;
   title: string;
   subtitle: string;
-  role?: string;
+  mode?: 'owner' | 'provider';
+  authType?: 'login' | 'signup';
 }
 
 /**
  * Shared layout for auth forms (login/signup)
  */
-export function AuthFormLayout({ children, title, subtitle, role }: AuthFormLayoutProps) {
+export function AuthFormLayout({ children, title, subtitle, mode = 'owner', authType = 'login' }: AuthFormLayoutProps) {
+  const isProvider = mode === 'provider';
+  const switchPath = authType === 'login' ? '/auth/login' : '/auth/signup';
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -22,25 +26,35 @@ export function AuthFormLayout({ children, title, subtitle, role }: AuthFormLayo
       className="h-full"
     >
       <Card className="w-full shadow-xl border-slate-200/60 h-full flex flex-col" padding="xl">
-        {/* Role Context Badge */}
-        {role === 'provider' && (
-          <div className="mb-6 -mt-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span>Signing in as a mechanic</span>
-              </div>
-              <Link
-                to="/auth/login"
-                className="text-xs text-slate-500 hover:text-slate-700 hover:underline"
-              >
-                Not a mechanic?
-              </Link>
+        {/* Role Context Badge - Always shown */}
+        <div className="mb-6 -mt-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              {isProvider ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>Signing in as a provider</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
+                  <span>Signing in as a car owner</span>
+                </>
+              )}
             </div>
+            <Link
+              to={switchPath}
+              search={{ mode: isProvider ? 'owner' : 'provider' }}
+              className="text-xs text-slate-500 hover:text-slate-700 hover:underline"
+            >
+              {isProvider ? 'Not a provider?' : 'Are you a provider?'}
+            </Link>
           </div>
-        )}
+        </div>
 
         {/* Brand Stamp */}
         <div className="text-center mb-8">

@@ -25,6 +25,9 @@ export class VehicleResponseDto {
   @ApiProperty({ example: 45000, required: false, nullable: true })
   mileage: number | null;
 
+  @ApiProperty({ type: [String], example: ['https://example.com/image1.jpg'], required: false })
+  imageUrls?: string[];
+
   @ApiProperty()
   createdAt: Date;
 

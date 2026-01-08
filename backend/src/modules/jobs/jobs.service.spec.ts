@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JobsService } from './jobs.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { JobStatus, UserRole } from '../../shared/enums';
 
@@ -32,6 +33,10 @@ describe('JobsService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockNotificationsService = {
+    create: jest.fn(),
+  };
+
   const mockJob = {
     id: 'job-id',
     requestId: 'request-id',
@@ -51,6 +56,10 @@ describe('JobsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

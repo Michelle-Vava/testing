@@ -1,12 +1,15 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards, Request, Logger, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Logger, Query, UploadedFiles, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiBody, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileValidationPipe } from '../../shared/pipes/file-validation.pipe';
 import { RequestsService } from './requests.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestResponseDto } from './dto/request-response.dto';
-import { PaginationDto } from '../../shared/dto/pagination.dto';
+import { RequestsQueryDto } from './dto/requests-query.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
+import { UploadService } from '../../shared/services/upload.service';
 
 /**
  * RequestsController handles service request management
@@ -20,7 +23,10 @@ import { AuthenticatedRequest } from '../../shared/types/express-request.interfa
 export class RequestsController {
   private readonly logger = new Logger(RequestsController.name);
 
-  constructor(private requestsService: RequestsService) {}
+  constructor(
+    private requestsService: RequestsService,
+    private uploadService: UploadService,
+  ) {}
 
   /**
    * Get recent public service requests for landing page
@@ -52,16 +58,14 @@ export class RequestsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all service requests (owners see theirs, providers see all open)' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20, max: 100)' })
   @ApiResponse({ 
     status: 200, 
     description: 'Paginated list of service requests',
     type: [RequestResponseDto]
   })
-  async findAll(@Request() req: AuthenticatedRequest, @Query() paginationDto: PaginationDto) {
-    this.logger.log(`User ${req.user.sub} fetching all requests`);
-    return this.requestsService.findAll(req.user.sub, req.user.roles, paginationDto);
+  async findAll(@Request() req: AuthenticatedRequest, @Query() query: RequestsQueryDto) {
+    this.logger.log(`User ${req.user.sub} fetching all requests with query: ${JSON.stringify(query)}`);
+    return this.requestsService.findAll(req.user.sub, req.user.roles, query);
   }
 
   /**
@@ -130,5 +134,82 @@ export class RequestsController {
   async update(@Request() req: AuthenticatedRequest, @Param('id') id: string, @Body() updateData: UpdateRequestDto) {
     this.logger.log(`User ${req.user.sub} updating request ${id}`);
     return this.requestsService.update(id, req.user.sub, updateData);
+  }
+
+  /**
+   * Upload images for a service request
+   * 
+   * Accepts multiple image files and uploads them to Cloudinary.
+   * Updates the request's imageUrls array with the uploaded URLs.
+   * 
+   * @param req - Authenticated request with user JWT payload
+   * @param id - Service request UUID
+   * @param files - Array of image files (max 10)
+   * @returns Updated service request entity with new imageUrls
+   * @throws NotFoundException if request doesn't exist
+   * @throws ForbiddenException if user doesn't own the request
+   * @throws BadRequestException if no files or invalid files
+   */
+  @Post(':id/images')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload images for a service request' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 10)) // Max 10 images
+  @ApiResponse({ status: 200, description: 'Images uploaded successfully', type: RequestResponseDto })
+  async uploadImages(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @UploadedFiles(new FileValidationPipe()) files: Express.Multer.File[],
+  ) {
+    this.logger.log(`User ${req.user.sub} uploading images for request ${id}`);
+    
+    // Validate request ownership first
+    await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No images provided');
+    }
+
+    // Upload images to Cloudinary
+    const imageUrls = await this.uploadService.uploadImages(files, 'shanda/requests');
+
+    // Update request with new image URLs
+    return this.requestsService.addImages(id, imageUrls);
+  }
+
+  /**
+   * Delete an image from a service request
+   * 
+   * Removes a specific image URL from the request's imageUrls array
+   * and deletes it from Cloudinary.
+   * 
+   * @param req - Authenticated request with user JWT payload
+   * @param id - Service request UUID
+   * @param imageUrl - URL of the image to delete
+   * @returns Updated service request entity
+   * @throws NotFoundException if request doesn't exist
+   * @throws ForbiddenException if user doesn't own the request
+   */
+  @Delete(':id/images')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete an image from a service request' })
+  @ApiResponse({ status: 200, description: 'Image deleted successfully', type: RequestResponseDto })
+  async deleteImage(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body('imageUrl') imageUrl: string,
+  ) {
+    this.logger.log(`User ${req.user.sub} deleting image from request ${id}`);
+    
+    // Validate request ownership first
+    await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+
+    // Delete image from Cloudinary
+    await this.uploadService.deleteImage(imageUrl);
+
+    // Remove URL from request
+    return this.requestsService.removeImage(id, imageUrl);
   }
 }

@@ -5,6 +5,8 @@
  * Marketplace connecting vehicle owners with service providers
  * OpenAPI spec version: 1.0
  */
+import type { VehicleResponseDtoLicensePlate } from './vehicleResponseDtoLicensePlate';
+import type { VehicleResponseDtoMileage } from './vehicleResponseDtoMileage';
 
 export interface VehicleResponseDto {
   id: string;
@@ -14,9 +16,10 @@ export interface VehicleResponseDto {
   year: number;
   vin: string;
   /** @nullable */
-  licensePlate?: string | null;
+  licensePlate?: VehicleResponseDtoLicensePlate;
   /** @nullable */
-  mileage?: number | null;
+  mileage?: VehicleResponseDtoMileage;
+  imageUrls?: string[];
   createdAt: string;
   updatedAt: string;
 }

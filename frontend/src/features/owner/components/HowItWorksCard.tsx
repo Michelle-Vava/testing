@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, Car, FileText, CheckCircle, ShieldCheck } from 'lucide-react';
 
 export function HowItWorksCard() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Card className="border border-slate-200 shadow-sm bg-white">

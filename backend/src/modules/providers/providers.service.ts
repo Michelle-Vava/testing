@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { ProviderStatus } from '@prisma/client';
 
 @Injectable()
 export class ProvidersService {
@@ -10,13 +11,12 @@ export class ProvidersService {
   async findFeatured() {
     this.logger.debug('Finding featured providers');
     
-    // Get providers with provider role and completed onboarding
+    // Optimized query: single database call with minimal fields
     const providers = await this.prisma.user.findMany({
       where: {
-        roles: {
-          has: 'provider',
-        },
-        providerOnboardingComplete: true,
+        roles: { has: 'provider' },
+        providerStatus: ProviderStatus.ACTIVE, // Only active providers
+        rating: { not: null }, // Only providers with ratings
       },
       take: 4,
       select: {
@@ -24,34 +24,26 @@ export class ProvidersService {
         name: true,
         businessName: true,
         serviceTypes: true,
-        yearsInBusiness: true,
         city: true,
         state: true,
         rating: true,
         reviewCount: true,
         isVerified: true,
-        _count: {
-          select: {
-            providedQuotes: true,
-            providerJobs: true,
-          },
-        },
       },
-      orderBy: {
-        rating: 'desc',
-      },
+      orderBy: [
+        { rating: 'desc' },
+        { reviewCount: 'desc' },
+      ],
     });
 
-    // Transform to match frontend expectations
+    // Lean transformation - no additional queries
     return providers.map(provider => ({
       id: provider.id,
       name: provider.businessName || provider.name,
-      rating: provider.rating || 4.8,
-      reviewCount: provider.reviewCount || provider._count.providedQuotes + provider._count.providerJobs,
+      rating: Number(provider.rating) || 0,
+      reviewCount: provider.reviewCount,
       isVerified: provider.isVerified,
       specialties: provider.serviceTypes.slice(0, 3),
-      distance: `${(Math.random() * 5 + 1).toFixed(1)} miles`, // Mock distance for now
-      responseTime: '< 2 hours', // Mock response time
       city: provider.city,
       state: provider.state,
     }));
@@ -66,7 +58,7 @@ export class ProvidersService {
   }) {
     const where: any = {
       roles: { has: 'provider' },
-      providerOnboardingComplete: true,
+      providerStatus: ProviderStatus.ACTIVE, // Only show active providers in search
     };
 
     if (filters.serviceType) {

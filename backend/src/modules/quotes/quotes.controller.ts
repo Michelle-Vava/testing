@@ -2,8 +2,10 @@ import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { QuotesService } from './quotes.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ProviderStatusGuard, RequireProviderStatus } from '../../shared/guards/provider-status.guard';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
+import { ProviderStatus } from '@prisma/client';
 
 /**
  * QuotesController handles quote management for service requests
@@ -38,15 +40,17 @@ export class QuotesController {
    * Create a new quote on a service request
    * 
    * Providers submit quotes with pricing, timeline, and service details.
-   * Only users with 'provider' role can create quotes.
+   * Only users with 'provider' role and ACTIVE status can create quotes.
    * 
    * @param req - Authenticated request with user JWT payload
    * @param quoteData - Quote details (requestId, amount, estimatedDuration, description, warranty)
    * @returns Created quote entity
-   * @throws ForbiddenException if user is not a provider
+   * @throws ForbiddenException if user is not a provider or not ACTIVE
    */
   @Post()
-  @ApiOperation({ summary: 'Create a new quote (providers only)' })
+  @UseGuards(ProviderStatusGuard)
+  @RequireProviderStatus(ProviderStatus.ACTIVE)
+  @ApiOperation({ summary: 'Create a new quote (active providers only)' })
   async create(@Request() req: AuthenticatedRequest, @Body() quoteData: CreateQuoteDto) {
     return this.quotesService.create(req.user.sub, req.user.roles, quoteData);
   }

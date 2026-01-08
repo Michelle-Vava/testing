@@ -4,22 +4,26 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { UpdateMileageDto } from './dto/update-mileage.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
+import { UploadService } from '../../shared/services/upload.service';
 export declare class VehiclesController {
     private vehiclesService;
-    constructor(vehiclesService: VehiclesService);
+    private uploadService;
+    constructor(vehiclesService: VehiclesService, uploadService: UploadService);
     findAll(req: AuthenticatedRequest, paginationDto: PaginationDto): Promise<{
         data: {
             id: string;
             createdAt: Date;
+            deletedAt: Date | null;
             updatedAt: Date;
+            year: number;
             make: string;
             model: string;
-            year: number;
             vin: string | null;
             licensePlate: string | null;
             color: string | null;
             mileage: number | null;
             ownerId: string;
+            imageUrls: string[];
         }[];
         meta: {
             total: number;
@@ -31,15 +35,17 @@ export declare class VehiclesController {
     create(req: AuthenticatedRequest, vehicleData: CreateVehicleDto): Promise<{
         id: string;
         createdAt: Date;
+        deletedAt: Date | null;
         updatedAt: Date;
+        year: number;
         make: string;
         model: string;
-        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
         mileage: number | null;
         ownerId: string;
+        imageUrls: string[];
     }>;
     findOne(req: AuthenticatedRequest, id: string): Promise<{
         owner: {
@@ -51,43 +57,79 @@ export declare class VehiclesController {
     } & {
         id: string;
         createdAt: Date;
+        deletedAt: Date | null;
         updatedAt: Date;
+        year: number;
         make: string;
         model: string;
-        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
         mileage: number | null;
         ownerId: string;
+        imageUrls: string[];
     }>;
     update(req: AuthenticatedRequest, id: string, vehicleData: UpdateVehicleDto): Promise<{
         id: string;
         createdAt: Date;
+        deletedAt: Date | null;
         updatedAt: Date;
+        year: number;
         make: string;
         model: string;
-        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
         mileage: number | null;
         ownerId: string;
+        imageUrls: string[];
     }>;
     updateMileage(req: AuthenticatedRequest, id: string, mileageData: UpdateMileageDto): Promise<{
         id: string;
         createdAt: Date;
+        deletedAt: Date | null;
         updatedAt: Date;
+        year: number;
         make: string;
         model: string;
-        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
         mileage: number | null;
         ownerId: string;
+        imageUrls: string[];
     }>;
     delete(req: AuthenticatedRequest, id: string): Promise<{
         message: string;
+    }>;
+    uploadImages(req: AuthenticatedRequest, id: string, files: Express.Multer.File[]): Promise<{
+        id: string;
+        createdAt: Date;
+        deletedAt: Date | null;
+        updatedAt: Date;
+        year: number;
+        make: string;
+        model: string;
+        vin: string | null;
+        licensePlate: string | null;
+        color: string | null;
+        mileage: number | null;
+        ownerId: string;
+        imageUrls: string[];
+    }>;
+    deleteImage(req: AuthenticatedRequest, id: string, imageUrl: string): Promise<{
+        id: string;
+        createdAt: Date;
+        deletedAt: Date | null;
+        updatedAt: Date;
+        year: number;
+        make: string;
+        model: string;
+        vin: string | null;
+        licensePlate: string | null;
+        color: string | null;
+        mileage: number | null;
+        ownerId: string;
+        imageUrls: string[];
     }>;
 }

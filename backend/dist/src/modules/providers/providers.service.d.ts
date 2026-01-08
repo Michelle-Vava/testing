@@ -6,12 +6,10 @@ export declare class ProvidersService {
     findFeatured(): Promise<{
         id: string;
         name: string;
-        rating: number | import("@prisma/client/runtime/library").Decimal;
+        rating: number;
         reviewCount: number;
         isVerified: boolean;
         specialties: string[];
-        distance: string;
-        responseTime: string;
         city: string | null;
         state: string | null;
     }[]>;
@@ -30,7 +28,6 @@ export declare class ProvidersService {
         businessName: string | null;
         serviceTypes: string[];
         yearsInBusiness: number | null;
-        certifications: string[];
         shopAddress: string | null;
         shopCity: string | null;
         shopState: string | null;
@@ -38,8 +35,9 @@ export declare class ProvidersService {
         serviceArea: string[];
         isMobileService: boolean;
         isShopService: boolean;
-        isVerified: boolean;
+        certifications: string[];
         rating: import("@prisma/client/runtime/library").Decimal | null;
+        isVerified: boolean;
         reviewCount: number;
     }[]>;
     findOne(id: string): Promise<{
@@ -54,7 +52,6 @@ export declare class ProvidersService {
         businessName: string | null;
         serviceTypes: string[];
         yearsInBusiness: number | null;
-        certifications: string[];
         shopAddress: string | null;
         shopCity: string | null;
         shopState: string | null;
@@ -62,9 +59,10 @@ export declare class ProvidersService {
         serviceArea: string[];
         isMobileService: boolean;
         isShopService: boolean;
+        certifications: string[];
+        rating: import("@prisma/client/runtime/library").Decimal | null;
         isVerified: boolean;
         shopPhotos: string[];
-        rating: import("@prisma/client/runtime/library").Decimal | null;
         reviewCount: number;
         _count: {
             providedQuotes: number;

@@ -15,24 +15,30 @@ import {
 import type { CreateRequestDto, UpdateRequestDto, RequestsControllerFindAllParams } from '@/api/generated/model';
 import type { ServiceRequest, Quote } from '@/features/requests/types/request';
 
-export function useRequests(initialPage = 1, initialLimit = 20) {
+export function useRequests(initialPage = 1, initialLimit = 20, initialStatus?: string, initialSort?: string) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(initialPage);
   const [limit] = useState(initialLimit);
+  const [status, setStatus] = useState(initialStatus);
+  const [sort, setSort] = useState(initialSort);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['requests', page, limit],
+    queryKey: ['requests', page, limit, status, sort],
     queryFn: async () => {
-      const params: RequestsControllerFindAllParams = {
+      const params: any = {
         page,
-        limit
+        limit,
+        status,
+        sort
       };
       return await requestsControllerFindAll(params);
     },
   });
 
   // Backend returns { data: Request[], meta: PaginationMeta } wrapped in axios response
-  const responseData = (data as any)?.data || data;
+  // The customInstance returns the response body directly.
+  // If the backend returns { data: [...], meta: {...} }, then `data` here IS that object.
+  const responseData = data as any;
   const requests = (responseData?.data || []) as unknown as ServiceRequest[];
   const meta = responseData?.meta || { total: 0, page: 1, limit: 20, totalPages: 0 };
 
@@ -57,6 +63,10 @@ export function useRequests(initialPage = 1, initialLimit = 20) {
     page,
     setPage,
     limit,
+    status,
+    setStatus,
+    sort,
+    setSort,
     isLoading,
     error,
     createRequest: createMutation.mutateAsync,
@@ -67,7 +77,7 @@ export function useRequests(initialPage = 1, initialLimit = 20) {
 }
 
 export function useRequest(id: string) {
-  const { data: request, isLoading, error } = useQuery({
+  const { data: request, isLoading, error, refetch } = useQuery({
     queryKey: ['requests', id],
     queryFn: async () => {
       const result = await requestsControllerFindOne(id);
@@ -76,13 +86,13 @@ export function useRequest(id: string) {
     enabled: !!id,
   });
 
-  return { request, isLoading, error };
+  return { request, isLoading, error, refetch };
 }
 
 export function useQuotes(requestId: string) {
   const queryClient = useQueryClient();
 
-  const { data: quotes = [], isLoading, error } = useQuery({
+  const { data: quotes = [], isLoading, error, refetch } = useQuery({
     queryKey: ['quotes', requestId],
     queryFn: async () => {
       const result = await quotesControllerFindByRequest(requestId);
@@ -123,5 +133,6 @@ export function useQuotes(requestId: string) {
     isCreating: createMutation.isPending,
     isAccepting: acceptMutation.isPending,
     isRejecting: rejectMutation.isPending,
+    refetch,
   };
 }

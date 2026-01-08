@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsArray, IsNumber } from 'class-validator';
+import { IsOptional, IsString, IsArray, IsNumber, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateProfileDto {
@@ -58,6 +58,63 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsNumber()
   yearsInBusiness?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  shopAddress?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  shopCity?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  shopState?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  shopZipCode?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  serviceArea?: string[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  isMobileService?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  isShopService?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  hourlyRate?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  certifications?: string[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  insuranceInfo?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { EmailService } from '../../shared/services/email.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -20,10 +21,13 @@ import { UserRole } from '../../shared/enums';
  */
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -58,6 +62,10 @@ export class AuthService {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenHash = await bcrypt.hash(verificationToken, 10);
 
+    // Determine initial provider status
+    const isProvider = userRoles.includes('provider');
+    const providerStatus = isProvider ? 'NONE' : undefined;
+
     // Create user
     const user = await this.prisma.user.create({
       data: {
@@ -68,22 +76,19 @@ export class AuthService {
         roles: userRoles,
         emailVerificationToken: verificationTokenHash,
         emailVerified: false,
+        ...(isProvider && { providerStatus: 'NONE' as any }),
       },
     });
 
     // TODO: Send verification email
-    console.log(`Email verification token for ${email}: ${verificationToken}`);
-    console.log(`Verification link: http://localhost:5173/auth/verify-email?token=${verificationToken}&email=${email}`);
+    this.logger.log(`Email verification requested for user: ${email}`);
 
-    // Generate JWT token
-    const token = this.jwtService.sign({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles,
-    });
+    // Generate JWT tokens
+    const { token, refreshToken } = this.generateTokens(user);
 
     return {
       token,
+      refreshToken,
       user: new UserEntity(user),
     };
   }
@@ -110,16 +115,26 @@ export class AuthService {
     }
 
     // Verify password
+    if (!user.password) {
+      throw new UnauthorizedException('This account uses OAuth authentication. Please sign in with Google.');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate JWT token
-    const token = this.jwtService.sign({
-      sub: user.id,
-      email: user.email,
+    // Generate JWT tokens
+    const { token, refreshToken } = this.generateTokens(user);
+
+    return {
+      token,
+      refreshToken,
+      user: new UserEntity(user),
+    };
+  }
+
   /**
    * Get user profile by ID
    * 
@@ -127,14 +142,6 @@ export class AuthService {
    * @returns Sanitized user entity
    * @throws UnauthorizedException if user not found
    */
-      roles: user.roles,
-    });
-
-    return {
-      token,
-      user: new UserEntity(user),
-    };
-  }
 
   async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -176,42 +183,42 @@ export class AuthService {
     if (updateProfileDto.businessName !== undefined) updateData.businessName = updateProfileDto.businessName;
     if (updateProfileDto.serviceTypes !== undefined) updateData.serviceTypes = updateProfileDto.serviceTypes;
     if (updateProfileDto.yearsInBusiness !== undefined) updateData.yearsInBusiness = updateProfileDto.yearsInBusiness;
+    if (updateProfileDto.shopAddress !== undefined) updateData.shopAddress = updateProfileDto.shopAddress;
+    if (updateProfileDto.serviceArea !== undefined) updateData.serviceArea = updateProfileDto.serviceArea;
+    if (updateProfileDto.isMobileService !== undefined) updateData.isMobileService = updateProfileDto.isMobileService;
+    if (updateProfileDto.isShopService !== undefined) updateData.isShopService = updateProfileDto.isShopService;
+    if (updateProfileDto.hourlyRate !== undefined) updateData.hourlyRate = updateProfileDto.hourlyRate;
+    if (updateProfileDto.website !== undefined) updateData.website = updateProfileDto.website;
+    if (updateProfileDto.certifications !== undefined) updateData.certifications = updateProfileDto.certifications;
+    if (updateProfileDto.insuranceInfo !== undefined) updateData.insuranceInfo = updateProfileDto.insuranceInfo;
     
     // Onboarding completion
     if (updateProfileDto.onboardingComplete !== undefined) {
       updateData.onboardingComplete = updateProfileDto.onboardingComplete;
     }
 
-    // Check provider onboarding status
+    // Check provider onboarding status and update roles if necessary
     const currentUser = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (currentUser && currentUser.roles.includes(UserRole.PROVIDER)) {
+    
+    if (currentUser) {
       const mergedData = { ...currentUser, ...updateData };
       
-  /**
-   * Validate user exists and return entity
-   * 
-   * Used by guards and middleware for authentication validation.
-   * 
-   * @param userId - User UUID to validate
-   * @returns Sanitized user entity or null if not found
-   */
-      // Define what constitutes a "complete" provider profile
+      // Check if user is filling out provider info (Business Name or Services)
       const hasBusinessName = !!mergedData.businessName;
       const hasServiceTypes = mergedData.serviceTypes && mergedData.serviceTypes.length > 0;
-      const hasLocation = !!(mergedData.city && mergedData.state); // Basic location check
+      const hasLocation = !!(mergedData.city && mergedData.state);
       
-      if (hasBusinessName && hasServiceTypes && hasLocation) {
-        updateData.providerOnboardingComplete = true;
-  /**
-   * Initiate password reset flow
-   * 
-   * Generates secure reset token (hashed in database), sets 1-hour expiration,
-   * and sends reset email (TODO: implement email service).
-   * Doesn't reveal if email exists to prevent enumeration attacks.
-   * 
-   * @param forgotPasswordDto - Email address for password reset
-   * @returns Generic success message (doesn't reveal if email exists)
-   */
+      // If user is attempting to provide provider details
+      if (hasBusinessName || hasServiceTypes) {
+        // Automatically add PROVIDER role if missing
+        if (!currentUser.roles.includes(UserRole.PROVIDER)) {
+          updateData.roles = [...currentUser.roles, UserRole.PROVIDER];
+        }
+
+        // Mark onboarding as complete if all requirements met
+        if (hasBusinessName && hasServiceTypes && hasLocation) {
+          updateData.providerOnboardingComplete = true;
+        }
       }
     }
 
@@ -267,10 +274,14 @@ export class AuthService {
       },
     });
 
-    // TODO: Send email with reset link
-    // For now, log the token (in production, send via email service)
-    console.log(`Password reset token for ${email}: ${resetToken}`);
-    console.log(`Reset link: http://localhost:5173/auth/reset-password?token=${resetToken}&email=${email}`);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    const resetUrl = `${frontendUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+    // Send email using EmailService
+    this.emailService.sendPasswordResetEmail(email, resetUrl);
+    
+    // Log for dev convenience (can remove later if strict security is needed in logs)
+    this.logger.log(`Password reset requested for ${email}`);
 
     return { message: 'If the email exists, a password reset link has been sent.' };
   }
@@ -387,10 +398,72 @@ export class AuthService {
       },
     });
 
-    // TODO: Send verification email
-    console.log(`Email verification token for ${email}: ${verificationToken}`);
-    console.log(`Verification link: http://localhost:5173/auth/verify-email?token=${verificationToken}&email=${email}`);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    const verifyUrl = `${frontendUrl}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+    
+    // Send verification email
+    this.emailService.sendVerificationEmail(email, verifyUrl);
+
+    this.logger.log(`Email verification resent for user: ${email}`);
+    // console.log(`[DEV] Verify Link: ${verifyUrl}`);
 
     return { message: 'If the email exists, a verification link has been sent.' };
+  }
+
+  /**
+   * Refresh access token using refresh token
+   * 
+   * @param refreshToken - Valid refresh token from cookie
+   * @returns New access token, refresh token, and user data
+   */
+  async refreshToken(refreshToken: string) {
+    try {
+      // Verify refresh token
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      // Get user
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Generate new tokens
+      const tokens = this.generateTokens(user);
+
+      return {
+        ...tokens,
+        user: new UserEntity(user),
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
+  /**
+   * Generate access and refresh tokens for a user
+   */
+  private generateTokens(user: any): { token: string; refreshToken: string } {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      roles: user.roles,
+    };
+
+    // Access token - short lived (15 minutes)
+    const token = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    // Refresh token - long lived (7 days)
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+    });
+
+    return { token, refreshToken };
   }
 }

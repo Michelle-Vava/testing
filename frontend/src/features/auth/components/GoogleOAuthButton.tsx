@@ -1,10 +1,11 @@
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/contexts/ToastContext';
 
 /**
  * Google OAuth authentication button component.
  * 
- * Displays a styled button with the Google logo that initiates OAuth authentication flow.
- * Currently shows a placeholder toast notification - OAuth implementation pending.
+ * Displays a styled button with the Google logo that initiates OAuth authentication flow
+ * using Supabase's built-in Google OAuth support.
  * 
  * @component
  * @example
@@ -16,14 +17,26 @@ import { useToast } from '@/contexts/ToastContext';
  * - Reusable across Login and Signup forms
  * - Includes Google brand colors and official logo SVG
  * - Accessible with keyboard focus states
- * - TODO: Implement actual Google OAuth flow
+ * - Uses Supabase Auth for OAuth flow
  */
 export function GoogleOAuthButton() {
   const toast = useToast();
 
-  const handleGoogleAuth = () => {
-    // TODO: Implement Google OAuth
-    toast.info('Google authentication coming soon!');
+  const handleGoogleAuth = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error('Failed to initiate Google sign-in');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    }
   };
 
   return (

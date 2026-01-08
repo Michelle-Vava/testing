@@ -1,55 +1,52 @@
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
-import { PaginationDto } from '../../shared/dto/pagination.dto';
+import { RequestsQueryDto } from './dto/requests-query.dto';
 export declare class RequestsService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
-    findPublicRecent(): Promise<({
+    findPublicRecent(): Promise<{
+        quoteCount: number;
+        quotes: undefined;
         vehicle: {
+            year: number;
             make: string;
             model: string;
-            year: number;
         };
-        _count: {
-            quotes: number;
-        };
-    } & {
         id: string;
-        description: string;
         createdAt: Date;
-        updatedAt: Date;
-        ownerId: string;
-        vehicleId: string;
+        description: string;
         title: string;
-        urgency: string;
         status: string;
-    })[]>;
-    findAll(userId: string, userRoles: string[], paginationDto: PaginationDto): Promise<{
+        urgency: string;
+    }[]>;
+    findAll(userId: string, userRoles: string[], query: RequestsQueryDto): Promise<{
         data: ({
+            vehicle: {
+                year: number;
+                make: string;
+                model: string;
+            };
             owner: {
                 name: string;
                 phone: string | null;
-            };
-            vehicle: {
-                make: string;
-                model: string;
-                year: number;
             };
             _count: {
                 quotes: number;
             };
         } & {
             id: string;
-            description: string;
             createdAt: Date;
-            updatedAt: Date;
-            ownerId: string;
-            vehicleId: string;
+            description: string;
             title: string;
-            urgency: string;
+            deletedAt: Date | null;
+            updatedAt: Date;
             status: string;
+            ownerId: string;
+            imageUrls: string[];
+            vehicleId: string;
+            urgency: string;
         })[];
         meta: {
             total: number;
@@ -62,29 +59,33 @@ export declare class RequestsService {
             vehicle: {
                 id: string;
                 createdAt: Date;
+                deletedAt: Date | null;
                 updatedAt: Date;
+                year: number;
                 make: string;
                 model: string;
-                year: number;
                 vin: string | null;
                 licensePlate: string | null;
                 color: string | null;
                 mileage: number | null;
                 ownerId: string;
+                imageUrls: string[];
             };
             _count: {
                 quotes: number;
             };
         } & {
             id: string;
-            description: string;
             createdAt: Date;
-            updatedAt: Date;
-            ownerId: string;
-            vehicleId: string;
+            description: string;
             title: string;
-            urgency: string;
+            deletedAt: Date | null;
+            updatedAt: Date;
             status: string;
+            ownerId: string;
+            imageUrls: string[];
+            vehicleId: string;
+            urgency: string;
         })[];
         meta: {
             total: number;
@@ -97,46 +98,52 @@ export declare class RequestsService {
         vehicle: {
             id: string;
             createdAt: Date;
+            deletedAt: Date | null;
             updatedAt: Date;
+            year: number;
             make: string;
             model: string;
-            year: number;
             vin: string | null;
             licensePlate: string | null;
             color: string | null;
             mileage: number | null;
             ownerId: string;
+            imageUrls: string[];
         };
     } & {
         id: string;
-        description: string;
         createdAt: Date;
-        updatedAt: Date;
-        ownerId: string;
-        vehicleId: string;
+        description: string;
         title: string;
-        urgency: string;
+        deletedAt: Date | null;
+        updatedAt: Date;
         status: string;
+        ownerId: string;
+        imageUrls: string[];
+        vehicleId: string;
+        urgency: string;
     }>;
     findOne(id: string, userId: string, userRoles: string[]): Promise<{
+        vehicle: {
+            id: string;
+            createdAt: Date;
+            deletedAt: Date | null;
+            updatedAt: Date;
+            year: number;
+            make: string;
+            model: string;
+            vin: string | null;
+            licensePlate: string | null;
+            color: string | null;
+            mileage: number | null;
+            ownerId: string;
+            imageUrls: string[];
+        };
         owner: {
             id: string;
             name: string;
             email: string;
             phone: string | null;
-        };
-        vehicle: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            make: string;
-            model: string;
-            year: number;
-            vin: string | null;
-            licensePlate: string | null;
-            color: string | null;
-            mileage: number | null;
-            ownerId: string;
         };
         quotes: ({
             provider: {
@@ -146,8 +153,8 @@ export declare class RequestsService {
             };
         } & {
             id: string;
-            description: string | null;
             createdAt: Date;
+            description: string | null;
             updatedAt: Date;
             status: string;
             requestId: string;
@@ -159,24 +166,54 @@ export declare class RequestsService {
         })[];
     } & {
         id: string;
-        description: string;
         createdAt: Date;
-        updatedAt: Date;
-        ownerId: string;
-        vehicleId: string;
+        description: string;
         title: string;
-        urgency: string;
+        deletedAt: Date | null;
+        updatedAt: Date;
         status: string;
+        ownerId: string;
+        imageUrls: string[];
+        vehicleId: string;
+        urgency: string;
     }>;
     update(id: string, userId: string, updateData: UpdateRequestDto): Promise<{
         id: string;
-        description: string;
         createdAt: Date;
-        updatedAt: Date;
-        ownerId: string;
-        vehicleId: string;
+        description: string;
         title: string;
-        urgency: string;
+        deletedAt: Date | null;
+        updatedAt: Date;
         status: string;
+        ownerId: string;
+        imageUrls: string[];
+        vehicleId: string;
+        urgency: string;
+    }>;
+    addImages(id: string, imageUrls: string[]): Promise<{
+        id: string;
+        createdAt: Date;
+        description: string;
+        title: string;
+        deletedAt: Date | null;
+        updatedAt: Date;
+        status: string;
+        ownerId: string;
+        imageUrls: string[];
+        vehicleId: string;
+        urgency: string;
+    }>;
+    removeImage(id: string, imageUrl: string): Promise<{
+        id: string;
+        createdAt: Date;
+        description: string;
+        title: string;
+        deletedAt: Date | null;
+        updatedAt: Date;
+        status: string;
+        ownerId: string;
+        imageUrls: string[];
+        vehicleId: string;
+        urgency: string;
     }>;
 }

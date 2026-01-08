@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QuotesService } from './quotes.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { QuoteStatus, RequestStatus, UserRole } from '../../shared/enums';
 
@@ -37,6 +38,10 @@ describe('QuotesService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockNotificationsService = {
+    create: jest.fn(),
+  };
+
   const mockRequest = {
     id: 'request-id',
     ownerId: 'owner-id',
@@ -64,6 +69,10 @@ describe('QuotesService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

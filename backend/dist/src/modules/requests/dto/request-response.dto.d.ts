@@ -9,6 +9,7 @@ export declare class RequestResponseDto {
     preferredLocation: string | null;
     preferredDate: Date | null;
     status: RequestStatus;
+    imageUrls?: string[];
     createdAt: Date;
     updatedAt: Date;
 }

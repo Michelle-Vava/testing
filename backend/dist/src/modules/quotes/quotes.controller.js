@@ -18,7 +18,9 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const quotes_service_1 = require("./quotes.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const provider_status_guard_1 = require("../../shared/guards/provider-status.guard");
 const create_quote_dto_1 = require("./dto/create-quote.dto");
+const client_1 = require("@prisma/client");
 let QuotesController = class QuotesController {
     quotesService;
     constructor(quotesService) {
@@ -41,7 +43,7 @@ exports.QuotesController = QuotesController;
 __decorate([
     (0, common_1.Get)('request/:requestId'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all quotes for a service request' }),
-    openapi.ApiResponse({ status: 200, type: [Object] }),
+    openapi.ApiResponse({ status: 200, type: [require("./entities/quote.entity").QuoteEntity] }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('requestId')),
     __metadata("design:type", Function),
@@ -50,8 +52,10 @@ __decorate([
 ], QuotesController.prototype, "findByRequest", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new quote (providers only)' }),
-    openapi.ApiResponse({ status: 201, type: Object }),
+    (0, common_1.UseGuards)(provider_status_guard_1.ProviderStatusGuard),
+    (0, provider_status_guard_1.RequireProviderStatus)(client_1.ProviderStatus.ACTIVE),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new quote (active providers only)' }),
+    openapi.ApiResponse({ status: 201, type: require("./entities/quote.entity").QuoteEntity }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

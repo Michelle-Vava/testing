@@ -1,12 +1,15 @@
-import { Controller, Post, Get, Put, Body, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards, Request, Query, Res, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { AuthResponseDto } from './dto/auth-response.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot-password.dto';
 import { VerifyEmailDto, ResendVerificationDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+// import { SkipCsrf } from './decorators/skip-csrf.decorator';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 
@@ -32,10 +35,25 @@ export class AuthController {
    * @throws ConflictException if email already exists
    */
   @Post('signup')
+  // @SkipCsrf()
   @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 attempts per 15 minutes
   @ApiOperation({ summary: 'Sign up a new user' })
-  async signup(@Body() signupDto: SignupDto) {
-    return this.authService.signup(signupDto);
+  @ApiCreatedResponse({ type: AuthResponseDto })
+  async signup(
+    @Body() signupDto: SignupDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.signup(signupDto);
+    
+    // Set httpOnly cookies for security
+    // In dev (localhost), we must check if we are truly on HTTPS to set Secure
+    // Also, SameSite=Lax is best for localhost to localhost communication
+    this.setAuthCookies(res, result.token, result.refreshToken);
+    
+    return { 
+      user: result.user,
+      accessToken: result.token,
+    };
   }
 
   /**
@@ -49,10 +67,23 @@ export class AuthController {
    * @throws UnauthorizedException if credentials are invalid
    */
   @Post('login')
+  // @SkipCsrf()
   @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 attempts per 15 minutes
   @ApiOperation({ summary: 'Login user' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  @ApiCreatedResponse({ type: AuthResponseDto })
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(loginDto);
+    
+    // Set httpOnly cookies for security
+    this.setAuthCookies(res, result.token, result.refreshToken);
+    
+    return { 
+      user: result.user,
+      accessToken: result.token,
+    };
   }
 
   /**
@@ -146,5 +177,70 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend email verification link' })
   async resendVerification(@Body() resendDto: ResendVerificationDto) {
     return this.authService.resendVerificationEmail(resendDto);
+  }
+
+  /**
+   * Refresh access token using refresh token cookie
+   */
+  @Post('refresh')
+  // @SkipCsrf() // Skip CSRF for refresh endpoint
+  @ApiOperation({ summary: 'Refresh access token' })
+  async refresh(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refresh_token;
+    
+    if (!refreshToken) {
+      res.clearCookie('access_token');
+      res.clearCookie('refresh_token');
+      // Throw 403 Forbidden instead of 401 to distinguish from expired token
+      throw new ForbiddenException('No refresh token provided');
+    }
+    
+    const result = await this.authService.refreshToken(refreshToken);
+    this.setAuthCookies(res, result.token, result.refreshToken);
+    
+    return { 
+      user: result.user,
+      accessToken: result.token,
+    };
+  }
+
+  /**
+   * Logout - clear auth cookies
+   */
+  @Post('logout')
+  // @SkipCsrf() // Skip CSRF for logout
+  @ApiOperation({ summary: 'Logout user' })
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+    return { message: 'Logged out successfully' };
+  }
+
+  /**
+   * Helper to set auth cookies with proper security settings
+   */
+  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Access token - short lived (15 minutes)
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: isProduction, // False in dev is CRITICAL for localhost http
+      sameSite: isProduction ? 'strict' : 'lax', // Lax is better for dev
+      path: '/',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    
+    // Refresh token - long lived (7 days)
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
   }
 }

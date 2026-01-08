@@ -46,5 +46,12 @@ exports.envValidationSchema = Joi.object({
     SUPABASE_ANON_KEY: Joi.string().required(),
     JWT_SECRET: Joi.string().required(),
     STRIPE_SECRET_KEY: Joi.string().required(),
+    CLOUDINARY_CLOUD_NAME: Joi.string().required(),
+    CLOUDINARY_API_KEY: Joi.string().required(),
+    CLOUDINARY_API_SECRET: Joi.string().required(),
+    RESEND_API_KEY: Joi.string().required(),
+    EMAIL_FROM: Joi.string().email().default('onboarding@resend.dev'),
+    REDIS_HOST: Joi.string().default('localhost'),
+    REDIS_PORT: Joi.number().default(6379),
 });
 //# sourceMappingURL=env.validation.js.map

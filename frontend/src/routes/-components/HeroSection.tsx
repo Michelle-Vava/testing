@@ -38,7 +38,7 @@ export function HeroSection() {
             transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
             className="text-xl md:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto"
           >
-            Get transparent, competing quotes from verified mechanics. Compare prices, reviews, and availability — all in one place.
+            Get transparent, competing quotes from verified providers. Compare prices, reviews, and availability — all in one place.
           </motion.p>
 
           <motion.div

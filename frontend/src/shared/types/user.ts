@@ -7,6 +7,7 @@ export interface User {
   role: UserRole | null;
   onboardingComplete: boolean;
   providerOnboardingComplete?: boolean;
+  providerStatus?: 'NONE' | 'DRAFT' | 'PENDING' | 'ACTIVE' | 'SUSPENDED';
   createdAt: Date;
   // Optional profile fields populated from OwnerProfile/ProviderProfile
   phoneNumber?: string;

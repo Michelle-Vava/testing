@@ -1,12 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { Login } from './Login';
 import { Signup } from './Signup';
 
 type AuthMode = 'login' | 'signup';
 
 export function AuthContainer() {
-  const [mode, setMode] = useState<AuthMode>('login');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const search = (location.search as any) || {};
+  
+  const isSignup = location.pathname.includes('/signup');
+  const mode: AuthMode = isSignup ? 'signup' : 'login';
+  const userMode = search.mode || 'owner'; // default to owner
+
+  const handleSwitchToSignup = () => {
+    navigate({ to: '/auth/signup', search: { mode: userMode } });
+  };
+
+  const handleSwitchToLogin = () => {
+    navigate({ to: '/auth/login', search: { mode: userMode } });
+  };
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -40,7 +55,7 @@ export function AuthContainer() {
                 exit="exit"
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               >
-                <Login onSwitchToSignup={() => setMode('signup')} />
+                <Login onSwitchToSignup={handleSwitchToSignup} />
               </motion.div>
             ) : (
               <motion.div
@@ -52,7 +67,7 @@ export function AuthContainer() {
                 exit="exit"
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               >
-                <Signup onSwitchToLogin={() => setMode('login')} />
+                <Signup onSwitchToLogin={handleSwitchToLogin} />
               </motion.div>
             )}
           </AnimatePresence>

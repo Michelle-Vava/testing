@@ -24,8 +24,8 @@ interface SignupProps {
 
 export function Signup({ onSwitchToLogin }: SignupProps) {
   const navigate = useNavigate();
-  const search = useSearch({ from: '/auth/signup' }) as { role?: string };
-  const role = search?.role;
+  const search = useSearch({ strict: false }) as { mode?: 'owner' | 'provider' };
+  const mode = search?.mode || 'owner';
   const { signup } = useAuth();
   const toast = useToast();
 
@@ -51,7 +51,7 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
     }
 
     try {
-      const roles = role === 'provider' ? ['provider'] : ['owner'];
+      const roles = mode === 'provider' ? ['provider', 'owner'] : ['owner'];
       
       await signup({
         name: `${formValues.firstName} ${formValues.lastName}`,
@@ -61,7 +61,13 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
       });
 
       toast.success('Account created successfully!');
-      navigate({ to: ROUTES.OWNER_DASHBOARD });
+      
+      // Route based on mode
+      if (mode === 'provider') {
+        navigate({ to: '/provider/onboarding' });
+      } else {
+        navigate({ to: ROUTES.OWNER_DASHBOARD });
+      }
     } catch (error: any) {
       const message = error.response?.data?.message || error.message;
       
@@ -76,18 +82,12 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
     }
   };
 
-  const roleContext = role === 'provider' ? {
-    role: 'provider' as const,
-    message: 'Creating a mechanic account',
-    switchLink: '/auth/signup',
-    switchText: 'Not a mechanic?'
-  } : undefined;
-
   return (
     <AuthFormLayout
       title="Create your account"
       subtitle="Compare verified quotes. No spam."
-      role={roleContext?.role}
+      mode={mode}
+      authType="signup"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Google OAuth Button */}

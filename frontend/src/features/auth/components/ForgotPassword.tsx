@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/contexts/ToastContext';
-import axios from 'axios';
-import { env } from '@/config/env';
+import { AXIOS_INSTANCE } from '@/lib/axios';
 import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/shared/utils/validation';
 
 export function ForgotPassword() {
@@ -40,11 +39,12 @@ export function ForgotPassword() {
     
     setIsSubmitting(true);
     try {
-      await axios.post(`${env.API_URL}/auth/forgot-password`, { email });
+      await AXIOS_INSTANCE.post('/auth/forgot-password', { email });
       setEmailSent(true);
       toast.success('Password reset link sent to your email');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send reset email');
+      // Error handled globally but keeping this for specific UX logic if needed
+      // toast.error is redundant here as interceptor handles it, but harmless
     } finally {
       setIsSubmitting(false);
     }

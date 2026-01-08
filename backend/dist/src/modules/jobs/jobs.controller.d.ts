@@ -8,6 +8,19 @@ export declare class JobsController {
     constructor(jobsService: JobsService);
     findAll(req: AuthenticatedRequest, paginationDto: PaginationDto): Promise<{
         data: ({
+            quote: {
+                id: string;
+                createdAt: Date;
+                description: string | null;
+                updatedAt: Date;
+                status: string;
+                requestId: string;
+                providerId: string;
+                amount: import("@prisma/client/runtime/library").Decimal;
+                estimatedDuration: string;
+                notes: string | null;
+                includesWarranty: boolean;
+            };
             owner: {
                 id: string;
                 name: string;
@@ -20,50 +33,41 @@ export declare class JobsController {
                 email: string;
                 phone: string | null;
             };
-            quote: {
-                id: string;
-                description: string | null;
-                createdAt: Date;
-                updatedAt: Date;
-                status: string;
-                requestId: string;
-                providerId: string;
-                amount: import("@prisma/client/runtime/library").Decimal;
-                estimatedDuration: string;
-                notes: string | null;
-                includesWarranty: boolean;
-            };
             request: {
                 vehicle: {
                     id: string;
                     createdAt: Date;
+                    deletedAt: Date | null;
                     updatedAt: Date;
+                    year: number;
                     make: string;
                     model: string;
-                    year: number;
                     vin: string | null;
                     licensePlate: string | null;
                     color: string | null;
                     mileage: number | null;
                     ownerId: string;
+                    imageUrls: string[];
                 };
             } & {
                 id: string;
-                description: string;
                 createdAt: Date;
-                updatedAt: Date;
-                ownerId: string;
-                vehicleId: string;
+                description: string;
                 title: string;
-                urgency: string;
+                deletedAt: Date | null;
+                updatedAt: Date;
                 status: string;
+                ownerId: string;
+                imageUrls: string[];
+                vehicleId: string;
+                urgency: string;
             };
             payments: {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                ownerId: string;
                 status: string;
+                ownerId: string;
                 providerId: string;
                 amount: import("@prisma/client/runtime/library").Decimal;
                 jobId: string;
@@ -74,8 +78,8 @@ export declare class JobsController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            ownerId: string;
             status: string;
+            ownerId: string;
             requestId: string;
             providerId: string;
             startedAt: Date | null;
@@ -90,6 +94,19 @@ export declare class JobsController {
         };
     }>;
     findOne(req: AuthenticatedRequest, id: string): Promise<{
+        quote: {
+            id: string;
+            createdAt: Date;
+            description: string | null;
+            updatedAt: Date;
+            status: string;
+            requestId: string;
+            providerId: string;
+            amount: import("@prisma/client/runtime/library").Decimal;
+            estimatedDuration: string;
+            notes: string | null;
+            includesWarranty: boolean;
+        };
         owner: {
             id: string;
             name: string;
@@ -102,50 +119,41 @@ export declare class JobsController {
             email: string;
             phone: string | null;
         };
-        quote: {
-            id: string;
-            description: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            status: string;
-            requestId: string;
-            providerId: string;
-            amount: import("@prisma/client/runtime/library").Decimal;
-            estimatedDuration: string;
-            notes: string | null;
-            includesWarranty: boolean;
-        };
         request: {
             vehicle: {
                 id: string;
                 createdAt: Date;
+                deletedAt: Date | null;
                 updatedAt: Date;
+                year: number;
                 make: string;
                 model: string;
-                year: number;
                 vin: string | null;
                 licensePlate: string | null;
                 color: string | null;
                 mileage: number | null;
                 ownerId: string;
+                imageUrls: string[];
             };
         } & {
             id: string;
-            description: string;
             createdAt: Date;
-            updatedAt: Date;
-            ownerId: string;
-            vehicleId: string;
+            description: string;
             title: string;
-            urgency: string;
+            deletedAt: Date | null;
+            updatedAt: Date;
             status: string;
+            ownerId: string;
+            imageUrls: string[];
+            vehicleId: string;
+            urgency: string;
         };
         payments: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            ownerId: string;
             status: string;
+            ownerId: string;
             providerId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
             jobId: string;
@@ -156,8 +164,8 @@ export declare class JobsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        ownerId: string;
         status: string;
+        ownerId: string;
         requestId: string;
         providerId: string;
         startedAt: Date | null;
@@ -168,8 +176,8 @@ export declare class JobsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        ownerId: string;
         status: string;
+        ownerId: string;
         requestId: string;
         providerId: string;
         startedAt: Date | null;

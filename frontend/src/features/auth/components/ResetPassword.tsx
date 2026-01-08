@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/contexts/ToastContext';
-import axios from 'axios';
-import { env } from '@/config/env';
+import { AXIOS_INSTANCE } from '@/lib/axios';
 import { ROUTES } from '@/config/routes';
 import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/shared/utils/validation';
 
@@ -78,14 +77,14 @@ export function ResetPassword() {
 
     setIsSubmitting(true);
     try {
-      await axios.post(`${env.API_URL}/auth/reset-password`, {
+      await AXIOS_INSTANCE.post('/auth/reset-password', {
         token,
         newPassword,
       });
-      toast.success('Password reset successfully!');
-      navigate({ to: ROUTES.LOGIN });
+      toast.success('Password reset successfully');
+      navigate({ to: '/auth/login' });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to reset password');
+      // Handled by global interceptor
     } finally {
       setIsSubmitting(false);
     }

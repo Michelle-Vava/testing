@@ -20,10 +20,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import type {
-  HealthControllerCheck200
-} from '.././model';
-
 import { customInstance } from '../../../lib/axios';
 
 
@@ -40,7 +36,7 @@ export const healthControllerCheck = (
 ) => {
       
       
-      return customInstance<HealthControllerCheck200>(
+      return customInstance<void>(
       {url: `/health`, method: 'GET', signal
     },
       options);

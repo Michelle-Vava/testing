@@ -1,6 +1,6 @@
 openapi: 3.0.0
 paths:
-  /auth/signup:
+  /shanda/auth/signup:
     post:
       operationId: AuthController_signup
       parameters: []
@@ -13,10 +13,14 @@ paths:
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDto'
       summary: Sign up a new user
       tags: &ref_0
         - auth
-  /auth/login:
+  /shanda/auth/login:
     post:
       operationId: AuthController_login
       parameters: []
@@ -29,9 +33,13 @@ paths:
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDto'
       summary: Login user
       tags: *ref_0
-  /auth/me:
+  /shanda/auth/me:
     get:
       operationId: AuthController_getMe
       parameters: []
@@ -46,7 +54,7 @@ paths:
         - bearer: []
       summary: Get current user profile
       tags: *ref_0
-  /auth/profile:
+  /shanda/auth/profile:
     put:
       operationId: AuthController_updateProfile
       parameters: []
@@ -67,7 +75,7 @@ paths:
         - bearer: []
       summary: Update user profile
       tags: *ref_0
-  /auth/forgot-password:
+  /shanda/auth/forgot-password:
     post:
       operationId: AuthController_forgotPassword
       parameters: []
@@ -82,7 +90,7 @@ paths:
           description: ''
       summary: Request password reset email
       tags: *ref_0
-  /auth/reset-password:
+  /shanda/auth/reset-password:
     post:
       operationId: AuthController_resetPassword
       parameters: []
@@ -97,7 +105,66 @@ paths:
           description: ''
       summary: Reset password with token
       tags: *ref_0
-  /vehicles:
+  /shanda/auth/verify-email:
+    post:
+      operationId: AuthController_verifyEmail
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailDto'
+      responses:
+        '201':
+          description: ''
+      summary: Verify email address with token
+      tags: *ref_0
+  /shanda/auth/resend-verification:
+    post:
+      operationId: AuthController_resendVerification
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationDto'
+      responses:
+        '201':
+          description: ''
+      summary: Resend email verification link
+      tags: *ref_0
+  /shanda/auth/refresh:
+    post:
+      operationId: AuthController_refresh
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      summary: Refresh access token
+      tags: *ref_0
+  /shanda/auth/logout:
+    post:
+      operationId: AuthController_logout
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      summary: Logout user
+      tags: *ref_0
+  /shanda/oauth/callback:
+    post:
+      description: Validates Supabase token, creates/finds user, issues custom JWT
+      operationId: OAuthController_handleCallback
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      summary: Exchange Supabase OAuth token for application JWT
+      tags:
+        - oauth
+  /shanda/vehicles:
     get:
       operationId: VehiclesController_findAll
       parameters:
@@ -153,7 +220,7 @@ paths:
       security: *ref_1
       summary: Create a new vehicle
       tags: *ref_2
-  /vehicles/{id}:
+  /shanda/vehicles/{id}:
     get:
       operationId: VehiclesController_findOne
       parameters:
@@ -210,7 +277,7 @@ paths:
       security: *ref_1
       summary: Delete a vehicle
       tags: *ref_2
-  /vehicles/{id}/mileage:
+  /shanda/vehicles/{id}/mileage:
     patch:
       operationId: VehiclesController_updateMileage
       parameters:
@@ -235,7 +302,46 @@ paths:
       security: *ref_1
       summary: Update vehicle mileage
       tags: *ref_2
-  /requests/public/recent:
+  /shanda/vehicles/{id}/images:
+    post:
+      operationId: VehiclesController_uploadImages
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponseDto'
+        '201':
+          description: ''
+      security: *ref_1
+      summary: Upload images for a vehicle
+      tags: *ref_2
+    delete:
+      operationId: VehiclesController_deleteImage
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponseDto'
+      security: *ref_1
+      summary: Delete an image from a vehicle
+      tags: *ref_2
+  /shanda/requests/public/recent:
     get:
       operationId: RequestsController_findPublicRecent
       parameters: []
@@ -245,14 +351,14 @@ paths:
       summary: Get recent public service requests (no auth required)
       tags: &ref_3
         - requests
-  /requests:
+  /shanda/requests:
     get:
       operationId: RequestsController_findAll
       parameters:
         - name: page
           required: false
           in: query
-          description: 'Page number (default: 1)'
+          description: Page number
           schema:
             minimum: 1
             default: 1
@@ -261,13 +367,30 @@ paths:
         - name: limit
           required: false
           in: query
-          description: 'Items per page (default: 20, max: 100)'
+          description: Items per page
           schema:
             minimum: 1
             maximum: 100
             default: 20
             example: 20
             type: number
+        - name: status
+          required: false
+          in: query
+          description: Filter by status (open, quoted, in_progress, completed, cancelled)
+          schema:
+            type: string
+        - name: sort
+          required: false
+          in: query
+          description: Sort order
+          schema:
+            default: newest
+            type: string
+            enum:
+              - newest
+              - oldest
+              - urgency
       responses:
         '200':
           description: Paginated list of service requests
@@ -301,7 +424,7 @@ paths:
         - bearer: []
       summary: Create a new service request
       tags: *ref_3
-  /requests/{id}:
+  /shanda/requests/{id}:
     get:
       operationId: RequestsController_findOne
       parameters:
@@ -350,7 +473,48 @@ paths:
         - bearer: []
       summary: Update a service request
       tags: *ref_3
-  /quotes/request/{requestId}:
+  /shanda/requests/{id}/images:
+    post:
+      operationId: RequestsController_uploadImages
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponseDto'
+        '201':
+          description: ''
+      security:
+        - bearer: []
+      summary: Upload images for a service request
+      tags: *ref_3
+    delete:
+      operationId: RequestsController_deleteImage
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponseDto'
+      security:
+        - bearer: []
+      summary: Delete an image from a service request
+      tags: *ref_3
+  /shanda/quotes/request/{requestId}:
     get:
       operationId: QuotesController_findByRequest
       parameters:
@@ -367,13 +531,13 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  $ref: '#/components/schemas/QuoteEntity'
       security: &ref_4
         - bearer: []
       summary: Get all quotes for a service request
       tags: &ref_5
         - quotes
-  /quotes:
+  /shanda/quotes:
     post:
       operationId: QuotesController_create
       parameters: []
@@ -389,11 +553,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/QuoteEntity'
       security: *ref_4
-      summary: Create a new quote (providers only)
+      summary: Create a new quote (active providers only)
       tags: *ref_5
-  /quotes/{id}/accept:
+  /shanda/quotes/{id}/accept:
     post:
       operationId: QuotesController_accept
       parameters:
@@ -408,7 +572,7 @@ paths:
       security: *ref_4
       summary: Accept a quote (creates a job)
       tags: *ref_5
-  /quotes/{id}/reject:
+  /shanda/quotes/{id}/reject:
     post:
       operationId: QuotesController_reject
       parameters:
@@ -423,7 +587,58 @@ paths:
       security: *ref_4
       summary: Reject a quote
       tags: *ref_5
-  /jobs:
+  /shanda/notifications:
+    get:
+      operationId: NotificationsController_findAll
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security: &ref_6
+        - bearer: []
+      summary: Get all notifications for current user
+      tags: &ref_7
+        - notifications
+  /shanda/notifications/unread-count:
+    get:
+      operationId: NotificationsController_getUnreadCount
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security: *ref_6
+      summary: Get unread notification count
+      tags: *ref_7
+  /shanda/notifications/{id}/read:
+    put:
+      operationId: NotificationsController_markAsRead
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      security: *ref_6
+      summary: Mark notification as read
+      tags: *ref_7
+  /shanda/notifications/read-all:
+    put:
+      operationId: NotificationsController_markAllAsRead
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      security: *ref_6
+      summary: Mark all notifications as read
+      tags: *ref_7
+  /shanda/jobs:
     get:
       operationId: JobsController_findAll
       parameters:
@@ -455,12 +670,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/JobResponseDto'
-      security: &ref_6
+      security: &ref_8
         - bearer: []
       summary: Get all jobs (owners see theirs, providers see theirs)
-      tags: &ref_7
+      tags: &ref_9
         - jobs
-  /jobs/{id}:
+  /shanda/jobs/{id}:
     get:
       operationId: JobsController_findOne
       parameters:
@@ -480,10 +695,10 @@ paths:
           description: Forbidden.
         '404':
           description: Job not found.
-      security: *ref_6
+      security: *ref_8
       summary: Get a specific job by ID
-      tags: *ref_7
-  /jobs/{id}/status:
+      tags: *ref_9
+  /shanda/jobs/{id}/status:
     put:
       operationId: JobsController_updateStatus
       parameters:
@@ -509,10 +724,10 @@ paths:
           description: Forbidden.
         '404':
           description: Job not found.
-      security: *ref_6
+      security: *ref_8
       summary: Update job status (providers only)
-      tags: *ref_7
-  /payments:
+      tags: *ref_9
+  /shanda/payments:
     get:
       operationId: PaymentsController_listTransactions
       parameters: []
@@ -525,12 +740,12 @@ paths:
                 type: array
                 items:
                   type: object
-      security: &ref_8
+      security: &ref_10
         - bearer: []
       summary: Get all payments/transactions
-      tags: &ref_9
+      tags: &ref_11
         - payments
-  /payments/charge/{jobId}:
+  /shanda/payments/charge/{jobId}:
     post:
       operationId: PaymentsController_createCharge
       parameters:
@@ -542,10 +757,25 @@ paths:
       responses:
         '201':
           description: ''
-      security: *ref_8
+      security: *ref_10
       summary: Create a payment charge for a completed job
-      tags: *ref_9
-  /payments/payout/{jobId}:
+      tags: *ref_11
+  /shanda/payments/complete/{paymentId}:
+    post:
+      operationId: PaymentsController_completePayment
+      parameters:
+        - name: paymentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      security: *ref_10
+      summary: Manually complete a payment (Dev/Test only)
+      tags: *ref_11
+  /shanda/payments/payout/{jobId}:
     post:
       operationId: PaymentsController_createPayout
       parameters:
@@ -557,10 +787,25 @@ paths:
       responses:
         '201':
           description: ''
-      security: *ref_8
+      security: *ref_10
       summary: Request payout for a paid job (providers only)
-      tags: *ref_9
-  /providers/public/featured:
+      tags: *ref_11
+  /shanda/webhooks/stripe:
+    post:
+      operationId: WebhooksController_handleStripeWebhook
+      parameters:
+        - name: stripe-signature
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      summary: Handle Stripe webhook events
+      tags:
+        - webhooks
+  /shanda/providers/public/featured:
     get:
       operationId: ProvidersController_findFeatured
       parameters: []
@@ -568,9 +813,9 @@ paths:
         '200':
           description: Return featured providers.
       summary: Get featured providers (no auth required)
-      tags: &ref_10
+      tags: &ref_12
         - providers
-  /providers:
+  /shanda/providers:
     get:
       operationId: ProvidersController_findAll
       parameters:
@@ -603,8 +848,8 @@ paths:
         '200':
           description: ''
       summary: Get all providers with optional filters
-      tags: *ref_10
-  /providers/{id}:
+      tags: *ref_12
+  /shanda/providers/{id}:
     get:
       operationId: ProvidersController_findOne
       parameters:
@@ -617,8 +862,41 @@ paths:
         '200':
           description: ''
       summary: Get provider by ID with full profile
-      tags: *ref_10
-  /services:
+      tags: *ref_12
+  /shanda/providers/onboarding/status:
+    get:
+      operationId: ProvidersController_getOnboardingStatus
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Get provider onboarding status and checklist
+      tags: *ref_12
+  /shanda/providers/onboarding/complete:
+    post:
+      operationId: ProvidersController_completeOnboarding
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      security:
+        - bearer: []
+      summary: Complete provider onboarding
+      tags: *ref_12
+  /shanda/providers/onboarding/start:
+    put:
+      operationId: ProvidersController_startOnboarding
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security:
+        - bearer: []
+      summary: Start provider onboarding (NONE → DRAFT)
+      tags: *ref_12
+  /shanda/services:
     get:
       operationId: ServicesController_findAll
       parameters: []
@@ -626,9 +904,9 @@ paths:
         '200':
           description: ''
       summary: Get all active services
-      tags: &ref_11
+      tags: &ref_13
         - services
-  /services/popular:
+  /shanda/services/popular:
     get:
       operationId: ServicesController_findPopular
       parameters: []
@@ -636,8 +914,8 @@ paths:
         '200':
           description: ''
       summary: Get popular services for dashboard
-      tags: *ref_11
-  /services/{id}:
+      tags: *ref_13
+  /shanda/services/{id}:
     get:
       operationId: ServicesController_findOne
       parameters:
@@ -654,59 +932,8 @@ paths:
               schema:
                 type: object
       summary: Get service by ID
-      tags: *ref_11
-  /notifications:
-    get:
-      operationId: NotificationsController_findAll
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      security: &ref_12
-        - bearer: []
-      summary: Get all notifications for current user
-      tags: &ref_13
-        - notifications
-  /notifications/unread-count:
-    get:
-      operationId: NotificationsController_getUnreadCount
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      security: *ref_12
-      summary: Get unread notification count
       tags: *ref_13
-  /notifications/{id}/read:
-    put:
-      operationId: NotificationsController_markAsRead
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: ''
-      security: *ref_12
-      summary: Mark notification as read
-      tags: *ref_13
-  /notifications/read-all:
-    put:
-      operationId: NotificationsController_markAllAsRead
-      parameters: []
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: object
-      security: *ref_12
-      summary: Mark all notifications as read
-      tags: *ref_13
-  /activities:
+  /shanda/activities:
     get:
       operationId: ActivitiesController_findAll
       parameters:
@@ -723,7 +950,7 @@ paths:
       summary: Get activity timeline for current user
       tags:
         - activities
-  /vehicles/{vehicleId}/maintenance:
+  /shanda/vehicles/{vehicleId}/maintenance:
     get:
       operationId: MaintenanceController_findAll
       parameters:
@@ -760,7 +987,7 @@ paths:
       security: *ref_14
       summary: Add a maintenance record to a vehicle
       tags: *ref_15
-  /maintenance/{id}:
+  /shanda/maintenance/{id}:
     delete:
       operationId: MaintenanceController_delete
       parameters:
@@ -775,7 +1002,229 @@ paths:
       security: *ref_14
       summary: Delete a maintenance record
       tags: *ref_15
-  /health:
+  /shanda/messages/conversations:
+    get:
+      operationId: MessagesController_getConversations
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      security: &ref_16
+        - bearer: []
+      summary: Get all conversations for the authenticated user
+      tags: &ref_17
+        - messages
+  /shanda/messages/conversations/{jobId}:
+    get:
+      operationId: MessagesController_getConversation
+      parameters:
+        - name: jobId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      security: *ref_16
+      summary: Get messages for a specific job conversation
+      tags: *ref_17
+  /shanda/messages:
+    post:
+      operationId: MessagesController_sendMessage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMessageDto'
+      responses:
+        '201':
+          description: ''
+      security: *ref_16
+      summary: Send a message in a conversation
+      tags: *ref_17
+  /shanda/messages/conversations/{conversationId}/read:
+    post:
+      operationId: MessagesController_markAsRead
+      parameters:
+        - name: conversationId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+      security: *ref_16
+      summary: Mark all messages in a conversation as read
+      tags: *ref_17
+  /shanda/reviews:
+    post:
+      operationId: ReviewsController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewDto'
+      responses:
+        '201':
+          description: Review created successfully
+        '400':
+          description: Bad request (job not completed, review already exists)
+        '403':
+          description: Only job owner can create review
+      security: &ref_18
+        - bearer: []
+      summary: Create a review for a completed job
+      tags: &ref_19
+        - reviews
+  /shanda/reviews/provider/{providerId}:
+    get:
+      operationId: ReviewsController_findByProvider
+      parameters:
+        - name: providerId
+          required: true
+          in: path
+          description: Provider user ID
+          schema:
+            type: string
+        - name: page
+          required: false
+          in: query
+          schema:
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: List of reviews with pagination
+      security: *ref_18
+      summary: Get all reviews for a provider
+      tags: *ref_19
+  /shanda/reviews/job/{jobId}:
+    get:
+      operationId: ReviewsController_findByJob
+      parameters:
+        - name: jobId
+          required: true
+          in: path
+          description: Job ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review details
+        '404':
+          description: Review not found
+      security: *ref_18
+      summary: Get review for a specific job
+      tags: *ref_19
+  /shanda/reviews/{id}:
+    get:
+      operationId: ReviewsController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Review ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review details
+        '404':
+          description: Review not found
+      security: *ref_18
+      summary: Get a single review by ID
+      tags: *ref_19
+    put:
+      operationId: ReviewsController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Review ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReviewDto'
+      responses:
+        '200':
+          description: Review updated successfully
+        '403':
+          description: Can only update own reviews
+        '404':
+          description: Review not found
+      security: *ref_18
+      summary: Update a review
+      tags: *ref_19
+    delete:
+      operationId: ReviewsController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Review ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review deleted successfully
+        '403':
+          description: Can only delete own reviews
+        '404':
+          description: Review not found
+      security: *ref_18
+      summary: Delete a review
+      tags: *ref_19
+  /shanda/reviews/{id}/respond:
+    post:
+      operationId: ReviewsController_respond
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Review ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespondToReviewDto'
+      responses:
+        '200':
+          description: Response added successfully
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          description: Only the provider can respond
+        '404':
+          description: Review not found
+      security: *ref_18
+      summary: Respond to a review (providers only)
+      tags: *ref_19
+  /shanda/health:
     get:
       operationId: HealthController_check
       parameters: []
@@ -789,7 +1238,7 @@ paths:
       summary: Health check endpoint
       tags:
         - health
-  /platform/stats:
+  /shanda/platform/stats:
     get:
       operationId: PlatformController_getStats
       parameters: []
@@ -799,9 +1248,9 @@ paths:
       security:
         - bearer: []
       summary: Get platform statistics (Admin only)
-      tags: &ref_16
+      tags: &ref_20
         - platform
-  /platform/settings:
+  /shanda/platform/settings:
     get:
       operationId: PlatformController_getSettings
       parameters: []
@@ -809,7 +1258,7 @@ paths:
         '200':
           description: ''
       summary: Get platform settings (public)
-      tags: *ref_16
+      tags: *ref_20
 info:
   title: Shanda Automotive API
   description: Marketplace connecting vehicle owners with service providers
@@ -819,6 +1268,8 @@ tags: []
 servers:
   - url: http://localhost:4201
     description: Local Development
+  - url: https://api.shanda.com
+    description: Production
 components:
   securitySchemes:
     bearer:
@@ -836,7 +1287,8 @@ components:
           format: email
         password:
           type: string
-          minLength: 6
+          minLength: 8
+          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
         phone:
           type: string
         roles:
@@ -845,17 +1297,6 @@ components:
             type: string
       required:
         - name
-        - email
-        - password
-    LoginDto:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-      required:
         - email
         - password
     UserEntity:
@@ -959,6 +1400,27 @@ components:
         - createdAt
         - updatedAt
         - password
+    AuthResponseDto:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserEntity'
+        accessToken:
+          type: string
+          description: JWT Access Token
+      required:
+        - user
+    LoginDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
     UpdateProfileDto:
       type: object
       properties:
@@ -986,6 +1448,32 @@ components:
             type: string
         yearsInBusiness:
           type: number
+        shopAddress:
+          type: string
+        shopCity:
+          type: string
+        shopState:
+          type: string
+        shopZipCode:
+          type: string
+        serviceArea:
+          type: array
+          items:
+            type: string
+        isMobileService:
+          type: boolean
+        isShopService:
+          type: boolean
+        hourlyRate:
+          type: number
+        website:
+          type: string
+        certifications:
+          type: array
+          items:
+            type: string
+        insuranceInfo:
+          type: string
         onboardingComplete:
           type: boolean
     ForgotPasswordDto:
@@ -1008,6 +1496,31 @@ components:
       required:
         - token
         - newPassword
+    VerifyEmailDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@example.com
+        token:
+          type: string
+          description: Email verification token sent to user
+          example: abc123def456
+      required:
+        - email
+        - token
+    ResendVerificationDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address to resend verification to
+          example: user@example.com
+      required:
+        - email
     VehicleResponseDto:
       type: object
       properties:
@@ -1037,6 +1550,12 @@ components:
           type: number
           nullable: true
           example: 45000
+        imageUrls:
+          example:
+            - https://example.com/image1.jpg
+          type: array
+          items:
+            type: string
         createdAt:
           format: date-time
           type: string
@@ -1139,6 +1658,12 @@ components:
             - cancelled
           type: string
           example: open
+        imageUrls:
+          example:
+            - https://example.com/image1.jpg
+          type: array
+          items:
+            type: string
         createdAt:
           format: date-time
           type: string
@@ -1169,7 +1694,7 @@ components:
           type: string
           description: Detailed description of the issue
         urgency:
-          enum: &ref_17
+          enum: &ref_21
             - low
             - medium
             - high
@@ -1195,9 +1720,47 @@ components:
           type: string
           description: Detailed description of the issue
         urgency:
-          enum: *ref_17
+          enum: *ref_21
           type: string
           description: Urgency level
+    QuoteEntity:
+      type: object
+      properties:
+        id:
+          type: string
+        requestId:
+          type: string
+        providerId:
+          type: string
+        amount:
+          type: string
+        estimatedDuration:
+          type: string
+        description:
+          type: string
+          nullable: true
+        includesWarranty:
+          type: boolean
+        status:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        provider:
+          type: object
+      required:
+        - id
+        - requestId
+        - providerId
+        - amount
+        - estimatedDuration
+        - includesWarranty
+        - status
+        - createdAt
+        - updatedAt
     CreateQuoteDto:
       type: object
       properties:
@@ -1323,3 +1886,58 @@ components:
       required:
         - serviceType
         - serviceDate
+    CreateMessageDto:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Job ID for the conversation
+          example: 123e4567-e89b-12d3-a456-426614174000
+        content:
+          type: string
+          description: Message content
+          example: Hi, what time works best for you tomorrow?
+      required:
+        - jobId
+        - content
+    CreateReviewDto:
+      type: object
+      properties:
+        jobId:
+          type: string
+          description: Job ID for the review
+          example: 123e4567-e89b-12d3-a456-426614174000
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: Rating from 1 to 5 stars
+          example: 5
+        comment:
+          type: string
+          description: Optional review comment
+          example: Great service! Very professional and timely.
+      required:
+        - jobId
+        - rating
+    UpdateReviewDto:
+      type: object
+      properties:
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: Updated rating from 1 to 5 stars
+        comment:
+          type: string
+          description: Updated review comment
+    RespondToReviewDto:
+      type: object
+      properties:
+        response:
+          type: string
+          description: Provider response to the review
+          example: Thank you for your feedback! It was a pleasure working with you.
+      required:
+        - response

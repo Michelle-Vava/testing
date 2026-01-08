@@ -12,10 +12,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
+const notifications_gateway_1 = require("./notifications.gateway");
 let NotificationsService = class NotificationsService {
     prisma;
-    constructor(prisma) {
+    notificationsGateway;
+    constructor(prisma, notificationsGateway) {
         this.prisma = prisma;
+        this.notificationsGateway = notificationsGateway;
+    }
+    async create(userId, type, title, message, link) {
+        const notification = await this.prisma.notification.create({
+            data: {
+                userId,
+                type,
+                title,
+                message,
+                link,
+            },
+        });
+        this.notificationsGateway.sendNotificationToUser(userId, notification);
+        return notification;
     }
     async findByUserId(userId) {
         return this.prisma.notification.findMany({
@@ -48,6 +64,7 @@ let NotificationsService = class NotificationsService {
 exports.NotificationsService = NotificationsService;
 exports.NotificationsService = NotificationsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_gateway_1.NotificationsGateway])
 ], NotificationsService);
 //# sourceMappingURL=notifications.service.js.map

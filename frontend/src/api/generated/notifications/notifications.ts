@@ -24,10 +24,6 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import type {
-  NotificationsControllerMarkAllAsRead200
-} from '.././model';
-
 import { customInstance } from '../../../lib/axios';
 
 
@@ -288,7 +284,7 @@ export const notificationsControllerMarkAllAsRead = (
  options?: SecondParameter<typeof customInstance>,) => {
       
       
-      return customInstance<NotificationsControllerMarkAllAsRead200>(
+      return customInstance<void>(
       {url: `/notifications/read-all`, method: 'PUT'
     },
       options);

@@ -7,15 +7,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProviderStatus {
+  NONE        // No provider profile
+  DRAFT       // Started onboarding, incomplete
+  LIMITED     // Can browse but limited actions
+  ACTIVE      // Fully enabled, can submit quotes
+  SUSPENDED   // Banned or compliance issue
+}
+
 model User {
-  id                          String   @id @default(uuid())
-  email                       String   @unique
+  id                          String    @id @default(uuid())
+  email                       String    @unique
   name                        String
-  password                    String
-  phone                       String?
-  roles                       String[] @default(["owner"])
-  onboardingComplete          Boolean  @default(false)
-  providerOnboardingComplete  Boolean  @default(false)
+  password                    String?
+  phone                       String?   @unique
+  roles                       String[]  @default(["owner"])
+  onboardingComplete          Boolean   @default(false)
+  providerOnboardingComplete  Boolean   @default(false)
+  providerStatus              ProviderStatus @default(NONE)
+  providerStatusReason        String?   // Why suspended, etc.
+  providerStatusChangedAt     DateTime?
+  deletedAt                   DateTime? // Soft delete
   
   // Profile fields
   address                     String?
@@ -26,7 +38,7 @@ model User {
   bio                         String?
   
   // Provider-specific fields
-  businessName                String?
+  businessName                String?  @unique
   serviceTypes                String[] @default([])
   yearsInBusiness             Int?
   certifications              String[] @default([])
@@ -61,12 +73,20 @@ model User {
   providerPayments            Payment[]        @relation("PaymentProvider")
   notifications               Notification[]
   activities                  Activity[]
+  sentMessages                Message[]        @relation("MessageSender")
+  ownerConversations          Conversation[]   @relation("ConversationOwner")
+  providerConversations       Conversation[]   @relation("ConversationProvider")
+  receivedReviews             Review[]         @relation("ProviderReviews")
+  givenReviews                Review[]         @relation("OwnerReviews")
 
   @@map("users")
+  @@index([providerOnboardingComplete])
+  @@index([rating])
+  @@index([providerOnboardingComplete, rating])
 }
 
 model Vehicle {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   ownerId      String
   make         String
   model        String
@@ -75,8 +95,10 @@ model Vehicle {
   licensePlate String?
   color        String?
   mileage      Int?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  imageUrls    String[]  @default([])
+  deletedAt    DateTime? // Soft delete
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
   owner               User                 @relation("VehicleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -84,18 +106,21 @@ model Vehicle {
   maintenanceRecords  MaintenanceRecord[]
 
   @@map("vehicles")
+  @@index([ownerId])
 }
 
 model ServiceRequest {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   vehicleId   String
   ownerId     String
   title       String
   description String
-  urgency     String   // 'low' | 'medium' | 'high' | 'urgent'
-  status      String   @default("open") // 'open' | 'quoted' | 'accepted' | 'in_progress' | 'completed' | 'cancelled'
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  urgency     String    // 'low' | 'medium' | 'high' | 'urgent'
+  status      String    @default("open") // 'open' | 'quoted' | 'accepted' | 'in_progress' | 'completed' | 'cancelled'
+  imageUrls   String[]  @default([])
+  deletedAt   DateTime? // Soft delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relations
   vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
@@ -104,6 +129,10 @@ model ServiceRequest {
   jobs    Job[]
 
   @@map("service_requests")
+  @@index([vehicleId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([status, createdAt])
 }
 
 model Quote {
@@ -125,6 +154,8 @@ model Quote {
   jobs     Job[]
 
   @@map("quotes")
+  @@index([requestId])
+  @@index([providerId])
 }
 
 model Job {
@@ -145,8 +176,14 @@ model Job {
   provider User             @relation("JobProvider", fields: [providerId], references: [id], onDelete: Cascade)
   owner    User             @relation("JobOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   payments Payment[]
+  conversation Conversation?
+  review   Review?
 
   @@map("jobs")
+  @@index([quoteId])
+  @@index([requestId])
+  @@index([providerId])
+  @@index([ownerId])
 }
 
 model Payment {
@@ -167,6 +204,9 @@ model Payment {
   provider User @relation("PaymentProvider", fields: [providerId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+  @@index([jobId])
+  @@index([ownerId])
+  @@index([providerId])
 }
 
 model Service {
@@ -198,6 +238,7 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+  @@index([userId])
 }
 
 model Activity {
@@ -212,6 +253,7 @@ model Activity {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("activities")
+  @@index([userId])
 }
 
 model MaintenanceRecord {
@@ -230,4 +272,82 @@ model MaintenanceRecord {
   vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@map("maintenance_records")
+  @@index([vehicleId])
+}
+
+model Conversation {
+  id             String    @id @default(uuid())
+  jobId          String    @unique
+  ownerId        String
+  providerId     String
+  lastMessageAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  job      Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  owner    User      @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  provider User      @relation("ConversationProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@map("conversations")
+  @@index([ownerId])
+  @@index([providerId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model Review {
+  id          String    @id @default(uuid())
+  jobId       String    @unique
+  providerId  String
+  ownerId     String
+  rating      Int       // 1-5 stars
+  comment     String?
+  response    String?   // Provider's response to review
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  job      Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  provider User @relation("ProviderReviews", fields: [providerId], references: [id], onDelete: Cascade)
+  owner    User @relation("OwnerReviews", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+  @@index([providerId])
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String?  // User who performed the action
+  entityType    String   // 'User', 'Vehicle', 'ServiceRequest', 'Quote', 'Job', etc.
+  entityId      String   // ID of the affected entity
+  action        String   // 'CREATE', 'UPDATE', 'DELETE', 'SOFT_DELETE'
+  changes       Json?    // Detailed changes (before/after)
+  metadata      Json?    // Additional context (IP, user agent, etc.)
+  createdAt     DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
 }

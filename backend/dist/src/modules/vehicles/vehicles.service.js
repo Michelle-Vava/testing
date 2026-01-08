@@ -61,10 +61,10 @@ let VehiclesService = class VehiclesService {
             },
         });
         if (!vehicle) {
-            throw new common_1.NotFoundException('Vehicle not found');
+            throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
         }
         if (vehicle.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only access your own vehicles');
+            throw new common_1.ForbiddenException(`Access denied: Vehicle ${id} belongs to another user`);
         }
         return vehicle;
     }
@@ -73,10 +73,10 @@ let VehiclesService = class VehiclesService {
             where: { id },
         });
         if (!vehicle) {
-            throw new common_1.NotFoundException('Vehicle not found');
+            throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
         }
         if (vehicle.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only update your own vehicles');
+            throw new common_1.ForbiddenException(`Update denied: Vehicle ${id} belongs to another user`);
         }
         return this.prisma.vehicle.update({
             where: { id },
@@ -88,29 +88,60 @@ let VehiclesService = class VehiclesService {
             where: { id },
         });
         if (!vehicle) {
-            throw new common_1.NotFoundException('Vehicle not found');
+            throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
         }
         if (vehicle.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only delete your own vehicles');
+            throw new common_1.ForbiddenException(`Delete denied: Vehicle ${id} belongs to another user`);
         }
         await this.prisma.vehicle.delete({
             where: { id },
         });
-        return { message: 'Vehicle deleted successfully' };
+        return { message: `Vehicle ${vehicle.make} ${vehicle.model} deleted successfully` };
     }
     async updateMileage(id, userId, mileage) {
         const vehicle = await this.prisma.vehicle.findUnique({
             where: { id },
         });
         if (!vehicle) {
-            throw new common_1.NotFoundException('Vehicle not found');
+            throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
         }
         if (vehicle.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only update your own vehicles');
+            throw new common_1.ForbiddenException(`Update denied: Vehicle ${id} belongs to another user`);
         }
         return this.prisma.vehicle.update({
             where: { id },
             data: { mileage },
+        });
+    }
+    async addImages(id, imageUrls) {
+        const vehicle = await this.prisma.vehicle.findUnique({
+            where: { id },
+        });
+        if (!vehicle) {
+            throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
+        }
+        return this.prisma.vehicle.update({
+            where: { id },
+            data: {
+                imageUrls: {
+                    push: imageUrls,
+                },
+            },
+        });
+    }
+    async removeImage(id, imageUrl) {
+        const vehicle = await this.prisma.vehicle.findUnique({
+            where: { id },
+        });
+        if (!vehicle) {
+            throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
+        }
+        const updatedImageUrls = vehicle.imageUrls.filter(url => url !== imageUrl);
+        return this.prisma.vehicle.update({
+            where: { id },
+            data: {
+                imageUrls: updatedImageUrls,
+            },
         });
     }
 };

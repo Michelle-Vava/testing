@@ -1,5 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SocketProvider } from '../contexts/SocketContext';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,8 +15,12 @@ const queryClient = new QueryClient({
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SocketProvider>
+          {children}
+        </SocketProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };

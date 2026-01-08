@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as HelpRouteImport } from './routes/help'
@@ -16,17 +17,23 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MessagesIndexRouteImport } from './routes/messages/index'
 import { Route as ProviderProviderSetupRouteImport } from './routes/provider/provider-setup'
+import { Route as ProviderOnboardingRouteImport } from './routes/provider/onboarding'
 import { Route as ProviderLayoutRouteImport } from './routes/provider/_layout'
-import { Route as OwnerSettingsRouteImport } from './routes/owner/settings'
 import { Route as OwnerOwnerSetupRouteImport } from './routes/owner/owner-setup'
 import { Route as OwnerLayoutRouteImport } from './routes/owner/_layout'
+import { Route as MessagesConversationIdRouteImport } from './routes/messages/$conversationId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AdminLayoutRouteImport } from './routes/admin/_layout'
+import { Route as ProviderLayoutProfileRouteImport } from './routes/provider/_layout/profile'
+import { Route as ProviderLayoutPaymentsRouteImport } from './routes/provider/_layout/payments'
 import { Route as ProviderLayoutDashboardRouteImport } from './routes/provider/_layout/dashboard'
+import { Route as OwnerLayoutSettingsRouteImport } from './routes/owner/_layout/settings'
 import { Route as OwnerLayoutNotificationsRouteImport } from './routes/owner/_layout/notifications'
 import { Route as OwnerLayoutDashboardRouteImport } from './routes/owner/_layout/dashboard'
 import { Route as AdminLayoutDashboardRouteImport } from './routes/admin/_layout/dashboard'
@@ -44,6 +51,11 @@ import { Route as OwnerLayoutRequestsRequestIdRouteImport } from './routes/owner
 import { Route as OwnerLayoutProvidersProviderIdRouteImport } from './routes/owner/_layout/providers/$providerId'
 import { Route as OwnerLayoutJobsJobIdRouteImport } from './routes/owner/_layout/jobs/$jobId'
 
+const UnauthorizedRoute = UnauthorizedRouteImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -79,19 +91,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderProviderSetupRoute = ProviderProviderSetupRouteImport.update({
   id: '/provider/provider-setup',
   path: '/provider/provider-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProviderOnboardingRoute = ProviderOnboardingRouteImport.update({
+  id: '/provider/onboarding',
+  path: '/provider/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderLayoutRoute = ProviderLayoutRouteImport.update({
   id: '/provider/_layout',
   path: '/provider',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OwnerSettingsRoute = OwnerSettingsRouteImport.update({
-  id: '/owner/settings',
-  path: '/owner/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OwnerOwnerSetupRoute = OwnerOwnerSetupRouteImport.update({
@@ -102,6 +119,11 @@ const OwnerOwnerSetupRoute = OwnerOwnerSetupRouteImport.update({
 const OwnerLayoutRoute = OwnerLayoutRouteImport.update({
   id: '/owner/_layout',
   path: '/owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
+  id: '/messages/$conversationId',
+  path: '/messages/$conversationId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
@@ -124,15 +146,35 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLayoutRoute = AdminLayoutRouteImport.update({
   id: '/admin/_layout',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProviderLayoutProfileRoute = ProviderLayoutProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ProviderLayoutRoute,
+} as any)
+const ProviderLayoutPaymentsRoute = ProviderLayoutPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => ProviderLayoutRoute,
+} as any)
 const ProviderLayoutDashboardRoute = ProviderLayoutDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => ProviderLayoutRoute,
+} as any)
+const OwnerLayoutSettingsRoute = OwnerLayoutSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => OwnerLayoutRoute,
 } as any)
 const OwnerLayoutNotificationsRoute =
   OwnerLayoutNotificationsRouteImport.update({
@@ -231,20 +273,27 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/admin': typeof AdminLayoutRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/owner': typeof OwnerLayoutRouteWithChildren
   '/owner/owner-setup': typeof OwnerOwnerSetupRoute
-  '/owner/settings': typeof OwnerSettingsRoute
   '/provider': typeof ProviderLayoutRouteWithChildren
+  '/provider/onboarding': typeof ProviderOnboardingRoute
   '/provider/provider-setup': typeof ProviderProviderSetupRoute
+  '/messages': typeof MessagesIndexRoute
   '/admin/dashboard': typeof AdminLayoutDashboardRoute
   '/owner/dashboard': typeof OwnerLayoutDashboardRoute
   '/owner/notifications': typeof OwnerLayoutNotificationsRoute
+  '/owner/settings': typeof OwnerLayoutSettingsRoute
   '/provider/dashboard': typeof ProviderLayoutDashboardRoute
+  '/provider/payments': typeof ProviderLayoutPaymentsRoute
+  '/provider/profile': typeof ProviderLayoutProfileRoute
   '/owner/jobs/$jobId': typeof OwnerLayoutJobsJobIdRoute
   '/owner/providers/$providerId': typeof OwnerLayoutProvidersProviderIdRoute
   '/owner/requests/$requestId': typeof OwnerLayoutRequestsRequestIdRoute
@@ -267,20 +316,27 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/admin': typeof AdminLayoutRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/owner': typeof OwnerLayoutRouteWithChildren
   '/owner/owner-setup': typeof OwnerOwnerSetupRoute
-  '/owner/settings': typeof OwnerSettingsRoute
   '/provider': typeof ProviderLayoutRouteWithChildren
+  '/provider/onboarding': typeof ProviderOnboardingRoute
   '/provider/provider-setup': typeof ProviderProviderSetupRoute
+  '/messages': typeof MessagesIndexRoute
   '/admin/dashboard': typeof AdminLayoutDashboardRoute
   '/owner/dashboard': typeof OwnerLayoutDashboardRoute
   '/owner/notifications': typeof OwnerLayoutNotificationsRoute
+  '/owner/settings': typeof OwnerLayoutSettingsRoute
   '/provider/dashboard': typeof ProviderLayoutDashboardRoute
+  '/provider/payments': typeof ProviderLayoutPaymentsRoute
+  '/provider/profile': typeof ProviderLayoutProfileRoute
   '/owner/jobs/$jobId': typeof OwnerLayoutJobsJobIdRoute
   '/owner/providers/$providerId': typeof OwnerLayoutProvidersProviderIdRoute
   '/owner/requests/$requestId': typeof OwnerLayoutRequestsRequestIdRoute
@@ -304,20 +360,27 @@ export interface FileRoutesById {
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/admin/_layout': typeof AdminLayoutRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/owner/_layout': typeof OwnerLayoutRouteWithChildren
   '/owner/owner-setup': typeof OwnerOwnerSetupRoute
-  '/owner/settings': typeof OwnerSettingsRoute
   '/provider/_layout': typeof ProviderLayoutRouteWithChildren
+  '/provider/onboarding': typeof ProviderOnboardingRoute
   '/provider/provider-setup': typeof ProviderProviderSetupRoute
+  '/messages/': typeof MessagesIndexRoute
   '/admin/_layout/dashboard': typeof AdminLayoutDashboardRoute
   '/owner/_layout/dashboard': typeof OwnerLayoutDashboardRoute
   '/owner/_layout/notifications': typeof OwnerLayoutNotificationsRoute
+  '/owner/_layout/settings': typeof OwnerLayoutSettingsRoute
   '/provider/_layout/dashboard': typeof ProviderLayoutDashboardRoute
+  '/provider/_layout/payments': typeof ProviderLayoutPaymentsRoute
+  '/provider/_layout/profile': typeof ProviderLayoutProfileRoute
   '/owner/_layout/jobs/$jobId': typeof OwnerLayoutJobsJobIdRoute
   '/owner/_layout/providers/$providerId': typeof OwnerLayoutProvidersProviderIdRoute
   '/owner/_layout/requests/$requestId': typeof OwnerLayoutRequestsRequestIdRoute
@@ -342,20 +405,27 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/unauthorized'
     | '/admin'
+    | '/auth/callback'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/messages/$conversationId'
     | '/owner'
     | '/owner/owner-setup'
-    | '/owner/settings'
     | '/provider'
+    | '/provider/onboarding'
     | '/provider/provider-setup'
+    | '/messages'
     | '/admin/dashboard'
     | '/owner/dashboard'
     | '/owner/notifications'
+    | '/owner/settings'
     | '/provider/dashboard'
+    | '/provider/payments'
+    | '/provider/profile'
     | '/owner/jobs/$jobId'
     | '/owner/providers/$providerId'
     | '/owner/requests/$requestId'
@@ -378,20 +448,27 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/unauthorized'
     | '/admin'
+    | '/auth/callback'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/messages/$conversationId'
     | '/owner'
     | '/owner/owner-setup'
-    | '/owner/settings'
     | '/provider'
+    | '/provider/onboarding'
     | '/provider/provider-setup'
+    | '/messages'
     | '/admin/dashboard'
     | '/owner/dashboard'
     | '/owner/notifications'
+    | '/owner/settings'
     | '/provider/dashboard'
+    | '/provider/payments'
+    | '/provider/profile'
     | '/owner/jobs/$jobId'
     | '/owner/providers/$providerId'
     | '/owner/requests/$requestId'
@@ -414,20 +491,27 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/unauthorized'
     | '/admin/_layout'
+    | '/auth/callback'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/messages/$conversationId'
     | '/owner/_layout'
     | '/owner/owner-setup'
-    | '/owner/settings'
     | '/provider/_layout'
+    | '/provider/onboarding'
     | '/provider/provider-setup'
+    | '/messages/'
     | '/admin/_layout/dashboard'
     | '/owner/_layout/dashboard'
     | '/owner/_layout/notifications'
+    | '/owner/_layout/settings'
     | '/provider/_layout/dashboard'
+    | '/provider/_layout/payments'
+    | '/provider/_layout/profile'
     | '/owner/_layout/jobs/$jobId'
     | '/owner/_layout/providers/$providerId'
     | '/owner/_layout/requests/$requestId'
@@ -451,20 +535,31 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  UnauthorizedRoute: typeof UnauthorizedRoute
   AdminLayoutRoute: typeof AdminLayoutRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  MessagesConversationIdRoute: typeof MessagesConversationIdRoute
   OwnerLayoutRoute: typeof OwnerLayoutRouteWithChildren
   OwnerOwnerSetupRoute: typeof OwnerOwnerSetupRoute
-  OwnerSettingsRoute: typeof OwnerSettingsRoute
   ProviderLayoutRoute: typeof ProviderLayoutRouteWithChildren
+  ProviderOnboardingRoute: typeof ProviderOnboardingRoute
   ProviderProviderSetupRoute: typeof ProviderProviderSetupRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -514,6 +609,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/provider-setup': {
       id: '/provider/provider-setup'
       path: '/provider/provider-setup'
@@ -521,18 +623,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProviderProviderSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/provider/onboarding': {
+      id: '/provider/onboarding'
+      path: '/provider/onboarding'
+      fullPath: '/provider/onboarding'
+      preLoaderRoute: typeof ProviderOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/_layout': {
       id: '/provider/_layout'
       path: '/provider'
       fullPath: '/provider'
       preLoaderRoute: typeof ProviderLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/owner/settings': {
-      id: '/owner/settings'
-      path: '/owner/settings'
-      fullPath: '/owner/settings'
-      preLoaderRoute: typeof OwnerSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/owner/owner-setup': {
@@ -547,6 +649,13 @@ declare module '@tanstack/react-router' {
       path: '/owner'
       fullPath: '/owner'
       preLoaderRoute: typeof OwnerLayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/$conversationId': {
+      id: '/messages/$conversationId'
+      path: '/messages/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/signup': {
@@ -577,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/_layout': {
       id: '/admin/_layout'
       path: '/admin'
@@ -584,12 +700,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/provider/_layout/profile': {
+      id: '/provider/_layout/profile'
+      path: '/profile'
+      fullPath: '/provider/profile'
+      preLoaderRoute: typeof ProviderLayoutProfileRouteImport
+      parentRoute: typeof ProviderLayoutRoute
+    }
+    '/provider/_layout/payments': {
+      id: '/provider/_layout/payments'
+      path: '/payments'
+      fullPath: '/provider/payments'
+      preLoaderRoute: typeof ProviderLayoutPaymentsRouteImport
+      parentRoute: typeof ProviderLayoutRoute
+    }
     '/provider/_layout/dashboard': {
       id: '/provider/_layout/dashboard'
       path: '/dashboard'
       fullPath: '/provider/dashboard'
       preLoaderRoute: typeof ProviderLayoutDashboardRouteImport
       parentRoute: typeof ProviderLayoutRoute
+    }
+    '/owner/_layout/settings': {
+      id: '/owner/_layout/settings'
+      path: '/settings'
+      fullPath: '/owner/settings'
+      preLoaderRoute: typeof OwnerLayoutSettingsRouteImport
+      parentRoute: typeof OwnerLayoutRoute
     }
     '/owner/_layout/notifications': {
       id: '/owner/_layout/notifications'
@@ -721,6 +858,7 @@ const AdminLayoutRouteWithChildren = AdminLayoutRoute._addFileChildren(
 interface OwnerLayoutRouteChildren {
   OwnerLayoutDashboardRoute: typeof OwnerLayoutDashboardRoute
   OwnerLayoutNotificationsRoute: typeof OwnerLayoutNotificationsRoute
+  OwnerLayoutSettingsRoute: typeof OwnerLayoutSettingsRoute
   OwnerLayoutJobsJobIdRoute: typeof OwnerLayoutJobsJobIdRoute
   OwnerLayoutProvidersProviderIdRoute: typeof OwnerLayoutProvidersProviderIdRoute
   OwnerLayoutRequestsRequestIdRoute: typeof OwnerLayoutRequestsRequestIdRoute
@@ -736,6 +874,7 @@ interface OwnerLayoutRouteChildren {
 const OwnerLayoutRouteChildren: OwnerLayoutRouteChildren = {
   OwnerLayoutDashboardRoute: OwnerLayoutDashboardRoute,
   OwnerLayoutNotificationsRoute: OwnerLayoutNotificationsRoute,
+  OwnerLayoutSettingsRoute: OwnerLayoutSettingsRoute,
   OwnerLayoutJobsJobIdRoute: OwnerLayoutJobsJobIdRoute,
   OwnerLayoutProvidersProviderIdRoute: OwnerLayoutProvidersProviderIdRoute,
   OwnerLayoutRequestsRequestIdRoute: OwnerLayoutRequestsRequestIdRoute,
@@ -754,6 +893,8 @@ const OwnerLayoutRouteWithChildren = OwnerLayoutRoute._addFileChildren(
 
 interface ProviderLayoutRouteChildren {
   ProviderLayoutDashboardRoute: typeof ProviderLayoutDashboardRoute
+  ProviderLayoutPaymentsRoute: typeof ProviderLayoutPaymentsRoute
+  ProviderLayoutProfileRoute: typeof ProviderLayoutProfileRoute
   ProviderLayoutJobsJobIdRoute: typeof ProviderLayoutJobsJobIdRoute
   ProviderLayoutRequestsRequestIdRoute: typeof ProviderLayoutRequestsRequestIdRoute
   ProviderLayoutJobsIndexRoute: typeof ProviderLayoutJobsIndexRoute
@@ -761,6 +902,8 @@ interface ProviderLayoutRouteChildren {
 
 const ProviderLayoutRouteChildren: ProviderLayoutRouteChildren = {
   ProviderLayoutDashboardRoute: ProviderLayoutDashboardRoute,
+  ProviderLayoutPaymentsRoute: ProviderLayoutPaymentsRoute,
+  ProviderLayoutProfileRoute: ProviderLayoutProfileRoute,
   ProviderLayoutJobsJobIdRoute: ProviderLayoutJobsJobIdRoute,
   ProviderLayoutRequestsRequestIdRoute: ProviderLayoutRequestsRequestIdRoute,
   ProviderLayoutJobsIndexRoute: ProviderLayoutJobsIndexRoute,
@@ -778,16 +921,20 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  UnauthorizedRoute: UnauthorizedRoute,
   AdminLayoutRoute: AdminLayoutRouteWithChildren,
+  AuthCallbackRoute: AuthCallbackRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignupRoute: AuthSignupRoute,
+  MessagesConversationIdRoute: MessagesConversationIdRoute,
   OwnerLayoutRoute: OwnerLayoutRouteWithChildren,
   OwnerOwnerSetupRoute: OwnerOwnerSetupRoute,
-  OwnerSettingsRoute: OwnerSettingsRoute,
   ProviderLayoutRoute: ProviderLayoutRouteWithChildren,
+  ProviderOnboardingRoute: ProviderOnboardingRoute,
   ProviderProviderSetupRoute: ProviderProviderSetupRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

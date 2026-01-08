@@ -11,7 +11,11 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const throttler_1 = require("@nestjs/throttler");
 const core_1 = require("@nestjs/core");
+const nestjs_pino_1 = require("nestjs-pino");
+const node_crypto_1 = require("node:crypto");
 const database_module_1 = require("./infrastructure/database/database.module");
+const shared_module_1 = require("./shared/shared.module");
+const logger_user_interceptor_1 = require("./shared/interceptors/logger-user.interceptor");
 const auth_module_1 = require("./modules/auth/auth.module");
 const vehicles_module_1 = require("./modules/vehicles/vehicles.module");
 const requests_module_1 = require("./modules/requests/requests.module");
@@ -23,16 +27,12 @@ const services_module_1 = require("./modules/services/services.module");
 const notifications_module_1 = require("./modules/notifications/notifications.module");
 const activities_module_1 = require("./modules/activities/activities.module");
 const maintenance_module_1 = require("./modules/maintenance/maintenance.module");
+const messages_module_1 = require("./modules/messages/messages.module");
+const reviews_module_1 = require("./modules/reviews/reviews.module");
 const health_module_1 = require("./health/health.module");
 const platform_module_1 = require("./platform/platform.module");
-const logger_middleware_1 = require("./shared/middleware/logger.middleware");
 const env_validation_1 = require("./config/env.validation");
 let AppModule = class AppModule {
-    configure(consumer) {
-        consumer
-            .apply(logger_middleware_1.LoggerMiddleware)
-            .forRoutes('*');
-    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
@@ -47,7 +47,59 @@ exports.AppModule = AppModule = __decorate([
                     ttl: 60000,
                     limit: 100,
                 }]),
+            nestjs_pino_1.LoggerModule.forRoot({
+                pinoHttp: {
+                    genReqId: (req, res) => {
+                        const existingID = req.id ?? req.headers['x-request-id'];
+                        if (existingID)
+                            return existingID;
+                        const id = (0, node_crypto_1.randomUUID)();
+                        res.setHeader('X-Request-Id', id);
+                        return id;
+                    },
+                    transport: process.env.NODE_ENV !== 'production' ? {
+                        target: 'pino-pretty',
+                        options: {
+                            colorize: true,
+                            translateTime: 'SYS:HH:MM:ss',
+                            ignore: 'pid,hostname,req,res',
+                            singleLine: false,
+                            messageFormat: '{context} - {msg}',
+                        },
+                    } : undefined,
+                    level: process.env.LOG_LEVEL || 'info',
+                    autoLogging: false,
+                    serializers: {
+                        req: (req) => ({
+                            id: req.id,
+                            method: req.method,
+                            url: req.url,
+                            headers: {
+                                host: req.headers.host,
+                                'user-agent': req.headers['user-agent'],
+                                'content-type': req.headers['content-type'],
+                            },
+                            remoteAddress: req.remoteAddress,
+                            remotePort: req.remotePort,
+                        }),
+                        res: (res) => ({
+                            statusCode: res.statusCode,
+                            headers: {
+                                'content-type': res.headers['content-type'],
+                                'x-request-id': res.headers['x-request-id'],
+                            },
+                        }),
+                    },
+                    customLogLevel: (req, res, err) => {
+                        if (res.statusCode >= 500 || err) {
+                            return 'error';
+                        }
+                        return 'info';
+                    },
+                },
+            }),
             database_module_1.DatabaseModule,
+            shared_module_1.SharedModule,
             auth_module_1.AuthModule,
             vehicles_module_1.VehiclesModule,
             requests_module_1.RequestsModule,
@@ -59,6 +111,8 @@ exports.AppModule = AppModule = __decorate([
             notifications_module_1.NotificationsModule,
             activities_module_1.ActivitiesModule,
             maintenance_module_1.MaintenanceModule,
+            messages_module_1.MessagesModule,
+            reviews_module_1.ReviewsModule,
             health_module_1.HealthModule,
             platform_module_1.PlatformModule,
         ],
@@ -66,6 +120,10 @@ exports.AppModule = AppModule = __decorate([
             {
                 provide: core_1.APP_GUARD,
                 useClass: throttler_1.ThrottlerGuard,
+            },
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useClass: logger_user_interceptor_1.LoggerUserInterceptor,
             },
         ],
     })

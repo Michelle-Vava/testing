@@ -1,20 +1,24 @@
-import { useParams } from '@tanstack/react-router';
+import { useParams, Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useJob } from '@/features/jobs/hooks/use-jobs';
+import { useJob, useJobs } from '@/features/jobs/hooks/use-jobs';
 import { formatCurrency, formatShortDate } from '@/utils/formatters';
-import { User, Phone, Mail, Shield, CheckCircle, PlayCircle } from 'lucide-react';
+import { User, Phone, Mail, Shield, CheckCircle, PlayCircle, Loader2, MessageSquare } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 
 export function ProviderJobDetail() {
   const { jobId } = useParams({ from: '/provider/_layout/jobs/$jobId' });
   const { job, isLoading } = useJob(jobId);
+  const { updateJobStatus, isUpdatingStatus } = useJobs();
+  const toast = useToast();
 
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto">
         <Card>
           <CardContent className="text-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-600 mb-4" />
             <p className="text-gray-500">Loading job details...</p>
           </CardContent>
         </Card>
@@ -36,7 +40,7 @@ export function ProviderJobDetail() {
 
   const request = job.request;
   const vehicle = request.vehicle;
-  const owner = job.owner || { name: 'N/A', email: '', phone: '' };
+  const owner = job.owner || { name: 'Customer', email: '', phone: '' }; // Fallback if owner is not expanded
   const quote = job.quote;
 
   const getStatusColor = (status: string) => {
@@ -54,28 +58,72 @@ export function ProviderJobDetail() {
     }
   };
 
-  const handleStartJob = () => {
-    alert('Start job functionality coming soon!');
-    // Will call updateJobStatus('in_progress')
+  const handleStartJob = async () => {
+    try {
+      await updateJobStatus({ id: jobId, status: 'in_progress' });
+      toast.success('Job started! Good luck.');
+    } catch (error) {
+       console.error(error);
+       toast.error('Failed to start job.');
+    }
   };
 
-  const handleCompleteJob = () => {
-    alert('Complete job functionality coming soon!');
-    // Will call updateJobStatus('completed')
+  const handleCompleteJob = async () => {
+     try {
+      await updateJobStatus({ id: jobId, status: 'completed' });
+      toast.success('Job marked as complete!');
+    } catch (error) {
+       console.error(error);
+       toast.error('Failed to complete job.');
+    }
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">{request.title}</h1>
-          <Badge className={getStatusColor(job.status)}>
-            {job.status.replace('_', ' ')}
-          </Badge>
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">{request.title}</h1>
+            <Badge className={getStatusColor(job.status)}>
+              {job.status.replace('_', ' ')}
+            </Badge>
+          </div>
+          <p className="text-gray-600">
+            {vehicle.year} {vehicle.make} {vehicle.model} • Job created {formatShortDate(job.createdAt)}
+          </p>
         </div>
-        <p className="text-gray-600">
-          {vehicle.year} {vehicle.make} {vehicle.model} • Job created {formatShortDate(job.createdAt)}
-        </p>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          {job.status === 'pending' && (
+            <Button 
+              onClick={handleStartJob} 
+              disabled={isUpdatingStatus}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <PlayCircle className="w-4 h-4 mr-2" />}
+              Start Job
+            </Button>
+          )}
+          
+          {job.status === 'in_progress' && (
+             <Button 
+              onClick={handleCompleteJob} 
+              disabled={isUpdatingStatus}
+              className="bg-green-600 hover:bg-green-700"
+             >
+               {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+               Complete Job
+             </Button>
+          )}
+
+          {job.status === 'completed' && (
+             <Button variant="outline" disabled className="text-green-600 border-green-200 bg-green-50 opacity-100">
+               <CheckCircle className="w-4 h-4 mr-2" />
+               Job Completed
+             </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -240,6 +288,13 @@ export function ProviderJobDetail() {
                   Call Customer
                 </Button>
               )}
+              
+              <Link to="/messages" search={{ jobId }}>
+                <Button fullWidth variant="outline">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Send Message
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

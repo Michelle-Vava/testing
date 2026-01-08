@@ -28,6 +28,10 @@ let AllExceptionsFilter = class AllExceptionsFilter {
             message: typeof message === 'string' ? message : message.message || message,
             error: typeof message === 'object' ? message.error : undefined,
         };
+        if (process.env.NODE_ENV === 'production' && status === common_1.HttpStatus.INTERNAL_SERVER_ERROR) {
+            errorResponse.message = 'Internal server error';
+            errorResponse.error = undefined;
+        }
         const reset = '\x1b[0m';
         const red = '\x1b[31m';
         const yellow = '\x1b[33m';

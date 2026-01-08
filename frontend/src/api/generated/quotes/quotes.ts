@@ -25,9 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreateQuoteDto,
-  QuotesControllerCreate201,
-  QuotesControllerFindByRequest200Item
+  CreateQuoteDto
 } from '.././model';
 
 import { customInstance } from '../../../lib/axios';
@@ -46,7 +44,7 @@ export const quotesControllerFindByRequest = (
 ) => {
       
       
-      return customInstance<QuotesControllerFindByRequest200Item[]>(
+      return customInstance<void>(
       {url: `/quotes/request/${requestId}`, method: 'GET', signal
     },
       options);
@@ -130,7 +128,7 @@ export function useQuotesControllerFindByRequest<TData = Awaited<ReturnType<type
 
 
 /**
- * @summary Create a new quote (providers only)
+ * @summary Create a new quote (active providers only)
  */
 export const quotesControllerCreate = (
     createQuoteDto: CreateQuoteDto,
@@ -138,7 +136,7 @@ export const quotesControllerCreate = (
 ) => {
       
       
-      return customInstance<QuotesControllerCreate201>(
+      return customInstance<void>(
       {url: `/quotes`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createQuoteDto, signal
@@ -178,7 +176,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type QuotesControllerCreateMutationError = unknown
 
     /**
- * @summary Create a new quote (providers only)
+ * @summary Create a new quote (active providers only)
  */
 export const useQuotesControllerCreate = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quotesControllerCreate>>, TError,{data: CreateQuoteDto}, TContext>, request?: SecondParameter<typeof customInstance>}

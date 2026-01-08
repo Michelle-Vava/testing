@@ -21,10 +21,11 @@ class VehicleResponseDto {
     vin;
     licensePlate;
     mileage;
+    imageUrls;
     createdAt;
     updatedAt;
     static _OPENAPI_METADATA_FACTORY() {
-        return { id: { required: true, type: () => String }, ownerId: { required: true, type: () => String }, make: { required: true, type: () => String }, model: { required: true, type: () => String }, year: { required: true, type: () => Number }, vin: { required: true, type: () => String }, licensePlate: { required: true, type: () => String, nullable: true }, mileage: { required: true, type: () => Number, nullable: true }, createdAt: { required: true, type: () => Date }, updatedAt: { required: true, type: () => Date } };
+        return { id: { required: true, type: () => String }, ownerId: { required: true, type: () => String }, make: { required: true, type: () => String }, model: { required: true, type: () => String }, year: { required: true, type: () => Number }, vin: { required: true, type: () => String }, licensePlate: { required: true, type: () => String, nullable: true }, mileage: { required: true, type: () => Number, nullable: true }, imageUrls: { required: false, type: () => [String] }, createdAt: { required: true, type: () => Date }, updatedAt: { required: true, type: () => Date } };
     }
 }
 exports.VehicleResponseDto = VehicleResponseDto;
@@ -60,6 +61,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 45000, required: false, nullable: true }),
     __metadata("design:type", Object)
 ], VehicleResponseDto.prototype, "mileage", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ type: [String], example: ['https://example.com/image1.jpg'], required: false }),
+    __metadata("design:type", Array)
+], VehicleResponseDto.prototype, "imageUrls", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Date)

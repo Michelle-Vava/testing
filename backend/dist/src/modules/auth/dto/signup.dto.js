@@ -19,7 +19,7 @@ class SignupDto {
     phone;
     roles;
     static _OPENAPI_METADATA_FACTORY() {
-        return { name: { required: true, type: () => String }, email: { required: true, type: () => String, format: "email" }, password: { required: true, type: () => String, minLength: 6 }, phone: { required: false, type: () => String }, roles: { required: false, type: () => [String] } };
+        return { name: { required: true, type: () => String }, email: { required: true, type: () => String, format: "email" }, password: { required: true, type: () => String, minLength: 8, pattern: "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]/" }, phone: { required: false, type: () => String }, roles: { required: false, type: () => [String] } };
     }
 }
 exports.SignupDto = SignupDto;
@@ -34,7 +34,10 @@ __decorate([
 ], SignupDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(8, { message: 'Password must be at least 8 characters long' }),
+    (0, class_validator_1.Matches)(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+        message: 'Password must contain uppercase, lowercase, number, and special character (@$!%*?&)'
+    }),
     __metadata("design:type", String)
 ], SignupDto.prototype, "password", void 0);
 __decorate([

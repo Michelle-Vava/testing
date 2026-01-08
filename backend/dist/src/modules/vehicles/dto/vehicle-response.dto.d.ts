@@ -7,6 +7,7 @@ export declare class VehicleResponseDto {
     vin: string;
     licensePlate: string | null;
     mileage: number | null;
+    imageUrls?: string[];
     createdAt: Date;
     updatedAt: Date;
 }

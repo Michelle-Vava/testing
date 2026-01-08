@@ -4,38 +4,38 @@ export declare class ServicesController {
     constructor(servicesService: ServicesService);
     findAll(): Promise<{
         id: string;
+        createdAt: Date;
         name: string;
-        slug: string;
         description: string | null;
+        updatedAt: Date;
+        slug: string;
         icon: string | null;
         isPopular: boolean;
         isActive: boolean;
         displayOrder: number;
-        createdAt: Date;
-        updatedAt: Date;
     }[]>;
     findPopular(): Promise<{
         id: string;
+        createdAt: Date;
         name: string;
-        slug: string;
         description: string | null;
+        updatedAt: Date;
+        slug: string;
         icon: string | null;
         isPopular: boolean;
         isActive: boolean;
         displayOrder: number;
-        createdAt: Date;
-        updatedAt: Date;
     }[]>;
     findOne(id: string): Promise<{
         id: string;
+        createdAt: Date;
         name: string;
-        slug: string;
         description: string | null;
+        updatedAt: Date;
+        slug: string;
         icon: string | null;
         isPopular: boolean;
         isActive: boolean;
         displayOrder: number;
-        createdAt: Date;
-        updatedAt: Date;
     } | null>;
 }

@@ -6,9 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface UpdateVehicleDto {
-  licensePlate?: string;
-  color?: string;
-  /** @minimum 0 */
-  mileage?: number;
-}
+export interface UpdateVehicleDto { [key: string]: unknown }

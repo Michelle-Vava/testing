@@ -4,6 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal, ModalFooter } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useRequest, useQuotes } from '@/features/requests/hooks/use-requests';
 import { formatCurrency, formatShortDate, getUrgencyColor } from '@/utils/formatters';
 import { useToast } from '@/contexts/ToastContext';
@@ -48,25 +53,25 @@ export function ProviderRequestDetail() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl">
+      <PageContainer maxWidth="4xl">
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-gray-500">Loading request details...</p>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!serviceRequest) {
     return (
-      <div className="max-w-4xl">
+      <PageContainer maxWidth="4xl">
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-gray-500">Request not found</p>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -79,18 +84,17 @@ export function ProviderRequestDetail() {
   const owner = (serviceRequest as any).owner || {};
 
   return (
-    <div className="max-w-5xl">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">{serviceRequest.title || 'Job Details'}</h1>
+    <PageContainer maxWidth="5xl">
+      <PageHeader
+        title={serviceRequest.title || 'Job Details'}
+        subtitle={`Posted by ${owner.name || 'Unknown'}`}
+        backLink={{ to: '/provider/jobs', label: 'Back to Jobs' }}
+        actions={
           <Badge className={getUrgencyColor(serviceRequest.urgency)}>
             {serviceRequest.urgency}
           </Badge>
-        </div>
-        <p className="text-gray-600">
-          Posted by {owner.name || 'Unknown'}
-        </p>
-      </div>
+        }
+      />
 
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <div className="md:col-span-2 space-y-6">
@@ -205,19 +209,19 @@ export function ProviderRequestDetail() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Label className="mb-2 block">
               Your quote price *
-            </label>
+            </Label>
             <div className="relative">
-              <span className="absolute left-3 top-2 text-gray-500 text-lg">$</span>
-              <input
+              <span className="absolute left-3 top-2 text-gray-500 text-sm flex h-full items-center mb-4">$</span>
+              <Input
                 type="number"
                 required
                 step="0.01"
                 min="0"
                 value={quoteAmount}
                 onChange={(e) => setQuoteAmount(e.target.value)}
-                className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                className="pl-7"
                 placeholder="0.00"
               />
             </div>
@@ -227,30 +231,28 @@ export function ProviderRequestDetail() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Label className="mb-2 block">
               How long will it take? *
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               required
               value={estimatedDuration}
               onChange={(e) => setEstimatedDuration(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
               placeholder="e.g., 2-3 hours, Same day, 1-2 days"
             />
             <p className="text-xs text-gray-600 mt-1">Be realistic with your time estimate</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Label className="mb-2 block">
               What's included in your quote? *
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               required
               value={quoteDescription}
               onChange={(e) => setQuoteDescription(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
               placeholder="Example: Full synthetic oil change with premium filter. Includes multi-point inspection, fluid top-off, and tire pressure check. All OEM-quality parts with 6-month warranty."
             />
             <p className="text-xs text-gray-600 mt-1">
@@ -259,14 +261,14 @@ export function ProviderRequestDetail() {
           </div>
 
           <div>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includesWarranty}
                 onChange={(e) => setIncludesWarranty(e.target.checked)}
-                className="rounded"
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
-              <span className="text-sm">Includes warranty</span>
+              <span className="text-sm font-medium text-gray-900">Includes warranty</span>
             </label>
           </div>
         </div>
@@ -283,6 +285,6 @@ export function ProviderRequestDetail() {
           </Button>
         </ModalFooter>
       </Modal>
-    </div>
+    </PageContainer>
   );
 }

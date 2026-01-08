@@ -23,9 +23,9 @@ interface LoginProps {
 
 export function Login({ onSwitchToSignup }: LoginProps) {
   const navigate = useNavigate();
-  const search = useSearch({ from: '/auth/login' }) as { role?: string };
-  const role = search?.role;
-  const { login } = useAuth();
+  const search = useSearch({ strict: false }) as { mode?: 'owner' | 'provider' };
+  const mode = search?.mode || 'owner';
+  const { login, user } = useAuth();
   const toast = useToast();
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
@@ -39,9 +39,21 @@ export function Login({ onSwitchToSignup }: LoginProps) {
 
   const onSubmit = async (formValues: LoginFormValues) => {
     try {
-      await login(formValues.email, formValues.password);
+      const loggedInUser = await login(formValues.email, formValues.password);
       toast.success('Welcome back!');
-      navigate({ to: ROUTES.OWNER_DASHBOARD });
+      
+      // Route based on mode and provider profile status
+      if (mode === 'provider') {
+        // User wants provider mode
+        if (loggedInUser.providerOnboardingComplete) {
+          navigate({ to: '/provider/dashboard' });
+        } else {
+          navigate({ to: '/provider/onboarding' });
+        }
+      } else {
+        // Default to owner dashboard
+        navigate({ to: ROUTES.OWNER_DASHBOARD });
+      }
     } catch (error: any) {
       const message = error.response?.data?.message || error.message;
       
@@ -58,7 +70,8 @@ export function Login({ onSwitchToSignup }: LoginProps) {
 
   return (
     <AuthFormLayout 
-      role={role}
+      mode={mode}
+      authType="login"
       title="Welcome back"
       subtitle="Compare verified quotes. No spam."
     >

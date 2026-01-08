@@ -1,12 +1,14 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PublicHeader } from '@/components/layout/public-header';
+import { NotFound } from '@/components/layout/not-found';
 import { AuthGateModal } from '@/routes/-components/auth-gate-modal';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 
 export const Route = createRootRoute({
   component: RootComponent,
+  notFoundComponent: NotFound,
 });
 
 function RootComponent() {
@@ -20,7 +22,7 @@ function RootComponent() {
 
   return (
     <ToastProvider>
-      <div className={showPublicHeader ? "min-h-screen bg-gray-50" : "h-screen overflow-hidden bg-slate-50"}>
+      <div className="min-h-screen bg-gray-50">
         {showPublicHeader && <PublicHeader />}
         <AnimatePresence mode="wait">
           <motion.div
@@ -29,7 +31,6 @@ function RootComponent() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className={showPublicHeader ? '' : 'h-full'}
           >
             <Outlet />
           </motion.div>

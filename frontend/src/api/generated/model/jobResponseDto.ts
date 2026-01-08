@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { JobResponseDtoStatus } from './jobResponseDtoStatus';
+import type { JobResponseDtoScheduledDate } from './jobResponseDtoScheduledDate';
+import type { JobResponseDtoCompletedAt } from './jobResponseDtoCompletedAt';
 
 export interface JobResponseDto {
   id: string;
@@ -19,9 +21,9 @@ export interface JobResponseDto {
   description: string;
   status: JobResponseDtoStatus;
   /** @nullable */
-  scheduledDate?: string | null;
+  scheduledDate?: JobResponseDtoScheduledDate;
   /** @nullable */
-  completedAt?: string | null;
+  completedAt?: JobResponseDtoCompletedAt;
   createdAt: string;
   updatedAt: string;
 }

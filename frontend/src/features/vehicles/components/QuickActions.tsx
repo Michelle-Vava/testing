@@ -7,6 +7,7 @@ interface QuickActionsProps {
   onCreateRequest: () => void;
   onUpdateMileage: () => void;
   onAddMaintenance: () => void;
+  onEditVehicle: () => void;
 }
 
 /**
@@ -15,7 +16,8 @@ interface QuickActionsProps {
 export function QuickActions({
   onCreateRequest,
   onUpdateMileage,
-  onAddMaintenance
+  onAddMaintenance,
+  onEditVehicle
 }: QuickActionsProps) {
   return (
     <Card>
@@ -42,6 +44,13 @@ export function QuickActions({
           onClick={onAddMaintenance}
         >
           Add Maintenance Record
+        </Button>
+        <Button 
+          variant="ghost" 
+          className="w-full text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          onClick={onEditVehicle}
+        >
+          Edit Vehicle Details
         </Button>
       </CardContent>
     </Card>

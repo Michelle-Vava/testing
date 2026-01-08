@@ -6,7 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface LoginDto {
-  email: string;
-  password: string;
-}
+export interface LoginDto { [key: string]: unknown }

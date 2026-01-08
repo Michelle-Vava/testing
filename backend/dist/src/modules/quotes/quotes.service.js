@@ -12,25 +12,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.QuotesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const email_service_1 = require("../../shared/services/email.service");
 const enums_1 = require("../../shared/enums");
+const quote_entity_1 = require("./entities/quote.entity");
 let QuotesService = class QuotesService {
     prisma;
-    constructor(prisma) {
+    notificationsService;
+    emailService;
+    constructor(prisma, notificationsService, emailService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
+        this.emailService = emailService;
     }
     async findByRequest(requestId, userId, userRoles) {
         const request = await this.prisma.serviceRequest.findUnique({
             where: { id: requestId },
         });
         if (!request) {
-            throw new common_1.NotFoundException('Service request not found');
+            throw new common_1.NotFoundException(`Service request with ID ${requestId} not found`);
         }
         const isOwner = request.ownerId === userId;
         const isProvider = userRoles.includes('provider');
         if (!isOwner && !isProvider) {
             throw new common_1.ForbiddenException('You do not have access to these quotes');
         }
-        return this.prisma.quote.findMany({
+        const quotes = await this.prisma.quote.findMany({
             where: { requestId },
             include: {
                 provider: {
@@ -44,6 +51,7 @@ let QuotesService = class QuotesService {
             },
             orderBy: { createdAt: 'desc' },
         });
+        return quotes.map(quote => new quote_entity_1.QuoteEntity(quote));
     }
     async create(userId, userRoles, quoteData) {
         if (!userRoles.includes('provider')) {
@@ -53,10 +61,10 @@ let QuotesService = class QuotesService {
             where: { id: quoteData.requestId },
         });
         if (!request) {
-            throw new common_1.NotFoundException('Service request not found');
+            throw new common_1.NotFoundException(`Service request with ID ${quoteData.requestId} not found`);
         }
         if (request.status === 'completed' || request.status === 'in_progress') {
-            throw new common_1.BadRequestException('This request is no longer accepting quotes');
+            throw new common_1.BadRequestException(`Service request ${quoteData.requestId} is no longer accepting quotes (status: ${request.status})`);
         }
         const quote = await this.prisma.quote.create({
             data: {
@@ -80,7 +88,23 @@ let QuotesService = class QuotesService {
                 data: { status: enums_1.RequestStatus.QUOTED },
             });
         }
-        return quote;
+        await this.notificationsService.create(request.ownerId, 'quote_received', 'New Quote Received', `You have received a new quote for your request: ${request.title}`, `/requests/${request.id}`);
+        const owner = await this.prisma.user.findUnique({
+            where: { id: request.ownerId },
+            select: { email: true, name: true },
+        });
+        if (owner) {
+            await this.emailService.sendQuoteReceivedEmail({
+                ownerEmail: owner.email,
+                ownerName: owner.name,
+                providerName: quote.provider.name,
+                requestTitle: request.title,
+                amount: quote.amount.toString(),
+                estimatedDuration: quote.estimatedDuration,
+                requestId: request.id,
+            });
+        }
+        return new quote_entity_1.QuoteEntity(quote);
     }
     async accept(quoteId, userId) {
         const quote = await this.prisma.quote.findUnique({
@@ -90,13 +114,13 @@ let QuotesService = class QuotesService {
             },
         });
         if (!quote) {
-            throw new common_1.NotFoundException('Quote not found');
+            throw new common_1.NotFoundException(`Quote with ID ${quoteId} not found`);
         }
         if (quote.request.ownerId !== userId) {
-            throw new common_1.ForbiddenException('Only the request owner can accept quotes');
+            throw new common_1.ForbiddenException(`Access denied: Only the owner of service request ${quote.requestId} can accept quotes`);
         }
         if (quote.status !== enums_1.QuoteStatus.PENDING) {
-            throw new common_1.BadRequestException('This quote cannot be accepted');
+            throw new common_1.BadRequestException(`Quote ${quoteId} cannot be accepted (current status: ${quote.status})`);
         }
         const result = await this.prisma.$transaction(async (prisma) => {
             const updatedQuote = await prisma.quote.update({
@@ -126,6 +150,25 @@ let QuotesService = class QuotesService {
             });
             return { quote: updatedQuote, job };
         });
+        await this.notificationsService.create(quote.providerId, 'quote_accepted', 'Quote Accepted', `Your quote for ${quote.request.title} has been accepted!`, `/jobs/${result.job.id}`);
+        const provider = await this.prisma.user.findUnique({
+            where: { id: quote.providerId },
+            select: { email: true, name: true },
+        });
+        const owner = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true },
+        });
+        if (provider && owner) {
+            await this.emailService.sendQuoteAcceptedEmail({
+                providerEmail: provider.email,
+                providerName: provider.name,
+                ownerName: owner.name,
+                requestTitle: quote.request.title,
+                amount: quote.amount.toString(),
+                jobId: result.job.id,
+            });
+        }
         return result;
     }
     async reject(quoteId, userId) {
@@ -136,13 +179,13 @@ let QuotesService = class QuotesService {
             },
         });
         if (!quote) {
-            throw new common_1.NotFoundException('Quote not found');
+            throw new common_1.NotFoundException(`Quote with ID ${quoteId} not found`);
         }
         if (quote.request.ownerId !== userId) {
-            throw new common_1.ForbiddenException('Only the request owner can reject quotes');
+            throw new common_1.ForbiddenException(`Access denied: Only the owner of service request ${quote.requestId} can reject quotes`);
         }
         if (quote.status !== enums_1.QuoteStatus.PENDING) {
-            throw new common_1.BadRequestException('This quote cannot be rejected');
+            throw new common_1.BadRequestException(`Quote ${quoteId} cannot be rejected (current status: ${quote.status})`);
         }
         return this.prisma.quote.update({
             where: { id: quoteId },
@@ -153,6 +196,8 @@ let QuotesService = class QuotesService {
 exports.QuotesService = QuotesService;
 exports.QuotesService = QuotesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService,
+        email_service_1.EmailService])
 ], QuotesService);
 //# sourceMappingURL=quotes.service.js.map

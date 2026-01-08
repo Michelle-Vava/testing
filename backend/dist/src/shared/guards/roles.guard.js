@@ -28,9 +28,13 @@ let RolesGuard = class RolesGuard {
         }
         const { user } = context.switchToHttp().getRequest();
         if (!user || !user.roles) {
-            return false;
+            throw new common_1.ForbiddenException('Authentication required');
         }
-        return requiredRoles.some((role) => user.roles.includes(role));
+        const hasRole = requiredRoles.some((role) => user.roles.includes(role));
+        if (!hasRole) {
+            throw new common_1.ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
+        }
+        return true;
     }
 };
 exports.RolesGuard = RolesGuard;

@@ -11,10 +11,7 @@ export interface CreateMaintenanceRecordDto {
   serviceType: string;
   /** Date when service was performed */
   serviceDate: string;
-  /**
-   * Mileage at time of service (km)
-   * @minimum 1
-   */
+  /** Mileage at time of service (km) */
   mileage?: number;
   /** Cost of service */
   cost?: number;

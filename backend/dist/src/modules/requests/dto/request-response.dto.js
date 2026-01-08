@@ -23,10 +23,11 @@ class RequestResponseDto {
     preferredLocation;
     preferredDate;
     status;
+    imageUrls;
     createdAt;
     updatedAt;
     static _OPENAPI_METADATA_FACTORY() {
-        return { id: { required: true, type: () => String }, ownerId: { required: true, type: () => String }, vehicleId: { required: true, type: () => String }, serviceType: { required: true, type: () => String }, description: { required: true, type: () => String }, urgency: { required: true, type: () => String }, preferredLocation: { required: true, type: () => String, nullable: true }, preferredDate: { required: true, type: () => Date, nullable: true }, status: { required: true, enum: require("../../../shared/enums/request-status.enum").RequestStatus }, createdAt: { required: true, type: () => Date }, updatedAt: { required: true, type: () => Date } };
+        return { id: { required: true, type: () => String }, ownerId: { required: true, type: () => String }, vehicleId: { required: true, type: () => String }, serviceType: { required: true, type: () => String }, description: { required: true, type: () => String }, urgency: { required: true, type: () => String }, preferredLocation: { required: true, type: () => String, nullable: true }, preferredDate: { required: true, type: () => Date, nullable: true }, status: { required: true, enum: require("../../../shared/enums/request-status.enum").RequestStatus }, imageUrls: { required: false, type: () => [String] }, createdAt: { required: true, type: () => Date }, updatedAt: { required: true, type: () => Date } };
     }
 }
 exports.RequestResponseDto = RequestResponseDto;
@@ -66,6 +67,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ enum: enums_1.RequestStatus, example: enums_1.RequestStatus.OPEN }),
     __metadata("design:type", String)
 ], RequestResponseDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ type: [String], example: ['https://example.com/image1.jpg'], required: false }),
+    __metadata("design:type", Array)
+], RequestResponseDto.prototype, "imageUrls", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Date)

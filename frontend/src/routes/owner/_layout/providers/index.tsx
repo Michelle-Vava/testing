@@ -4,8 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, MapPin, Clock, Shield } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { customInstance } from '@/lib/axios';
+import { useProvidersControllerFindAll } from '@/api/generated/providers/providers';
 
 export const Route = createFileRoute('/owner/_layout/providers/')({
   component: ProvidersBrowsePage,
@@ -25,48 +24,26 @@ interface Provider {
   isShopService: boolean;
 }
 
-function useProviders(filters: {
-  serviceType?: string;
-  mobileService?: boolean | null;
-  shopService?: boolean | null;
-  minRating?: number;
-}) {
-  return useQuery({
-    queryKey: ['providers', filters],
-    queryFn: () => {
-      const params: any = {};
-      if (filters.serviceType) params.serviceType = filters.serviceType;
-      if (filters.mobileService === true) params.mobileService = 'true';
-      if (filters.shopService === true) params.shopService = 'true';
-      if (filters.minRating && filters.minRating > 0) params.minRating = filters.minRating;
-
-      return customInstance<Provider[]>({
-        url: '/providers',
-        method: 'GET',
-        params,
-      });
-    },
-  });
-}
-
 function ProvidersBrowsePage() {
   const [serviceType, setServiceType] = useState<string>('');
   const [mobileService, setMobileService] = useState<boolean | null>(null);
   const [shopService, setShopService] = useState<boolean | null>(null);
   const [minRating, setMinRating] = useState<number>(0);
 
-  const { data: providers = [], isLoading } = useProviders({
-    serviceType,
-    mobileService,
-    shopService,
-    minRating,
+  const { data: providers = [], isLoading } = useProvidersControllerFindAll({
+    params: {
+      serviceType: serviceType || undefined,
+      mobileService: mobileService ?? undefined,
+      shopService: shopService ?? undefined,
+      minRating: minRating > 0 ? minRating : undefined,
+    },
   });
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Browse Providers</h1>
-        <p className="text-slate-600">Find trusted mechanics in your area</p>
+        <p className="text-slate-600">Find trusted providers in your area</p>
       </div>
 
       {/* Filters */}
@@ -231,7 +208,7 @@ function ProvidersBrowsePage() {
                       <div className="flex items-center gap-1 text-sm">
                         <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                         <span className="font-medium text-slate-900">
-                          {provider.rating?.toFixed(1) || 'N/A'}
+                          {provider.rating ? Number(provider.rating).toFixed(1) : 'N/A'}
                         </span>
                         <span className="text-slate-500">
                           ({provider.reviewCount || 0})

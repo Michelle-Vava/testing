@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
-import { PaginationDto } from '../../shared/dto/pagination.dto';
+import { RequestsQueryDto, RequestSort } from './dto/requests-query.dto';
 import { RequestStatus } from '../../shared/enums';
 
 @Injectable()
@@ -13,14 +13,20 @@ export class RequestsService {
 
   async findPublicRecent() {
     this.logger.debug('Finding recent public requests');
-    return this.prisma.serviceRequest.findMany({
+    
+    // Optimized: Single query with indexed columns, no _count
+    const requests = await this.prisma.serviceRequest.findMany({
       where: {
-        status: {
-          in: [RequestStatus.OPEN, RequestStatus.QUOTED],
-        },
+        status: { in: [RequestStatus.OPEN, RequestStatus.QUOTED] },
       },
       take: 4,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        urgency: true,
+        status: true,
+        createdAt: true,
         vehicle: {
           select: {
             make: true,
@@ -28,30 +34,51 @@ export class RequestsService {
             year: true,
           },
         },
-        _count: {
-          select: {
-            quotes: true,
-          },
+        quotes: {
+          select: { id: true },
+          take: 1, // Just need to check if any exist
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Add quote count efficiently
+    return requests.map(req => ({
+      ...req,
+      quoteCount: req.quotes?.length || 0,
+      quotes: undefined, // Remove from response
+    }));
   }
 
-  async findAll(userId: string, userRoles: string[], paginationDto: PaginationDto) {
+  async findAll(userId: string, userRoles: string[], query: RequestsQueryDto) {
     this.logger.debug(`Finding all requests for user ${userId}`);
     const isProvider = userRoles && userRoles.includes('provider');
-    const { skip, take } = paginationDto;
+    const { page, limit, status, sort } = query;
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const orderBy: any = {};
+    if (sort === RequestSort.OLDEST) {
+      orderBy.createdAt = 'asc';
+    } else {
+      orderBy.createdAt = 'desc';
+    }
 
     if (isProvider) {
       // Providers see all open requests
+      const where: any = {
+        status: {
+          in: [RequestStatus.OPEN, RequestStatus.QUOTED],
+        },
+      };
+      
+      if (status) {
+        where.status = status;
+      }
+
       const [requests, total] = await Promise.all([
         this.prisma.serviceRequest.findMany({
-          where: {
-            status: {
-              in: [RequestStatus.OPEN, RequestStatus.QUOTED],
-            },
-          },
+          where,
           include: {
             vehicle: {
               select: {
@@ -72,16 +99,12 @@ export class RequestsService {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy,
           skip,
           take,
         }),
         this.prisma.serviceRequest.count({
-          where: {
-            status: {
-              in: [RequestStatus.OPEN, RequestStatus.QUOTED],
-            },
-          },
+          where,
         }),
       ]);
       
@@ -89,16 +112,24 @@ export class RequestsService {
         data: requests,
         meta: {
           total,
-          page: paginationDto.page,
-          limit: paginationDto.limit,
-          totalPages: Math.ceil(total / paginationDto.limit),
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
         },
       };
     } else {
       // Owners see only their own requests
+      const where: any = {
+        ownerId: userId,
+      };
+
+      if (status) {
+        where.status = status;
+      }
+
       const [requests, total] = await Promise.all([
         this.prisma.serviceRequest.findMany({
-          where: { ownerId: userId },
+          where,
           include: {
             vehicle: true,
             _count: {
@@ -107,20 +138,20 @@ export class RequestsService {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy,
           skip,
           take,
         }),
-        this.prisma.serviceRequest.count({ where: { ownerId: userId } }),
+        this.prisma.serviceRequest.count({ where }),
       ]);
       
       return {
         data: requests,
         meta: {
           total,
-          page: paginationDto.page,
-          limit: paginationDto.limit,
-          totalPages: Math.ceil(total / paginationDto.limit),
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
         },
       };
     }
@@ -183,14 +214,14 @@ export class RequestsService {
     });
 
     if (!request) {
-      throw new NotFoundException('Service request not found');
+      throw new NotFoundException(`Service request with ID ${id} not found`);
     }
 
     const isOwner = request.ownerId === userId;
     const isProvider = userRoles.includes('provider');
 
     if (!isOwner && !isProvider) {
-      throw new ForbiddenException('You do not have access to this request');
+      throw new ForbiddenException(`Access denied: You do not have access to service request ${id}`);
     }
 
     return request;
@@ -212,6 +243,62 @@ export class RequestsService {
     return this.prisma.serviceRequest.update({
       where: { id },
       data: updateData,
+    });
+  }
+
+  /**
+   * Add images to a service request
+   * 
+   * Appends new image URLs to the request's imageUrls array.
+   * 
+   * @param id - Service request UUID
+   * @param imageUrls - Array of Cloudinary URLs to add
+   * @returns Updated service request entity
+   */
+  async addImages(id: string, imageUrls: string[]) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Service request with ID ${id} not found`);
+    }
+
+    return this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        imageUrls: {
+          push: imageUrls,
+        },
+      },
+    });
+  }
+
+  /**
+   * Remove an image from a service request
+   * 
+   * Removes a specific image URL from the request's imageUrls array.
+   * 
+   * @param id - Service request UUID
+   * @param imageUrl - URL to remove
+   * @returns Updated service request entity
+   */
+  async removeImage(id: string, imageUrl: string) {
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id },
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Service request with ID ${id} not found`);
+    }
+
+    const updatedImageUrls = request.imageUrls.filter(url => url !== imageUrl);
+
+    return this.prisma.serviceRequest.update({
+      where: { id },
+      data: {
+        imageUrls: updatedImageUrls,
+      },
     });
   }
 }

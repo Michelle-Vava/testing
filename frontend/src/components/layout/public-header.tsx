@@ -18,13 +18,13 @@ export const PublicHeader: React.FC = () => {
     }
   };
 
-  const handleMechanicClick = () => {
+  const handleProviderClick = () => {
     if (!user) {
-      authGateStore.open({ action: 'apply as a mechanic', role: 'provider' });
-    } else if (user.role === 'provider') {
+      navigate({ to: '/auth/signup', search: { mode: 'provider' } });
+    } else if (user.providerOnboardingComplete) {
       navigate({ to: '/provider/dashboard' });
     } else {
-      navigate({ to: '/auth/signup', search: { role: 'provider' } });
+      navigate({ to: '/provider/onboarding' });
     }
   };
 
@@ -59,19 +59,21 @@ export const PublicHeader: React.FC = () => {
             ) : isLandingPage && (
               <>
                 <button
-                  onClick={handleMechanicClick}
+                  onClick={handleProviderClick}
                   className="text-[#CBD5E1] hover:text-[#FFFFFF] px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                  For Mechanics
+                  For Providers
                 </button>
                 <Link
                   to="/auth/login"
+                  search={{ mode: 'owner' }}
                   className="text-[#CBD5E1] hover:text-[#FFFFFF] px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/auth/signup"
+                  search={{ mode: 'owner' }}
                   className="bg-[#F5B700] text-[#0F172A] hover:bg-yellow-600 px-4 py-2 rounded-md text-sm font-semibold transition-colors shadow-lg"
                 >
                   Get Started

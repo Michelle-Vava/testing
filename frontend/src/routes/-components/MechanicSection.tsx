@@ -21,7 +21,7 @@ export function MechanicSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            Are you a mechanic or auto shop?
+            Are you a provider or auto shop?
           </h2>
           <p className="text-lg text-slate-600 mb-8">
             Join Shanda to receive verified service requests and send quotes directly to drivers.
@@ -30,7 +30,7 @@ export function MechanicSection() {
             onClick={handleApplyClick}
             className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors shadow-md"
           >
-            Apply as a Mechanic
+            Apply as a Provider
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

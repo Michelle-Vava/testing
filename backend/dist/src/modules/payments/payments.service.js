@@ -11,20 +11,22 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var PaymentsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
 const stripe_1 = __importDefault(require("stripe"));
-let PaymentsService = class PaymentsService {
+let PaymentsService = PaymentsService_1 = class PaymentsService {
     configService;
     prisma;
+    logger = new common_1.Logger(PaymentsService_1.name);
     stripe;
     constructor(configService, prisma) {
         this.configService = configService;
         this.prisma = prisma;
-        this.stripe = new stripe_1.default(this.configService.get('STRIPE_SECRET_KEY'), { apiVersion: '2025-12-15.clover' });
+        this.stripe = new stripe_1.default(this.configService.get('STRIPE_SECRET_KEY'), { apiVersion: '2023-10-16' });
     }
     async createCharge(jobId, userId) {
         const job = await this.prisma.job.findUnique({
@@ -35,16 +37,16 @@ let PaymentsService = class PaymentsService {
             },
         });
         if (!job) {
-            throw new common_1.NotFoundException('Job not found');
+            throw new common_1.NotFoundException(`Job with ID ${jobId} not found`);
         }
         if (job.ownerId !== userId) {
-            throw new common_1.ForbiddenException('You can only pay for your own jobs');
+            throw new common_1.ForbiddenException(`Access denied: You can only pay for your own jobs (Job ID: ${jobId})`);
         }
         if (job.status !== 'completed') {
-            throw new common_1.BadRequestException('Job must be completed before payment');
+            throw new common_1.BadRequestException(`Job ${jobId} must be completed before payment (current status: ${job.status})`);
         }
         if (job.payments && job.payments.length > 0) {
-            throw new common_1.BadRequestException('Payment already exists for this job');
+            throw new common_1.BadRequestException(`Payment already exists for job ${jobId}`);
         }
         const paymentIntent = await this.stripe.paymentIntents.create({
             amount: Math.round(parseFloat(job.quote.amount.toString()) * 100),
@@ -70,6 +72,22 @@ let PaymentsService = class PaymentsService {
             clientSecret: paymentIntent.client_secret,
         };
     }
+    async completePayment(paymentId) {
+        const payment = await this.prisma.payment.findUnique({
+            where: { id: paymentId },
+        });
+        if (!payment) {
+            throw new common_1.NotFoundException(`Payment with ID ${paymentId} not found`);
+        }
+        if (payment.status === 'completed') {
+            return payment;
+        }
+        const updatedPayment = await this.prisma.payment.update({
+            where: { id: paymentId },
+            data: { status: 'completed' },
+        });
+        return updatedPayment;
+    }
     async createPayout(jobId, userId) {
         const job = await this.prisma.job.findUnique({
             where: { id: jobId },
@@ -79,14 +97,14 @@ let PaymentsService = class PaymentsService {
             },
         });
         if (!job) {
-            throw new common_1.NotFoundException('Job not found');
+            throw new common_1.NotFoundException(`Job with ID ${jobId} not found`);
         }
         if (job.providerId !== userId) {
-            throw new common_1.ForbiddenException('You can only request payout for your own jobs');
+            throw new common_1.ForbiddenException(`Access denied: You can only request payout for your own jobs (Job ID: ${jobId})`);
         }
         const payment = job.payments?.[0];
         if (!payment || payment.status !== 'paid') {
-            throw new common_1.BadRequestException('Job must be paid before payout');
+            throw new common_1.BadRequestException(`Job ${jobId} must be paid before payout (current payment status: ${payment?.status || 'none'})`);
         }
         return {
             message: 'Payout initiated',
@@ -129,9 +147,58 @@ let PaymentsService = class PaymentsService {
             orderBy: { createdAt: 'desc' },
         });
     }
+    async handleWebhook(rawBody, signature) {
+        const webhookSecret = this.configService.get('STRIPE_WEBHOOK_SECRET');
+        if (!webhookSecret) {
+            throw new Error('Stripe webhook secret not configured');
+        }
+        let event;
+        try {
+            event = this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            throw new Error(`Webhook signature verification failed: ${message}`);
+        }
+        switch (event.type) {
+            case 'payment_intent.succeeded':
+                const paymentIntent = event.data.object;
+                await this.handlePaymentIntentSucceeded(paymentIntent);
+                break;
+            case 'payment_intent.payment_failed':
+                const failedPayment = event.data.object;
+                await this.handlePaymentIntentFailed(failedPayment);
+                break;
+            default:
+                this.logger.warn(`Unhandled Stripe event type: ${event.type}`);
+        }
+        return { received: true };
+    }
+    async handlePaymentIntentSucceeded(paymentIntent) {
+        const payment = await this.prisma.payment.findFirst({
+            where: { stripePaymentIntentId: paymentIntent.id },
+        });
+        if (payment && payment.status !== 'completed') {
+            await this.prisma.payment.update({
+                where: { id: payment.id },
+                data: { status: 'completed' },
+            });
+        }
+    }
+    async handlePaymentIntentFailed(paymentIntent) {
+        const payment = await this.prisma.payment.findFirst({
+            where: { stripePaymentIntentId: paymentIntent.id },
+        });
+        if (payment) {
+            await this.prisma.payment.update({
+                where: { id: payment.id },
+                data: { status: 'failed' },
+            });
+        }
+    }
 };
 exports.PaymentsService = PaymentsService;
-exports.PaymentsService = PaymentsService = __decorate([
+exports.PaymentsService = PaymentsService = PaymentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
         prisma_service_1.PrismaService])

@@ -7,6 +7,10 @@ export const env = {
   // API
   API_URL: import.meta.env.VITE_API_URL || 'http://localhost:4201/shanda',
   
+  // Supabase
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  
   // Stripe
   STRIPE_PUBLIC_KEY: import.meta.env.VITE_STRIPE_PUBLIC_KEY || '',
   

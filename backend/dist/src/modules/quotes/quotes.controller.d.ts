@@ -4,50 +4,13 @@ import { AuthenticatedRequest } from '../../shared/types/express-request.interfa
 export declare class QuotesController {
     private quotesService;
     constructor(quotesService: QuotesService);
-    findByRequest(req: AuthenticatedRequest, requestId: string): Promise<({
-        provider: {
-            id: string;
-            name: string;
-            email: string;
-            phone: string | null;
-        };
-    } & {
-        id: string;
-        description: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        status: string;
-        requestId: string;
-        providerId: string;
-        amount: import("@prisma/client/runtime/library").Decimal;
-        estimatedDuration: string;
-        notes: string | null;
-        includesWarranty: boolean;
-    })[]>;
-    create(req: AuthenticatedRequest, quoteData: CreateQuoteDto): Promise<{
-        provider: {
-            id: string;
-            name: string;
-            phone: string | null;
-        };
-    } & {
-        id: string;
-        description: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        status: string;
-        requestId: string;
-        providerId: string;
-        amount: import("@prisma/client/runtime/library").Decimal;
-        estimatedDuration: string;
-        notes: string | null;
-        includesWarranty: boolean;
-    }>;
+    findByRequest(req: AuthenticatedRequest, requestId: string): Promise<import("./entities/quote.entity").QuoteEntity[]>;
+    create(req: AuthenticatedRequest, quoteData: CreateQuoteDto): Promise<import("./entities/quote.entity").QuoteEntity>;
     accept(req: AuthenticatedRequest, id: string): Promise<{
         quote: {
             id: string;
-            description: string | null;
             createdAt: Date;
+            description: string | null;
             updatedAt: Date;
             status: string;
             requestId: string;
@@ -61,8 +24,8 @@ export declare class QuotesController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            ownerId: string;
             status: string;
+            ownerId: string;
             requestId: string;
             providerId: string;
             startedAt: Date | null;
@@ -72,8 +35,8 @@ export declare class QuotesController {
     }>;
     reject(req: AuthenticatedRequest, id: string): Promise<{
         id: string;
-        description: string | null;
         createdAt: Date;
+        description: string | null;
         updatedAt: Date;
         status: string;
         requestId: string;

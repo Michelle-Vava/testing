@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { env } from '@/config/env';
+import { AXIOS_INSTANCE } from '@/lib/axios';
 import { useToast } from '@/contexts/ToastContext';
 import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/shared/utils/validation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,7 +23,7 @@ export function Contact() {
   const { data: settings } = useQuery({
     queryKey: ['platform-settings'],
     queryFn: async () => {
-      const response = await axios.get(`${env.API_URL}/platform/settings`);
+      const response = await AXIOS_INSTANCE.get('/platform/settings');
       return response.data;
     },
   });
@@ -82,13 +81,17 @@ export function Contact() {
     
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      await AXIOS_INSTANCE.post('/platform/contact', formData);
       toast.success('Message sent! We\'ll get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
       setTouched({});
       setErrors({});
+    } catch (error) {
+      // Error handled by global interceptor, but we can stop loading state
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const contactMethods = [

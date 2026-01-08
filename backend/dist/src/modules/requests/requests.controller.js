@@ -17,25 +17,30 @@ exports.RequestsController = void 0;
 const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const platform_express_1 = require("@nestjs/platform-express");
+const file_validation_pipe_1 = require("../../shared/pipes/file-validation.pipe");
 const requests_service_1 = require("./requests.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const create_request_dto_1 = require("./dto/create-request.dto");
 const update_request_dto_1 = require("./dto/update-request.dto");
 const request_response_dto_1 = require("./dto/request-response.dto");
-const pagination_dto_1 = require("../../shared/dto/pagination.dto");
+const requests_query_dto_1 = require("./dto/requests-query.dto");
+const upload_service_1 = require("../../shared/services/upload.service");
 let RequestsController = RequestsController_1 = class RequestsController {
     requestsService;
+    uploadService;
     logger = new common_1.Logger(RequestsController_1.name);
-    constructor(requestsService) {
+    constructor(requestsService, uploadService) {
         this.requestsService = requestsService;
+        this.uploadService = uploadService;
     }
     async findPublicRecent() {
         this.logger.log('Fetching recent public requests for landing page');
         return this.requestsService.findPublicRecent();
     }
-    async findAll(req, paginationDto) {
-        this.logger.log(`User ${req.user.sub} fetching all requests`);
-        return this.requestsService.findAll(req.user.sub, req.user.roles, paginationDto);
+    async findAll(req, query) {
+        this.logger.log(`User ${req.user.sub} fetching all requests with query: ${JSON.stringify(query)}`);
+        return this.requestsService.findAll(req.user.sub, req.user.roles, query);
     }
     async create(req, requestData) {
         this.logger.log(`User ${req.user.sub} creating request`);
@@ -49,13 +54,28 @@ let RequestsController = RequestsController_1 = class RequestsController {
         this.logger.log(`User ${req.user.sub} updating request ${id}`);
         return this.requestsService.update(id, req.user.sub, updateData);
     }
+    async uploadImages(req, id, files) {
+        this.logger.log(`User ${req.user.sub} uploading images for request ${id}`);
+        await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+        if (!files || files.length === 0) {
+            throw new common_1.BadRequestException('No images provided');
+        }
+        const imageUrls = await this.uploadService.uploadImages(files, 'shanda/requests');
+        return this.requestsService.addImages(id, imageUrls);
+    }
+    async deleteImage(req, id, imageUrl) {
+        this.logger.log(`User ${req.user.sub} deleting image from request ${id}`);
+        await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+        await this.uploadService.deleteImage(imageUrl);
+        return this.requestsService.removeImage(id, imageUrl);
+    }
 };
 exports.RequestsController = RequestsController;
 __decorate([
     (0, common_1.Get)('public/recent'),
     (0, swagger_1.ApiOperation)({ summary: 'Get recent public service requests (no auth required)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return recent public requests.' }),
-    openapi.ApiResponse({ status: 200, type: [Object] }),
+    openapi.ApiResponse({ status: 200 }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -65,8 +85,6 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get all service requests (owners see theirs, providers see all open)' }),
-    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20, max: 100)' }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Paginated list of service requests',
@@ -76,7 +94,7 @@ __decorate([
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationDto]),
+    __metadata("design:paramtypes", [Object, requests_query_dto_1.RequestsQueryDto]),
     __metadata("design:returntype", Promise)
 ], RequestsController.prototype, "findAll", null);
 __decorate([
@@ -123,9 +141,40 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, update_request_dto_1.UpdateRequestDto]),
     __metadata("design:returntype", Promise)
 ], RequestsController.prototype, "update", null);
+__decorate([
+    (0, common_1.Post)(':id/images'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload images for a service request' }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('images', 10)),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Images uploaded successfully', type: request_response_dto_1.RequestResponseDto }),
+    openapi.ApiResponse({ status: 201 }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.UploadedFiles)(new file_validation_pipe_1.FileValidationPipe())),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Array]),
+    __metadata("design:returntype", Promise)
+], RequestsController.prototype, "uploadImages", null);
+__decorate([
+    (0, common_1.Delete)(':id/images'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete an image from a service request' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Image deleted successfully', type: request_response_dto_1.RequestResponseDto }),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)('imageUrl')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], RequestsController.prototype, "deleteImage", null);
 exports.RequestsController = RequestsController = RequestsController_1 = __decorate([
     (0, swagger_1.ApiTags)('requests'),
     (0, common_1.Controller)('requests'),
-    __metadata("design:paramtypes", [requests_service_1.RequestsService])
+    __metadata("design:paramtypes", [requests_service_1.RequestsService,
+        upload_service_1.UploadService])
 ], RequestsController);
 //# sourceMappingURL=requests.controller.js.map

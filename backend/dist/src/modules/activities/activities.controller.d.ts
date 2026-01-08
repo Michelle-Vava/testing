@@ -5,10 +5,10 @@ export declare class ActivitiesController {
     constructor(activitiesService: ActivitiesService);
     findAll(req: AuthenticatedRequest, limit?: string): Promise<{
         id: string;
-        description: string;
+        userId: string;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
         createdAt: Date;
         type: string;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        userId: string;
+        description: string;
     }[]>;
 }

@@ -98,11 +98,22 @@ export function useVehicle(id: string) {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<Vehicle>) => 
+      vehiclesControllerUpdate(id, data as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+    },
+  });
+
   return { 
     vehicle, 
     isLoading, 
     error,
     updateMileage: updateMileageMutation.mutateAsync,
     isUpdatingMileage: updateMileageMutation.isPending,
+    updateVehicle: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
   };
 }

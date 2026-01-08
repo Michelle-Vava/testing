@@ -1,0 +1,15 @@
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String?  // User who performed the action
+  entityType    String   // 'User', 'Vehicle', 'ServiceRequest', 'Quote', 'Job', etc.
+  entityId      String   // ID of the affected entity
+  action        String   // 'CREATE', 'UPDATE', 'DELETE', 'SOFT_DELETE'
+  changes       Json?    // Detailed changes (before/after)
+  metadata      Json?    // Additional context (IP, user agent, etc.)
+  createdAt     DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}

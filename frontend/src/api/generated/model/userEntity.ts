@@ -6,46 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface UserEntity {
-  id: string;
-  email: string;
-  name: string;
-  /** @nullable */
-  phone?: string | null;
-  roles: string[];
-  onboardingComplete: boolean;
-  providerOnboardingComplete: boolean;
-  /** @nullable */
-  address?: string | null;
-  /** @nullable */
-  city?: string | null;
-  /** @nullable */
-  state?: string | null;
-  /** @nullable */
-  zipCode?: string | null;
-  /** @nullable */
-  businessName?: string | null;
-  serviceTypes: string[];
-  /** @nullable */
-  yearsInBusiness?: number | null;
-  certifications?: string[];
-  /** @nullable */
-  shopAddress?: string | null;
-  /** @nullable */
-  shopCity?: string | null;
-  /** @nullable */
-  shopState?: string | null;
-  /** @nullable */
-  shopZipCode?: string | null;
-  serviceArea?: string[];
-  isMobileService: boolean;
-  isShopService: boolean;
-  isVerified: boolean;
-  shopPhotos: string[];
-  /** @nullable */
-  rating?: number | null;
-  reviewCount: number;
-  createdAt: string;
-  updatedAt: string;
-  password: string;
-}
+export interface UserEntity { [key: string]: unknown }

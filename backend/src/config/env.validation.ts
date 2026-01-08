@@ -20,4 +20,17 @@ export const envValidationSchema = Joi.object({
   
   // Stripe
   STRIPE_SECRET_KEY: Joi.string().required(),
+
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: Joi.string().required(),
+  CLOUDINARY_API_KEY: Joi.string().required(),
+  CLOUDINARY_API_SECRET: Joi.string().required(),
+
+  // Resend Email
+  RESEND_API_KEY: Joi.string().required(),
+  EMAIL_FROM: Joi.string().email().default('onboarding@resend.dev'),
+
+  // Redis
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().default(6379),
 });
