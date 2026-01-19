@@ -19,9 +19,10 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const providers_service_1 = require("./providers.service");
 const provider_status_service_1 = require("./provider-status.service");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const provider_status_guard_1 = require("../../shared/guards/provider-status.guard");
 const client_1 = require("@prisma/client");
+const update_provider_profile_dto_1 = require("./dto/update-provider-profile.dto");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 let ProvidersController = ProvidersController_1 = class ProvidersController {
     providersService;
     providerStatusService;
@@ -47,18 +48,22 @@ let ProvidersController = ProvidersController_1 = class ProvidersController {
     async findOne(id) {
         return this.providersService.findOne(id);
     }
+    async updateProfile(req, data) {
+        return this.providersService.updateProfile(req.user.id, data);
+    }
     async getOnboardingStatus(req) {
-        return this.providerStatusService.getOnboardingStatus(req.user.sub);
+        return this.providerStatusService.getOnboardingStatus(req.user.id);
     }
     async completeOnboarding(req) {
-        return this.providerStatusService.completeOnboarding(req.user.sub);
+        return this.providerStatusService.completeOnboarding(req.user.id);
     }
     async startOnboarding(req) {
-        return this.providerStatusService.updateStatus(req.user.sub, client_1.ProviderStatus.DRAFT, 'Started onboarding');
+        return this.providerStatusService.updateStatus(req.user.id, client_1.ProviderStatus.DRAFT, 'Started onboarding');
     }
 };
 exports.ProvidersController = ProvidersController;
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('public/featured'),
     (0, swagger_1.ApiOperation)({ summary: 'Get featured providers (no auth required)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return featured providers.' }),
@@ -95,8 +100,18 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProvidersController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.Put)('profile'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Update provider profile' }),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, update_provider_profile_dto_1.UpdateProviderProfileDto]),
+    __metadata("design:returntype", Promise)
+], ProvidersController.prototype, "updateProfile", null);
+__decorate([
     (0, common_1.Get)('onboarding/status'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get provider onboarding status and checklist' }),
     openapi.ApiResponse({ status: 200 }),
@@ -107,11 +122,11 @@ __decorate([
 ], ProvidersController.prototype, "getOnboardingStatus", null);
 __decorate([
     (0, common_1.Post)('onboarding/complete'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, provider_status_guard_1.ProviderStatusGuard),
+    (0, common_1.UseGuards)(provider_status_guard_1.ProviderStatusGuard),
     (0, provider_status_guard_1.RequireProviderStatus)(client_1.ProviderStatus.DRAFT, client_1.ProviderStatus.NONE),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Complete provider onboarding' }),
-    openapi.ApiResponse({ status: 201 }),
+    openapi.ApiResponse({ status: 201, type: Object }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -119,10 +134,9 @@ __decorate([
 ], ProvidersController.prototype, "completeOnboarding", null);
 __decorate([
     (0, common_1.Put)('onboarding/start'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Start provider onboarding (NONE → DRAFT)' }),
-    openapi.ApiResponse({ status: 200 }),
+    openapi.ApiResponse({ status: 200, type: Object }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

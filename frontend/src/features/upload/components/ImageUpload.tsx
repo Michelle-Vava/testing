@@ -33,15 +33,7 @@ interface ImageUploadProps {
   disabled?: boolean;
 }
 
-/**
- * ImageUpload component for uploading and managing images
- * 
- * Features:
- * - Drag and drop support
- * - Image preview with remove functionality
- * - File validation (type and size)
- * - Multiple image upload
- */
+// Image upload with drag-and-drop, preview, and validation
 export function ImageUpload({
   images = [],
   onImagesSelected,
@@ -83,7 +75,7 @@ export function ImageUpload({
     const remainingSlots = maxImages - totalImages;
 
     if (remainingSlots <= 0) {
-      alert(`Maximum ${maxImages} images allowed`);
+      error(`Maximum ${maxImages} images allowed`);
       return;
     }
 
@@ -111,7 +103,7 @@ export function ImageUpload({
     });
 
     if (errors.length > 0) {
-      alert(errors.join('\n'));
+      error(errors.join('\n'));
     }
 
     if (validFiles.length > 0) {

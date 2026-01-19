@@ -1,10 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/contexts/ToastContext';
-import { useJobsControllerFindOne } from '@/api/generated/jobs/jobs';
-import { useReviewsControllerFindByJob } from '@/api/generated/reviews/reviews';
-import { useReviewsControllerCreate } from '@/api/generated/reviews/reviews';
-import { JobDetailsView } from '@/features/jobs/components/JobDetailsView';
+import { useToast } from '@/components/ui/ToastContext';
+import { useJobsControllerFindOne, useJobsControllerUpdateStatus } from '@/services/generated/jobs/jobs';
+// Phase 1: Review imports removed
+import { JobDetailsView } from '@/features/jobs/components/views/JobDetailsView';
 
 export const Route = createFileRoute('/owner/_layout/jobs/$jobId')({
   component: JobDetails,
@@ -16,35 +15,36 @@ function JobDetails() {
   const toast = useToast();
 
   const { data: job, isLoading, error } = useJobsControllerFindOne(jobId);
-
-  const { data: review } = useReviewsControllerFindByJob(jobId, {
-    query: { enabled: !!job && job.status === 'completed' },
-  });
-
-  const { mutate: createReview } = useReviewsControllerCreate({
+  const { mutate: updateJobStatus, isPending: isConfirming } = useJobsControllerUpdateStatus({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['reviews', 'job', jobId] });
-        queryClient.invalidateQueries({ queryKey: ['jobs', jobId] });
-        toast.success('Review submitted successfully!');
+        toast.success('Work confirmed! Thank you for using our service.');
+        queryClient.invalidateQueries({ queryKey: ['jobsControllerFindOne', jobId] });
+        queryClient.invalidateQueries({ queryKey: ['jobsControllerFindAll'] });
       },
-      onError: () => {
-        toast.error('Failed to submit review. Please try again.');
+      onError: (error) => {
+        console.error('Failed to confirm completion:', error);
+        toast.error('Failed to confirm work completion. Please try again.');
       },
     },
   });
 
-  const handleCreateReview = (data: { rating: number; comment: string }) => {
-    createReview({ data: { jobId, ...data } });
+  const handleConfirmCompletion = () => {
+    updateJobStatus({
+      id: jobId,
+      data: { status: 'completed' },
+    });
   };
+
+  // Phase 1: Review functionality removed
 
   return (
     <JobDetailsView
       job={job}
-      review={review}
       isLoading={isLoading}
       error={error}
-      onCreateReview={handleCreateReview}
+      onConfirmCompletion={handleConfirmCompletion}
+      isConfirming={isConfirming}
     />
   );
 }

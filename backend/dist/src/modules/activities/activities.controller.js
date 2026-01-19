@@ -16,7 +16,6 @@ exports.ActivitiesController = void 0;
 const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const activities_service_1 = require("./activities.service");
 let ActivitiesController = class ActivitiesController {
     activitiesService;
@@ -25,7 +24,7 @@ let ActivitiesController = class ActivitiesController {
     }
     findAll(req, limit) {
         const limitNum = limit ? parseInt(limit, 10) : 10;
-        return this.activitiesService.findByUserId(req.user.sub, limitNum);
+        return this.activitiesService.findByUserId(req.user.id, limitNum);
     }
 };
 exports.ActivitiesController = ActivitiesController;
@@ -43,7 +42,6 @@ __decorate([
 exports.ActivitiesController = ActivitiesController = __decorate([
     (0, swagger_1.ApiTags)('activities'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('activities'),
     __metadata("design:paramtypes", [activities_service_1.ActivitiesService])
 ], ActivitiesController);

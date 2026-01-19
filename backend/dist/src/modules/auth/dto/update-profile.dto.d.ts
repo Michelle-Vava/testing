@@ -19,7 +19,5 @@ export declare class UpdateProfileDto {
     isShopService?: boolean;
     hourlyRate?: number;
     website?: string;
-    certifications?: string[];
-    insuranceInfo?: string;
     onboardingComplete?: boolean;
 }

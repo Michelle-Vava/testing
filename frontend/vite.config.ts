@@ -57,9 +57,22 @@ export default defineConfig(({ mode }) => {
           // Suppress certain warnings
           if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
           warn(warning)
+        },
+        output: {
+          // Manual chunk splitting for better caching
+          manualChunks: {
+            // Vendor chunks
+            'react-vendor': ['react', 'react-dom'],
+            'router': ['@tanstack/react-router'],
+            'query': ['@tanstack/react-query'],
+            'ui': ['framer-motion', 'lucide-react'],
+          }
         }
-      }
+      },
+      // Enable source maps for production debugging
+      sourcemap: false,
+      // Chunk size warning limit
+      chunkSizeWarningLimit: 500,
     },
-    // logLevel: 'warn' // Only show warnings and errors, not info logs
   }
 })

@@ -2,7 +2,7 @@ import { Bell } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customInstance } from '@/lib/axios';
-import { useSocket } from '@/contexts/SocketContext';
+import { useSocket } from '@/lib/hooks/use-socket';
 import { useEffect } from 'react';
 import {
   Popover,
@@ -84,8 +84,7 @@ export function NotificationBell() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNotification = (notification: any) => {
-      console.log('New notification received:', notification);
+    const handleNotification = () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     };
 

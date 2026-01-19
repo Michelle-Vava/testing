@@ -26,6 +26,7 @@ let RequestsService = RequestsService_1 = class RequestsService {
         const requests = await this.prisma.serviceRequest.findMany({
             where: {
                 status: { in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED] },
+                deletedAt: null,
             },
             take: 4,
             select: {
@@ -70,13 +71,11 @@ let RequestsService = RequestsService_1 = class RequestsService {
         }
         if (isProvider) {
             const where = {
-                status: {
+                status: status ? status : {
                     in: [enums_1.RequestStatus.OPEN, enums_1.RequestStatus.QUOTED],
                 },
+                deletedAt: null,
             };
-            if (status) {
-                where.status = status;
-            }
             const [requests, total] = await Promise.all([
                 this.prisma.serviceRequest.findMany({
                     where,
@@ -121,10 +120,9 @@ let RequestsService = RequestsService_1 = class RequestsService {
         else {
             const where = {
                 ownerId: userId,
+                deletedAt: null,
+                ...(status && { status: status }),
             };
-            if (status) {
-                where.status = status;
-            }
             const [requests, total] = await Promise.all([
                 this.prisma.serviceRequest.findMany({
                     where,
@@ -155,18 +153,38 @@ let RequestsService = RequestsService_1 = class RequestsService {
     }
     async create(userId, requestData) {
         this.logger.debug(`Creating request for user ${userId}`);
-        const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id: requestData.vehicleId },
-        });
-        if (!vehicle) {
-            throw new common_1.NotFoundException(`Vehicle with ID ${requestData.vehicleId} not found`);
+        let vehicleId = requestData.vehicleId;
+        if (!vehicleId) {
+            if (!requestData.make || !requestData.model || !requestData.year) {
+                throw new common_1.ForbiddenException('Either vehicleId or vehicle details (make, model, year) must be provided');
+            }
+            const vehicle = await this.prisma.vehicle.create({
+                data: {
+                    ownerId: userId,
+                    make: requestData.make,
+                    model: requestData.model,
+                    year: requestData.year,
+                },
+            });
+            vehicleId = vehicle.id;
         }
-        if (vehicle.ownerId !== userId) {
-            throw new common_1.ForbiddenException(`Access denied: You can only create service requests for vehicles you own (Vehicle ID: ${requestData.vehicleId})`);
+        else {
+            const vehicle = await this.prisma.vehicle.findUnique({
+                where: { id: requestData.vehicleId },
+            });
+            if (!vehicle) {
+                throw new common_1.NotFoundException(`Vehicle with ID ${requestData.vehicleId} not found`);
+            }
+            if (vehicle.ownerId !== userId) {
+                throw new common_1.ForbiddenException(`Access denied: You can only create service requests for vehicles you own (Vehicle ID: ${requestData.vehicleId})`);
+            }
         }
         return this.prisma.serviceRequest.create({
             data: {
-                ...requestData,
+                vehicleId,
+                title: requestData.title,
+                description: requestData.description,
+                urgency: requestData.urgency,
                 ownerId: userId,
                 status: enums_1.RequestStatus.OPEN,
             },
@@ -178,7 +196,7 @@ let RequestsService = RequestsService_1 = class RequestsService {
     async findOne(id, userId, userRoles) {
         this.logger.debug(`Finding request ${id} for user ${userId}`);
         const request = await this.prisma.serviceRequest.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
             include: {
                 vehicle: true,
                 owner: {
@@ -215,7 +233,7 @@ let RequestsService = RequestsService_1 = class RequestsService {
     }
     async update(id, userId, updateData) {
         const request = await this.prisma.serviceRequest.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!request) {
             throw new common_1.NotFoundException(`Service request with ID ${id} not found`);
@@ -230,7 +248,7 @@ let RequestsService = RequestsService_1 = class RequestsService {
     }
     async addImages(id, imageUrls) {
         const request = await this.prisma.serviceRequest.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!request) {
             throw new common_1.NotFoundException(`Service request with ID ${id} not found`);
@@ -246,7 +264,7 @@ let RequestsService = RequestsService_1 = class RequestsService {
     }
     async removeImage(id, imageUrl) {
         const request = await this.prisma.serviceRequest.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!request) {
             throw new common_1.NotFoundException(`Service request with ID ${id} not found`);

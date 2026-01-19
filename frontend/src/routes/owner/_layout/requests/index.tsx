@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { OwnerRequestsList } from '@/features/requests/components/OwnerRequestsList';
+import { OwnerRequestsList } from '@/features/requests/components/views/OwnerRequestsList';
 
 const requestsSearchSchema = z.object({
   page: z.number().optional().default(1),

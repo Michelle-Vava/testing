@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { ROUTES } from '@/config/routes';
-import type { UserRole } from '@/shared/types/user';
+import { ROUTES, getDashboardRoute, getOnboardingRoute } from '@/lib/routes';
+import { UserRoles } from '@/lib/constants';
+import type { UserRole } from '@/types/user';
+import { getPrimaryRole, hasRole } from '@/features/auth/utils/auth-utils';
 
 export const AppHeader: React.FC = () => {
   const { user, logout, switchRole } = useAuth();
@@ -18,23 +20,26 @@ export const AppHeader: React.FC = () => {
     switchRole(newRole);
     setShowRolePicker(false);
     // Navigate to new dashboard
-    const path = newRole === 'owner' ? '/owner/dashboard' : '/provider/dashboard';
+    const path = getDashboardRoute(newRole as any);
     navigate({ to: path });
   };
 
   if (!user) return null;
 
+  const primaryRole = getPrimaryRole(user);
+
   const getDashboardPath = () => {
-    if (!user.role) return '/owner/dashboard';
+    if (!user.roles || user.roles.length === 0) return ROUTES.OWNER_DASHBOARD;
     if (!user.onboardingComplete) {
-      return user.role === 'owner' ? '/owner/onboarding' : '/provider/onboarding';
+      return getOnboardingRoute(primaryRole as any);
     }
-    return user.role === 'owner' ? '/owner/dashboard' : '/provider/dashboard';
+    return getDashboardRoute(primaryRole as any);
   };
 
   const roleLabels = {
-    owner: 'Vehicle Owner',
-    provider: 'Service Provider',
+    [UserRoles.OWNER]: 'Vehicle Owner',
+    [UserRoles.PROVIDER]: 'Service Provider',
+    [UserRoles.ADMIN]: 'Admin',
   };
 
   return (
@@ -55,7 +60,7 @@ export const AppHeader: React.FC = () => {
 
           {/* App Navigation */}
           <div className="flex items-center gap-4">
-            {user.role && user.onboardingComplete && (
+            {user.roles && user.roles.length > 0 && user.onboardingComplete && (
               <Link
                 to={getDashboardPath()}
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -64,14 +69,14 @@ export const AppHeader: React.FC = () => {
               </Link>
             )}
 
-            {user.role && user.onboardingComplete && (
+            {user.roles && user.roles.length > 0 && user.onboardingComplete && (
               <div className="relative">
                 <button
                   onClick={() => setShowRolePicker(!showRolePicker)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-150 rounded-lg transition-colors group"
                 >
                   <span className="text-sm font-medium text-gray-900">
-                    {roleLabels[user.role]}
+                    {roleLabels[primaryRole as keyof typeof roleLabels] || primaryRole}
                   </span>
                   <svg
                     className={`w-4 h-4 text-gray-500 transition-transform ${showRolePicker ? 'rotate-180' : ''}`}
@@ -97,9 +102,9 @@ export const AppHeader: React.FC = () => {
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Switch Role</p>
                       </div>
                       <button
-                        onClick={() => handleRoleSwitch('owner')}
+                        onClick={() => handleRoleSwitch(UserRoles.OWNER)}
                         className={`w-full px-3 py-2.5 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-                          user.role === 'owner' ? 'bg-primary-50' : ''
+                          primaryRole === UserRoles.OWNER ? 'bg-primary-50' : ''
                         }`}
                       >
                         <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -111,16 +116,16 @@ export const AppHeader: React.FC = () => {
                           <p className="text-sm font-medium text-gray-900">Vehicle Owner</p>
                           <p className="text-xs text-gray-500">Get quotes for repairs</p>
                         </div>
-                        {user.role === 'owner' && (
+                        {primaryRole === UserRoles.OWNER && (
                           <svg className="w-5 h-5 text-primary-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         )}
                       </button>
                       <button
-                        onClick={() => handleRoleSwitch('provider')}
+                        onClick={() => handleRoleSwitch(UserRoles.PROVIDER)}
                         className={`w-full px-3 py-2.5 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-                          user.role === 'provider' ? 'bg-primary-50' : ''
+                          primaryRole === UserRoles.PROVIDER ? 'bg-primary-50' : ''
                         }`}
                       >
                         <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -132,7 +137,7 @@ export const AppHeader: React.FC = () => {
                           <p className="text-sm font-medium text-gray-900">Service Provider</p>
                           <p className="text-xs text-gray-500">Bid on repair jobs</p>
                         </div>
-                        {user.role === 'provider' && (
+                        {primaryRole === UserRoles.PROVIDER && (
                           <svg className="w-5 h-5 text-primary-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -146,7 +151,7 @@ export const AppHeader: React.FC = () => {
 
             {/* User Menu */}
             <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
-              {user.role && user.onboardingComplete && (
+              {user.roles && user.roles.length > 0 && user.onboardingComplete && (
                 <Link
                   to={ROUTES.OWNER_SETTINGS}
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"

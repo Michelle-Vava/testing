@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/contexts/ToastContext';
+import { useToast } from '@/components/ui/ToastContext';
+import { useAuthControllerForgotPassword } from '@/services/generated/auth/auth';
 
 /**
  * Props for the ForgotPasswordSection component.
@@ -11,26 +12,50 @@ interface ForgotPasswordSectionProps {
   onClose: () => void;
 }
 
+/**
+ * ForgotPasswordSection Component
+ * 
+ * Handles the password reset request flow.
+ * 
+ * Features:
+ * - Validates email input.
+ * - Calls `authControllerForgotPassword` API to trigger reset email.
+ * - Displays success state ("Check your inbox") upon successful API call.
+ * - Handles errors via Toast notifications.
+ */
 export function ForgotPasswordSection({ isOpen, onClose }: ForgotPasswordSectionProps) {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const toast = useToast();
 
-  const handleSendReset = async () => {
+  const {
+    mutate: requestReset,
+    isPending: isResetting
+  } = useAuthControllerForgotPassword({
+    mutation: {
+      onSuccess: () => {
+        setResetSent(true);
+        // Auto-close after success message is shown for a few seconds
+        setTimeout(() => {
+          onClose();
+          setResetSent(false);
+          setResetEmail('');
+        }, 5000);
+      },
+      onError: (error: any) => {
+        const message = error?.response?.data?.message || 'Failed to send reset email. Please try again.';
+        toast.error(message);
+      }
+    }
+  });
+
+  const handleSendReset = () => {
     if (!resetEmail) {
       toast.error('Please enter your email address');
       return;
     }
     
-    // TODO: Implement actual forgot password API call
-    setTimeout(() => {
-      setResetSent(true);
-      setTimeout(() => {
-        onClose();
-        setResetSent(false);
-        setResetEmail('');
-      }, 3000);
-    }, 1000);
+    requestReset({ data: { email: resetEmail } });
   };
 
   return (
@@ -52,6 +77,7 @@ export function ForgotPasswordSection({ isOpen, onClose }: ForgotPasswordSection
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
                 placeholder="Enter your email"
+                disabled={isResetting}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
               />
               <div className="flex gap-2">
@@ -59,14 +85,16 @@ export function ForgotPasswordSection({ isOpen, onClose }: ForgotPasswordSection
                   type="button"
                   size="sm"
                   onClick={handleSendReset}
+                  disabled={isResetting}
                 >
-                  Send reset link
+                  {isResetting ? 'Sending...' : 'Send reset link'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={onClose}
+                  disabled={isResetting}
                 >
                   Cancel
                 </Button>
@@ -80,9 +108,7 @@ export function ForgotPasswordSection({ isOpen, onClose }: ForgotPasswordSection
             >
               <div className="flex justify-center mb-2">
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
               </div>
               <p className="text-sm font-medium text-slate-900">Check your inbox!</p>

@@ -1,13 +1,12 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { Sidebar } from '@/components/layout/sidebar';
+import { DashboardShell } from '@/components/layout/DashboardShell';
 import { ProviderHeader } from '@/components/layout/ProviderHeader';
-import { Footer } from '@/components/layout/footer';
-import { AuthService } from '@/features/auth/utils/auth-service';
+import { requireAuth } from '@/features/auth/utils/auth-utils';
 
 export const Route = createFileRoute('/provider/_layout')({
   beforeLoad: async () => {
     // Require authentication
-    const user = AuthService.requireAuth();
+    const user = requireAuth();
     
     // Check provider status instead of boolean flag
     const providerStatus = (user as any).providerStatus || 'NONE';
@@ -60,20 +59,20 @@ function ProviderLayout() {
         </svg>
       ),
     },
+    {
+      to: '/provider/inventory',
+      label: 'Parts Inventory',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      <Sidebar links={sidebarLinks} />
-      <div className="flex-1 flex flex-col min-w-0">
-        <ProviderHeader />
-        <div className="flex-1 overflow-y-auto flex flex-col">
-          <main className="flex-1 p-8">
-            <Outlet />
-          </main>
-          <Footer />
-        </div>
-      </div>
-    </div>
+    <DashboardShell header={<ProviderHeader />} sidebarLinks={sidebarLinks}>
+      <Outlet />
+    </DashboardShell>
   );
 }

@@ -34,11 +34,9 @@ class UpdateProfileDto {
     isShopService;
     hourlyRate;
     website;
-    certifications;
-    insuranceInfo;
     onboardingComplete;
     static _OPENAPI_METADATA_FACTORY() {
-        return { name: { required: false, type: () => String }, phoneNumber: { required: false, type: () => String }, address: { required: false, type: () => String }, city: { required: false, type: () => String }, state: { required: false, type: () => String }, zipCode: { required: false, type: () => String }, avatarUrl: { required: false, type: () => String }, bio: { required: false, type: () => String }, businessName: { required: false, type: () => String }, serviceTypes: { required: false, type: () => [String] }, yearsInBusiness: { required: false, type: () => Number }, shopAddress: { required: false, type: () => String }, shopCity: { required: false, type: () => String }, shopState: { required: false, type: () => String }, shopZipCode: { required: false, type: () => String }, serviceArea: { required: false, type: () => [String] }, isMobileService: { required: false, type: () => Boolean }, isShopService: { required: false, type: () => Boolean }, hourlyRate: { required: false, type: () => Number }, website: { required: false, type: () => String }, certifications: { required: false, type: () => [String] }, insuranceInfo: { required: false, type: () => String }, onboardingComplete: { required: false, type: () => Boolean } };
+        return { name: { required: false, type: () => String }, phoneNumber: { required: false, type: () => String }, address: { required: false, type: () => String }, city: { required: false, type: () => String }, state: { required: false, type: () => String }, zipCode: { required: false, type: () => String }, avatarUrl: { required: false, type: () => String }, bio: { required: false, type: () => String }, businessName: { required: false, type: () => String }, serviceTypes: { required: false, type: () => [String] }, yearsInBusiness: { required: false, type: () => Number }, shopAddress: { required: false, type: () => String }, shopCity: { required: false, type: () => String }, shopState: { required: false, type: () => String }, shopZipCode: { required: false, type: () => String }, serviceArea: { required: false, type: () => [String] }, isMobileService: { required: false, type: () => Boolean }, isShopService: { required: false, type: () => Boolean }, hourlyRate: { required: false, type: () => Number }, website: { required: false, type: () => String }, onboardingComplete: { required: false, type: () => Boolean } };
     }
 }
 exports.UpdateProfileDto = UpdateProfileDto;
@@ -164,19 +162,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateProfileDto.prototype, "website", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
-    __metadata("design:type", Array)
-], UpdateProfileDto.prototype, "certifications", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "insuranceInfo", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     (0, class_validator_1.IsOptional)(),

@@ -41,6 +41,20 @@ export function ContentPageLayout({
           </div>
         )}
       </div>
+
+      <section className="bg-[#1E293B] py-16 px-4 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+          Fair prices for everyone.
+        </h2>
+        <Link 
+          to="/auth/signup" 
+          search={{ mode: 'owner' }}
+          className="inline-block bg-[#F5B700] text-[#0F172A] hover:bg-yellow-400 px-8 py-3 rounded-lg font-bold shadow-lg shadow-yellow-500/20 hover:-translate-y-0.5 transition-all"
+        >
+          Get Started
+        </Link>
+      </section>
+
       <Footer />
     </div>
   );

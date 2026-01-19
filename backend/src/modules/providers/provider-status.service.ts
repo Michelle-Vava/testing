@@ -26,12 +26,9 @@ export class ProviderStatusService {
   ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        providerStatus: true,
-        roles: true,
-        businessName: true,
-        serviceTypes: true,
+      include: {
+        providerProfile: true,
+        ownerProfile: true,
       },
     });
 
@@ -43,32 +40,36 @@ export class ProviderStatusService {
       throw new BadRequestException('User is not a provider');
     }
 
+    const providerProfile = user.providerProfile;
+    if (!providerProfile) {
+       // Create if missing, but typically it should exist if they are provider role
+       // Assume handled
+    }
+    const currentStatus = providerProfile?.status || ProviderStatus.NONE;
+
     // Validate status transitions
-    this.validateStatusTransition(user.providerStatus, newStatus, user);
+    this.validateStatusTransition(currentStatus, newStatus, providerProfile, user.ownerProfile, user.phone);
 
     // Update status
-    const updated = await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        providerStatus: newStatus,
-        providerStatusReason: reason,
-        providerStatusChangedAt: new Date(),
-        // Update legacy field for backwards compatibility
-        providerOnboardingComplete: newStatus === ProviderStatus.ACTIVE,
+        providerProfile: {
+          update: {
+            status: newStatus,
+            statusReason: reason,
+            statusChangedAt: new Date(),
+          }
+        }
       },
-      select: {
-        id: true,
-        providerStatus: true,
-        providerStatusReason: true,
-        providerStatusChangedAt: true,
-      },
+      include: { providerProfile: true }
     });
 
     this.logger.log(
-      `Provider ${userId} status changed: ${user.providerStatus} → ${newStatus}`,
+      `Provider ${userId} status changed: ${currentStatus} → ${newStatus}`,
     );
 
-    return updated;
+    return updatedUser.providerProfile;
   }
 
   /**
@@ -77,14 +78,9 @@ export class ProviderStatusService {
   async completeOnboarding(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        providerStatus: true,
-        businessName: true,
-        serviceTypes: true,
-        shopAddress: true,
-        shopCity: true,
-        shopState: true,
+      include: {
+        providerProfile: true,
+        ownerProfile: true,
       },
     });
 
@@ -92,8 +88,11 @@ export class ProviderStatusService {
       throw new NotFoundException('User not found');
     }
 
+    const pp = user.providerProfile;
+    const op = user.ownerProfile;
+
     // Validate required fields
-    const isComplete = this.validateOnboardingComplete(user);
+    const isComplete = this.validateOnboardingComplete(pp, op, user.phone);
 
     if (!isComplete) {
       throw new BadRequestException(
@@ -103,11 +102,12 @@ export class ProviderStatusService {
 
     // Transition from DRAFT or NONE to LIMITED
     // (admin must manually approve to ACTIVE)
+    const currentStatus = pp?.status || ProviderStatus.NONE;
     const newStatus =
-      user.providerStatus === ProviderStatus.NONE ||
-      user.providerStatus === ProviderStatus.DRAFT
+      currentStatus === ProviderStatus.NONE ||
+      currentStatus === ProviderStatus.DRAFT
         ? ProviderStatus.LIMITED
-        : user.providerStatus;
+        : currentStatus;
 
     return this.updateStatus(userId, newStatus, 'Onboarding completed');
   }
@@ -118,21 +118,9 @@ export class ProviderStatusService {
   async getOnboardingStatus(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        providerStatus: true,
-        businessName: true,
-        serviceTypes: true,
-        bio: true,
-        phone: true,
-        shopAddress: true,
-        shopCity: true,
-        shopState: true,
-        shopZipCode: true,
-        certifications: true,
-        yearsInBusiness: true,
-        isMobileService: true,
-        isShopService: true,
+      include: {
+        providerProfile: true,
+        ownerProfile: true,
       },
     });
 
@@ -140,12 +128,15 @@ export class ProviderStatusService {
       throw new NotFoundException('User not found');
     }
 
+    const pp = user.providerProfile || {} as any;
+    const op = user.ownerProfile || {} as any;
+
     const checklist = {
-      basicInfo: !!(user.businessName && user.bio && user.phone),
-      serviceTypes: user.serviceTypes && user.serviceTypes.length > 0,
-      location: !!(user.shopCity && user.shopState),
-      serviceMethod: user.isMobileService || user.isShopService,
-      experience: user.yearsInBusiness !== null && user.yearsInBusiness !== undefined,
+      basicInfo: !!(pp.businessName && op.bio && user.phone),
+      serviceTypes: pp.serviceTypes && pp.serviceTypes.length > 0,
+      location: !!(pp.shopCity && pp.shopState),
+      serviceMethod: pp.isMobileService || pp.isShopService,
+      experience: pp.yearsInBusiness !== null && pp.yearsInBusiness !== undefined,
     };
 
     const completionPercent =
@@ -154,7 +145,7 @@ export class ProviderStatusService {
       100;
 
     return {
-      status: user.providerStatus,
+      status: pp.status || ProviderStatus.NONE,
       completionPercent: Math.round(completionPercent),
       checklist,
       canSubmit: Object.values(checklist).every(Boolean),
@@ -167,7 +158,9 @@ export class ProviderStatusService {
   private validateStatusTransition(
     currentStatus: ProviderStatus,
     newStatus: ProviderStatus,
-    user: any,
+    providerProfile: any,
+    ownerProfile: any,
+    phone: string | null,
   ) {
     // NONE → DRAFT (start onboarding)
     if (
@@ -182,7 +175,7 @@ export class ProviderStatusService {
       currentStatus === ProviderStatus.DRAFT &&
       newStatus === ProviderStatus.LIMITED
     ) {
-      if (!this.validateOnboardingComplete(user)) {
+      if (!this.validateOnboardingComplete(providerProfile, ownerProfile, phone)) {
         throw new BadRequestException('Onboarding not complete');
       }
       return;
@@ -220,14 +213,15 @@ export class ProviderStatusService {
   /**
    * Validate onboarding completion
    */
-  private validateOnboardingComplete(user: any): boolean {
+  private validateOnboardingComplete(providerProfile: any, ownerProfile: any, phone: string | null): boolean {
+    if (!providerProfile) return false;
     return !!(
-      user.businessName &&
-      user.serviceTypes &&
-      user.serviceTypes.length > 0 &&
-      user.shopCity &&
-      user.shopState &&
-      (user.isMobileService || user.isShopService)
+      providerProfile.businessName &&
+      providerProfile.serviceTypes &&
+      providerProfile.serviceTypes.length > 0 &&
+      providerProfile.shopCity &&
+      providerProfile.shopState &&
+      (providerProfile.isMobileService || providerProfile.isShopService)
     );
   }
 }

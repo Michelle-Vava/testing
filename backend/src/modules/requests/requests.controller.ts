@@ -3,13 +3,13 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiBody, ApiQuery, A
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from '../../shared/pipes/file-validation.pipe';
 import { RequestsService } from './requests.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestResponseDto } from './dto/request-response.dto';
 import { RequestsQueryDto } from './dto/requests-query.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 import { UploadService } from '../../shared/services/upload.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 /**
  * RequestsController handles service request management
@@ -36,6 +36,7 @@ export class RequestsController {
    * 
    * @returns List of recent public service requests with vehicle info and quote counts
    */
+  @Public()
   @Get('public/recent')
   @ApiOperation({ summary: 'Get recent public service requests (no auth required)' })
   @ApiResponse({ status: 200, description: 'Return recent public requests.' })
@@ -55,7 +56,6 @@ export class RequestsController {
    * @returns Paginated list of service requests with vehicle and quote data
    */
   @Get()
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all service requests (owners see theirs, providers see all open)' })
   @ApiResponse({ 
@@ -64,8 +64,8 @@ export class RequestsController {
     type: [RequestResponseDto]
   })
   async findAll(@Request() req: AuthenticatedRequest, @Query() query: RequestsQueryDto) {
-    this.logger.log(`User ${req.user.sub} fetching all requests with query: ${JSON.stringify(query)}`);
-    return this.requestsService.findAll(req.user.sub, req.user.roles, query);
+    this.logger.log(`User ${req.user.id} fetching all requests with query: ${JSON.stringify(query)}`);
+    return this.requestsService.findAll(req.user.id, req.user.roles, query);
   }
 
   /**
@@ -79,14 +79,13 @@ export class RequestsController {
    * @returns Created service request entity
    */
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new service request' })
   @ApiBody({ type: CreateRequestDto })
   @ApiResponse({ status: 201, description: 'Service request created successfully', type: RequestResponseDto })
   async create(@Request() req: AuthenticatedRequest, @Body() requestData: CreateRequestDto) {
-    this.logger.log(`User ${req.user.sub} creating request`);
-    return this.requestsService.create(req.user.sub, requestData);
+    this.logger.log(`User ${req.user.id} creating request`);
+    return this.requestsService.create(req.user.id, requestData);
   }
 
   /**
@@ -102,14 +101,13 @@ export class RequestsController {
    * @throws ForbiddenException if owner tries to view another owner's request
    */
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a specific service request by ID' })
   @ApiResponse({ status: 200, description: 'Service request details', type: RequestResponseDto })
   @ApiResponse({ status: 404, description: 'Request not found.' })
   async findOne(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    this.logger.log(`User ${req.user.sub} fetching request ${id}`);
-    return this.requestsService.findOne(id, req.user.sub, req.user.roles);
+    this.logger.log(`User ${req.user.id} fetching request ${id}`);
+    return this.requestsService.findOne(id, req.user.id, req.user.roles);
   }
 
   /**
@@ -125,15 +123,14 @@ export class RequestsController {
    * @throws ForbiddenException if user doesn't own the request
    */
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a service request' })
   @ApiBody({ type: UpdateRequestDto })
   @ApiResponse({ status: 200, description: 'Service request updated successfully', type: RequestResponseDto })
   @ApiResponse({ status: 404, description: 'Request not found.' })
   async update(@Request() req: AuthenticatedRequest, @Param('id') id: string, @Body() updateData: UpdateRequestDto) {
-    this.logger.log(`User ${req.user.sub} updating request ${id}`);
-    return this.requestsService.update(id, req.user.sub, updateData);
+    this.logger.log(`User ${req.user.id} updating request ${id}`);
+    return this.requestsService.update(id, req.user.id, updateData);
   }
 
   /**
@@ -151,7 +148,6 @@ export class RequestsController {
    * @throws BadRequestException if no files or invalid files
    */
   @Post(':id/images')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload images for a service request' })
   @ApiConsumes('multipart/form-data')
@@ -162,10 +158,10 @@ export class RequestsController {
     @Param('id') id: string,
     @UploadedFiles(new FileValidationPipe()) files: Express.Multer.File[],
   ) {
-    this.logger.log(`User ${req.user.sub} uploading images for request ${id}`);
+    this.logger.log(`User ${req.user.id} uploading images for request ${id}`);
     
     // Validate request ownership first
-    await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+    await this.requestsService.findOne(id, req.user.id, req.user.roles);
 
     if (!files || files.length === 0) {
       throw new BadRequestException('No images provided');
@@ -192,7 +188,6 @@ export class RequestsController {
    * @throws ForbiddenException if user doesn't own the request
    */
   @Delete(':id/images')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete an image from a service request' })
   @ApiResponse({ status: 200, description: 'Image deleted successfully', type: RequestResponseDto })
@@ -201,10 +196,10 @@ export class RequestsController {
     @Param('id') id: string,
     @Body('imageUrl') imageUrl: string,
   ) {
-    this.logger.log(`User ${req.user.sub} deleting image from request ${id}`);
+    this.logger.log(`User ${req.user.id} deleting image from request ${id}`);
     
     // Validate request ownership first
-    await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+    await this.requestsService.findOne(id, req.user.id, req.user.roles);
 
     // Delete image from Cloudinary
     await this.uploadService.deleteImage(imageUrl);
@@ -213,3 +208,5 @@ export class RequestsController {
     return this.requestsService.removeImage(id, imageUrl);
   }
 }
+
+

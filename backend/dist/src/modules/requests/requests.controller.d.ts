@@ -13,23 +13,23 @@ export declare class RequestsController {
         quoteCount: number;
         quotes: undefined;
         vehicle: {
-            year: number;
             make: string;
             model: string;
+            year: number;
         };
         id: string;
         createdAt: Date;
+        status: import(".prisma/client").$Enums.RequestStatus;
         description: string;
         title: string;
-        status: string;
         urgency: string;
     }[]>;
     findAll(req: AuthenticatedRequest, query: RequestsQueryDto): Promise<{
         data: ({
             vehicle: {
-                year: number;
                 make: string;
                 model: string;
+                year: number;
             };
             owner: {
                 name: string;
@@ -41,11 +41,11 @@ export declare class RequestsController {
         } & {
             id: string;
             createdAt: Date;
-            description: string;
-            title: string;
             deletedAt: Date | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.RequestStatus;
+            description: string;
+            title: string;
             ownerId: string;
             imageUrls: string[];
             vehicleId: string;
@@ -64,9 +64,9 @@ export declare class RequestsController {
                 createdAt: Date;
                 deletedAt: Date | null;
                 updatedAt: Date;
-                year: number;
                 make: string;
                 model: string;
+                year: number;
                 vin: string | null;
                 licensePlate: string | null;
                 color: string | null;
@@ -80,11 +80,11 @@ export declare class RequestsController {
         } & {
             id: string;
             createdAt: Date;
-            description: string;
-            title: string;
             deletedAt: Date | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.RequestStatus;
+            description: string;
+            title: string;
             ownerId: string;
             imageUrls: string[];
             vehicleId: string;
@@ -103,9 +103,9 @@ export declare class RequestsController {
             createdAt: Date;
             deletedAt: Date | null;
             updatedAt: Date;
-            year: number;
             make: string;
             model: string;
+            year: number;
             vin: string | null;
             licensePlate: string | null;
             color: string | null;
@@ -116,11 +116,11 @@ export declare class RequestsController {
     } & {
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -132,9 +132,9 @@ export declare class RequestsController {
             createdAt: Date;
             deletedAt: Date | null;
             updatedAt: Date;
-            year: number;
             make: string;
             model: string;
+            year: number;
             vin: string | null;
             licensePlate: string | null;
             color: string | null;
@@ -157,12 +157,14 @@ export declare class RequestsController {
         } & {
             id: string;
             createdAt: Date;
-            description: string | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.QuoteStatus;
+            description: string | null;
             requestId: string;
             providerId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
+            laborCost: import("@prisma/client/runtime/library").Decimal | null;
+            partsCost: import("@prisma/client/runtime/library").Decimal | null;
             estimatedDuration: string;
             notes: string | null;
             includesWarranty: boolean;
@@ -170,11 +172,11 @@ export declare class RequestsController {
     } & {
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -183,11 +185,11 @@ export declare class RequestsController {
     update(req: AuthenticatedRequest, id: string, updateData: UpdateRequestDto): Promise<{
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -196,11 +198,11 @@ export declare class RequestsController {
     uploadImages(req: AuthenticatedRequest, id: string, files: Express.Multer.File[]): Promise<{
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -209,11 +211,11 @@ export declare class RequestsController {
     deleteImage(req: AuthenticatedRequest, id: string, imageUrl: string): Promise<{
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;

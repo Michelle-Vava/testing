@@ -1,6 +1,13 @@
-import axios, { AxiosRequestConfig, AxiosError } from 'axios';
-import { env } from '@/config/env';
+import axios, { AxiosRequestConfig, AxiosError, CancelTokenSource } from 'axios';
+import { env } from '@/lib/env';
 import { eventBus, EVENTS } from '@/lib/event-bus';
+
+/**
+ * Extended Promise type that includes a cancel method for request cancellation
+ */
+export interface CancellablePromise<T> extends Promise<T> {
+  cancel: () => void;
+}
 
 const getBaseUrl = () => {
   return env.API_URL || 'http://localhost:4201/shanda';
@@ -12,42 +19,40 @@ export const AXIOS_INSTANCE = axios.create({
   withCredentials: true, // Enable cookies for cross-origin requests
 });
 
-// CSRF token and Access Token storage
-// initializing with localStorage to ensure persistence across reloads
-let accessToken: string | null = localStorage.getItem('access_token');
-let isRefreshing = false;
-let failedQueue: any[] = [];
+// Clerk token getter - set by ClerkTokenProvider on app initialization
+let getClerkToken: (() => Promise<string | null>) | null = null;
 
-export const setAccessToken = (token: string | null) => {
-  accessToken = token;
-  if (token) {
-    localStorage.setItem('access_token', token);
-  } else {
-    localStorage.removeItem('access_token');
-  }
+/**
+ * Set the Clerk token getter function
+ * Called by ClerkTokenProvider during app initialization
+ */
+export const setClerkTokenGetter = (getter: () => Promise<string | null>) => {
+  getClerkToken = getter;
 };
 
-const processQueue = (error: any, token: any = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
+/**
+ * Legacy function - kept for backward compatibility
+ * Clerk manages tokens automatically via Bearer header (no manual token setting needed)
+ */
+export const setAccessToken = (_token: string | null) => {
+  // No-op - Clerk manages tokens automatically
+};
+
+/**
+ * Request interceptor - adds Clerk Bearer token to all requests
+ * Tokens are obtained fresh on each request from Clerk SDK
+ */
+AXIOS_INSTANCE.interceptors.request.use(async (config) => {
+  if (getClerkToken) {
+    try {
+      const token = await getClerkToken();
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Failed to get Clerk token:', error);
     }
-  });
-  
-  failedQueue = [];
-};
-
-AXIOS_INSTANCE.interceptors.request.use((config) => {
-  // Add Bearer token if available
-  if (accessToken) {
-    config.headers['Authorization'] = `Bearer ${accessToken}`;
-  } else {
-    // Debug log to see why token is missing
-    // console.log('Request without access token:', config.url);
   }
-  
   return config;
 });
 
@@ -82,87 +87,44 @@ AXIOS_INSTANCE.interceptors.response.use(
 
     const { status } = error.response;
 
-    // 2. Handle 403 Forbidden (Unauthorized access)
-    if (status === 403) {
-      showToast('You do not have permission to perform this action.', 'error');
-      // Optional: Redirect to unauthorized page
-      // window.location.href = '/unauthorized';
+    // 2. Handle 401 Unauthorized - Clerk handles token refresh automatically
+    // Just reject and let Clerk's SignedIn/SignedOut components handle redirect
+    if (status === 401) {
+      // Clerk will automatically redirect to sign-in if session expired
       return Promise.reject(error);
     }
 
-    // 3. Handle 404 Not Found (Only for GET requests mainly, prevents spamming on search)
+    // 3. Handle 403 Forbidden (Unauthorized access)
+    if (status === 403) {
+      showToast('You do not have permission to perform this action.', 'error');
+      return Promise.reject(error);
+    }
+
+    // 4. Handle 404 Not Found (Only show for non-GET requests)
     if (status === 404 && originalRequest.method !== 'get') {
       showToast('The requested resource was not found.', 'error');
+      return Promise.reject(error);
     }
 
-    // 4. Handle 500 Server Errors
+    // 5. Handle 500 Server Errors - SINGLE toast only
     if (status >= 500) {
       showToast('Something went wrong on our end. Please try again later.', 'error');
+      return Promise.reject(error);
     }
 
-    // 5. Handle 401 Unauthorized (Token Expiration) with queueing
-    if (status === 401 && !originalRequest._retry) {
-      
-      // Don't show session expired toast for initial auth check (GET /auth/me)
-      const isAuthCheck = originalRequest.url?.includes('/auth/me');
-      
-      if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
-          failedQueue.push({ resolve, reject });
-        }).then(token => {
-          return AXIOS_INSTANCE(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        // Try to refresh token
-        const { data } = await axios.post(`${getBaseUrl()}/auth/refresh`, {}, { withCredentials: true });
-        
-        // Update access token if returned
-        if (data.accessToken) {
-          setAccessToken(data.accessToken);
-        }
-
-        processQueue(null, true);
-        return AXIOS_INSTANCE(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        setAccessToken(null); // Clear token on failure
-        
-        // Only redirect to login and show toast if not an auth check
-        isRefreshing = false;
-      }
-    }
-    
-    // Improve error message extract
-    const message = (error.response?.data as any)?.message || error.message || 'An unexpected error occurred';
-    
-    // Don't show toast for 401s (handled above) or 404 GETs
-    if (status !== 401 && !(status === 404 && originalRequest.method === 'get')) {
-       // Only show specific error toast if not already handled by generic handlers above
-       if (status < 500 && status !== 403) {
-          showToast(Array.isArray(message) ? message[0] : message, 'error');
-       }
-    }
-
+    // For all other errors, don't show toast - let components handle it
     return Promise.reject(error);
   }
 );
 
-export const customInstance = <T>(config: AxiosRequestConfig, options?: AxiosRequestConfig): Promise<T> => {
+export const customInstance = <T>(config: AxiosRequestConfig, options?: AxiosRequestConfig): CancellablePromise<T> => {
   const source = axios.CancelToken.source();
   const promise = AXIOS_INSTANCE({
     ...config,
     ...options,
     cancelToken: source.token,
-  }).then(({ data }) => data);
+  }).then(({ data }) => data) as CancellablePromise<T>;
 
-  // @ts-ignore
   promise.cancel = () => {
     source.cancel('Query was cancelled');
   };

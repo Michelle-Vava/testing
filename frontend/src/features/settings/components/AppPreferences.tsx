@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { useState } from 'react';
-import { useToast } from '@/contexts/ToastContext';
+import { useToast } from '@/components/ui/ToastContext';
+import { useUIStore } from '@/lib/store';
 
 /**
  * App preferences component
@@ -8,14 +8,10 @@ import { useToast } from '@/contexts/ToastContext';
  */
 export function AppPreferences() {
   const toast = useToast();
-  const [theme, setTheme] = useState<'light' | 'dark'>(
-    localStorage.getItem('theme') as 'light' | 'dark' || 'light'
-  );
+  const { theme, setTheme } = useUIStore();
 
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
     toast.success(`Switched to ${newTheme} mode`);
   };
 
@@ -59,17 +55,17 @@ export function AppPreferences() {
                 onClick={() => handleThemeChange('dark')}
                 className={`p-4 border-2 rounded-lg transition-all ${
                   theme === 'dark'
-                    ? 'border-primary-600 bg-primary-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-600'
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-6 h-6 text-gray-900 dark:text-gray-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                   <div className="text-left">
-                    <div className="font-medium text-gray-900">Dark</div>
-                    <div className="text-sm text-gray-500">Easy on the eyes</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">Dark</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Midnight Navy</div>
                   </div>
                 </div>
               </button>

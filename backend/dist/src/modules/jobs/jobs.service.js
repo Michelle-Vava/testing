@@ -14,8 +14,9 @@ exports.JobsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
 const notifications_service_1 = require("../notifications/notifications.service");
-const email_service_1 = require("../../shared/services/email.service");
+const email_service_1 = require("../../shared/services/email/email.service");
 const enums_1 = require("../../shared/enums");
+const pagination_helper_1 = require("../../shared/utils/pagination.helper");
 let JobsService = JobsService_1 = class JobsService {
     prisma;
     notificationsService;
@@ -59,7 +60,6 @@ let JobsService = JobsService_1 = class JobsService {
                             email: true,
                         },
                     },
-                    payments: true,
                 },
                 orderBy: { createdAt: 'desc' },
                 skip,
@@ -67,15 +67,7 @@ let JobsService = JobsService_1 = class JobsService {
             }),
             this.prisma.job.count({ where }),
         ]);
-        return {
-            data: jobs,
-            meta: {
-                total,
-                page: paginationDto.page,
-                limit: paginationDto.limit,
-                totalPages: Math.ceil(total / paginationDto.limit),
-            },
-        };
+        return (0, pagination_helper_1.paginate)(jobs, total, paginationDto);
     }
     async findOne(id, userId) {
         this.logger.debug(`Finding job ${id} for user ${userId}`);
@@ -104,7 +96,6 @@ let JobsService = JobsService_1 = class JobsService {
                         email: true,
                     },
                 },
-                payments: true,
             },
         });
         if (!job) {
@@ -123,8 +114,18 @@ let JobsService = JobsService_1 = class JobsService {
         if (!job) {
             throw new common_1.NotFoundException(`Job with ID ${id} not found`);
         }
-        if (job.providerId !== userId) {
-            throw new common_1.ForbiddenException(`Update denied: Only the assigned provider can update job ${id} status`);
+        const isProvider = job.providerId === userId;
+        const isOwner = job.ownerId === userId;
+        if (!isProvider && !isOwner) {
+            throw new common_1.ForbiddenException(`Update denied: You are not associated with job ${id}`);
+        }
+        if (isOwner && !isProvider) {
+            if (job.status !== enums_1.JobStatus.PENDING_CONFIRMATION || statusData.status !== enums_1.JobStatus.COMPLETED) {
+                throw new common_1.ForbiddenException(`Owners can only confirm completion of jobs marked as pending confirmation`);
+            }
+        }
+        if (isProvider && !isOwner && job.status === enums_1.JobStatus.COMPLETED && statusData.status !== enums_1.JobStatus.COMPLETED) {
+            throw new common_1.BadRequestException(`Job ${id} is already completed and cannot be modified`);
         }
         if (job.status === enums_1.JobStatus.COMPLETED && statusData.status !== enums_1.JobStatus.COMPLETED) {
             throw new common_1.BadRequestException(`Job ${id} is already completed and cannot be modified`);

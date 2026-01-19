@@ -1,43 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { useRequestsControllerFindAll } from '@/api/generated/requests/requests';
-import { usePaymentsControllerListTransactions } from '@/api/generated/payments/payments';
-import { useJobsControllerFindAll } from '@/api/generated/jobs/jobs';
-import { JobCard } from '@/routes/provider/_layout/-components/job-card';
-import { formatCurrency } from '@/utils/formatters';
+import { useRequestsControllerFindAll } from '@/services/generated/requests/requests';
+import { useJobsControllerFindAll } from '@/services/generated/jobs/jobs';
+import { ProviderJobCard } from '@/features/jobs/components/cards/ProviderJobCard';
+import type { RequestResponseDto, JobResponseDto } from '@/services/generated/model';
+import { JobStatus, RequestStatus } from '@/types/enums';
 import { 
-  DollarSign, 
-  Star, 
   Briefcase, 
   Clock, 
-  CheckCircle, 
   AlertCircle,
-  TrendingUp,
-  MapPin
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
+import { ProviderGettingStartedChecklist } from './ProviderGettingStartedChecklist';
 
+// Provider dashboard with metrics, available jobs, and alerts
 export function ProviderDashboard() {
   const { user } = useAuth();
   
   // Real Data Fetching
   const { data: requestRes } = useRequestsControllerFindAll();
-  const availableJobs = (requestRes as any)?.data || [];
-  
-  const { data: transactions = [] } = usePaymentsControllerListTransactions();
+  const availableJobs = requestRes?.data || [];
   
   const { data: jobRes } = useJobsControllerFindAll();
-  const allJobs = (jobRes as any)?.data || [];
+  const allJobs = jobRes?.data || [];
 
   // Derived Calculations
-  const urgentJobs = availableJobs.filter((j: any) => j.urgency === 'URGENT');
-  const activeJobs = allJobs.filter((j: any) => j.status === 'in_progress');
-  const totalEarnings = transactions.reduce((acc: number, t: any) => acc + Number(t.amount), 0);
-  
-  // User Stats
-  const rating = user?.rating || 5.0;
-  const reviewCount = user?.reviewCount || 0;
+  const urgentJobs = availableJobs.filter((j: RequestResponseDto) => j.urgency === 'URGENT');
+  const activeJobs = allJobs.filter((j: JobResponseDto) => j.status === JobStatus.IN_PROGRESS);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -51,35 +42,13 @@ export function ProviderDashboard() {
             Here's what's happening with your business today.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-           <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-200">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-              </span>
-              <span className="text-sm font-medium">Online & Accepting Jobs</span>
-           </div>
-        </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Earnings Card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-500">Earnings (Total)</p>
-              <DollarSign className="w-4 h-4 text-green-600" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-gray-900">{formatCurrency(totalEarnings)}</h3>
-              <span className="text-xs text-green-600 flex items-center">
-                <TrendingUp className="w-3 h-3 mr-1" /> Real-time
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Getting Started Checklist */}
+      <ProviderGettingStartedChecklist />
 
+      {/* Simplified Metrics Grid - Phase 1 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Available Jobs Card */}
         <Card>
           <CardContent className="p-6">
@@ -106,20 +75,6 @@ export function ProviderDashboard() {
             <div className="flex items-baseline gap-2">
               <h3 className="text-2xl font-bold text-gray-900">{activeJobs.length}</h3>
               <span className="text-xs text-gray-500">In progress</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Rating Card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-500">Rating</p>
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-gray-900">{rating}</h3>
-              <span className="text-xs text-gray-500">({reviewCount} reviews)</span>
             </div>
           </CardContent>
         </Card>
@@ -156,7 +111,7 @@ export function ProviderDashboard() {
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                  <Briefcase className="w-6 h-6 text-gray-400" />
+                  <Briefcase className="w-6 h-6 bg-gray-50 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900">No new requests</h3>
                 <p className="text-gray-500 max-w-sm mt-1">
@@ -166,8 +121,8 @@ export function ProviderDashboard() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {availableJobs.slice(0, 5).map((job: any) => (
-                <JobCard key={job.id} job={job} />
+              {availableJobs.slice(0, 5).map((job: RequestResponseDto) => (
+                <ProviderJobCard key={job.id} job={job} />
               ))}
             </div>
           )}
@@ -184,14 +139,17 @@ export function ProviderDashboard() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Completion</span>
-                  <span className="font-medium text-gray-900">85%</span>
+                  <span className="font-medium text-gray-900">{profileCompletion}%</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className="bg-primary-600 h-2 rounded-full w-[85%]"></div>
+                  <div 
+                    className="bg-primary-600 h-2 rounded-full transition-all duration-500 ease-in-out" 
+                    style={{ width: `${profileCompletion}%` }}
+                  ></div>
                 </div>
                 
                 <div className="space-y-2 pt-2">
-                  <div className="flex items-center gap-2 text-sm text-green-700">
+                  <div className={`flex items-center gap-2 text-sm ${user?.providerStatus === 'ACTIVE' ? 'text-green-700' : 'text-gray-400'}`}>
                     <CheckCircle className="w-4 h-4" />
                     <span>Business Details Verified</span>
                   </div>
@@ -224,16 +182,11 @@ export function ProviderDashboard() {
                   Browse Jobs
                 </Link>
               </Button>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => alert('Map view coming soon!')}>
+              <Button variant="ghost" className="w-full justify-start" onClick={() => info('Map view coming soon!')}>
                  <MapPin className="w-4 h-4 mr-2" />
                  Map View
               </Button>
-              <Button variant="ghost" className="w-full justify-start" asChild>
-                 <Link to="/provider/payments">
-                   <DollarSign className="w-4 h-4 mr-2" />
-                   Payout Settings
-                 </Link>
-              </Button>
+              {/* Phase 1: Payout Settings removed - coming in Phase 2 */}
             </CardContent>
           </Card>
 

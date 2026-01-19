@@ -18,71 +18,38 @@ let PlatformService = class PlatformService {
         this.db = db;
     }
     async getStats() {
-        const [totalCustomers, totalProviders, totalJobsCompleted, avgSavingsData,] = await Promise.all([
-            this.db.user.count({
-                where: {
-                    OR: [
-                        { ownedVehicles: { some: {} } },
-                        { serviceRequests: { some: {} } },
-                    ],
-                },
-            }),
-            this.db.user.count({
-                where: {
-                    roles: {
-                        has: 'provider',
-                    },
-                },
+        const [totalUsers, totalVehicles, activeJobs, completedJobs,] = await Promise.all([
+            this.db.user.count(),
+            this.db.vehicle.count(),
+            this.db.job.count({
+                where: { status: 'in_progress' },
             }),
             this.db.job.count({
-                where: {
-                    status: 'COMPLETED',
-                },
-            }),
-            this.db.serviceRequest.findMany({
-                where: {
-                    quotes: {
-                        some: {
-                            status: 'ACCEPTED',
-                        },
-                    },
-                },
-                include: {
-                    quotes: {
-                        select: {
-                            amount: true,
-                            status: true,
-                        },
-                    },
-                },
+                where: { status: 'completed' },
             }),
         ]);
-        let totalSavings = 0;
-        let requestsWithSavings = 0;
-        for (const request of avgSavingsData) {
-            const quotes = request.quotes;
-            if (quotes.length > 1) {
-                const acceptedQuote = quotes.find((q) => q.status === 'ACCEPTED');
-                const allPrices = quotes.map((q) => parseFloat(q.amount.toString()));
-                const maxPrice = Math.max(...allPrices);
-                if (acceptedQuote) {
-                    const savings = maxPrice - parseFloat(acceptedQuote.amount.toString());
-                    if (savings > 0) {
-                        totalSavings += savings;
-                        requestsWithSavings++;
+        const totalRevenue = 0;
+        return {
+            totalUsers,
+            totalVehicles,
+            activeJobs,
+            totalRevenue,
+            jobsCompleted: completedJobs,
+        };
+    }
+    async getActivity() {
+        return this.db.activity.findMany({
+            take: 20,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
                     }
                 }
             }
-        }
-        const averageSavings = requestsWithSavings > 0
-            ? Math.round(totalSavings / requestsWithSavings)
-            : 0;
-        return {
-            customers: totalCustomers,
-            providers: totalProviders,
-            jobsCompleted: totalJobsCompleted,
-            averageSavings,
-        };
+        });
     }
     async getSettings() {
         return {

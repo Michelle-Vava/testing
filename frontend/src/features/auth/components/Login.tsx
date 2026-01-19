@@ -1,33 +1,23 @@
 import { useNavigate, Link, useSearch } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { useToast } from '@/contexts/ToastContext';
-import { ROUTES } from '@/config/routes';
+import { useToast } from '@/components/ui/ToastContext';
+import { ROUTES } from '@/lib/routes';
 import { useState } from 'react';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
 import { PasswordField } from './PasswordField';
-import { FormField } from './FormField';
+import { FormField } from '@/components/ui/FormField';
 import { AuthFormLayout } from './AuthFormLayout';
 import { ForgotPasswordSection } from './ForgotPasswordSection';
 import { Button } from '@/components/ui/button';
 
-interface LoginFormValues {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
-
-interface LoginProps {
-  onSwitchToSignup?: () => void;
-}
-
-export function Login({ onSwitchToSignup }: LoginProps) {
+// Simple wrapper to be used inside OwnerAuthPage or ProviderAuthPage
+export function LoginComponent({ mode }: { mode: 'owner' | 'provider' }) {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { mode?: 'owner' | 'provider' };
-  const mode = search?.mode || 'owner';
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const toast = useToast();
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const isProvider = mode === 'provider';
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<LoginFormValues>({
     defaultValues: {
@@ -42,16 +32,27 @@ export function Login({ onSwitchToSignup }: LoginProps) {
       const loggedInUser = await login(formValues.email, formValues.password);
       toast.success('Welcome back!');
       
-      // Route based on mode and provider profile status
-      if (mode === 'provider') {
-        // User wants provider mode
-        if (loggedInUser.providerOnboardingComplete) {
+      // Determine target route based on USER ROLE first (source of truth), then fall back to mode
+      // This prevents providers from landing on owner dashboard if they used the wrong login link
+      
+      // Check for provider role/status
+      const hasProviderRole = loggedInUser.roles?.includes('provider');
+      const isProviderMode = mode === 'provider';
+
+      if (hasProviderRole || (isProviderMode && (!loggedInUser.roles || loggedInUser.roles.length === 0))) {
+        // Robust check for onboarding completion
+        const isProviderOnboarded = 
+          loggedInUser.providerStatus === 'ACTIVE' || 
+          loggedInUser.providerStatus === 'PENDING' || 
+          loggedInUser.providerOnboardingComplete;
+
+        if (isProviderOnboarded) {
           navigate({ to: '/provider/dashboard' });
         } else {
           navigate({ to: '/provider/onboarding' });
         }
       } else {
-        // Default to owner dashboard
+        // Default to Owner Dashboard
         navigate({ to: ROUTES.OWNER_DASHBOARD });
       }
     } catch (error: any) {
@@ -68,15 +69,14 @@ export function Login({ onSwitchToSignup }: LoginProps) {
     }
   };
 
+  if (showForgotPassword) {
+    return <ForgotPasswordSection onBack={() => setShowForgotPassword(false)} />;
+  }
+
   return (
-    <AuthFormLayout 
-      mode={mode}
-      authType="login"
-      title="Welcome back"
-      subtitle="Compare verified quotes. No spam."
-    >
+    <div className="w-full">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <GoogleOAuthButton />
+        <GoogleOAuthButton isProvider={isProvider} />
 
         {/* Divider */}
         <div className="relative">
@@ -89,93 +89,91 @@ export function Login({ onSwitchToSignup }: LoginProps) {
         </div>
 
         {/* Email Field */}
-        <FormField
-          id="email"
-          label="Email address"
-          type="email"
-          placeholder="you@example.com"
-          error={errors.email?.message}
-          {...register('email', { 
-            required: 'Email is required',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Please enter a valid email address'
-            }
-          })}
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-slate-700">
+            Email address
+          </label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 bg-white border-slate-300 text-slate-900 
+              ${isProvider ? 'focus:ring-[#F5B700]' : 'focus:ring-blue-500'}
+              ${errors.email ? 'border-red-500' : ''}
+            `}
+            {...register('email', { 
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Please enter a valid email address'
+              }
+            })}
+          />
+          {errors.email?.message && (
+            <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+          )}
+        </div>
 
-        {/* Password Field with Forgot Password Link */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+        {/* Password Field */}
+        <div className="space-y-1">
+           <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-slate-700">
               Password
             </label>
             <button
-              type="button"
-              onClick={() => setShowForgotPassword(!showForgotPassword)}
-              className="text-sm text-slate-600 hover:text-slate-900 hover:underline transition-colors"
-            >
-              Forgot password?
-            </button>
-          </div>
-          <PasswordField
-            id="password"
-            placeholder="••••••••"
-            error={errors.password?.message}
-            showStrengthIndicator={false}
-            {...register('password', { required: 'Password is required' })}
-          />
+               type="button"
+               onClick={() => setShowForgotPassword(true)}
+               className={`text-sm hover:underline ${isProvider ? 'text-[#F5B700]' : 'text-blue-600'}`}
+             >
+               Forgot password?
+             </button>
+           </div>
+           <PasswordField 
+             register={register} 
+             error={errors.password?.message}
+             isProvider={isProvider}
+             showStrengthIndicator={false}
+           />
         </div>
 
-        {/* Forgot Password Section */}
-        <ForgotPasswordSection 
-          isOpen={showForgotPassword}
-          onClose={() => setShowForgotPassword(false)}
-        />
-
-        {/* Remember Me */}
         <div className="flex items-center">
           <input
-            id="rememberMe"
+            id="remember-me"
             type="checkbox"
+            className={`h-4 w-4 rounded border-gray-300 ${isProvider ? 'text-[#F5B700] focus:ring-[#F5B700]' : 'text-blue-600 focus:ring-blue-500'}`}
             {...register('rememberMe')}
-            className="h-4 w-4 text-slate-900 focus:ring-slate-500 border-slate-300 rounded cursor-pointer"
           />
-          <label htmlFor="rememberMe" className="ml-2 block text-sm text-slate-700 cursor-pointer">
-            Keep me signed in
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600">
+            Remember me
           </label>
         </div>
 
-        {/* Submit Button */}
-        <Button type="submit" fullWidth isLoading={isSubmitting}>
-          {isSubmitting ? 'Signing in...' : 'Sign In'}
-        </Button>
-
-        {/* Trust Signal */}
-        <p className="text-xs text-center text-slate-500">
-          Your data is encrypted in transit. We never share your info without permission.
-        </p>
-      </form>
-
-      {/* Sign Up Link */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-slate-600">
-          Don't have an account?{' '}
-          {onSwitchToSignup ? (
-            <button
-              type="button"
-              onClick={onSwitchToSignup}
-              className="text-slate-900 hover:text-slate-700 font-medium hover:underline"
-            >
-              Sign up
-            </button>
+        <Button
+          type="submit"
+          className={`w-full py-2.5 font-semibold text-white shadow-sm transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+            ${isProvider 
+              ? 'bg-[#F5B700] text-slate-900 hover:bg-yellow-500 focus-visible:outline-yellow-500' 
+              : 'bg-slate-900 hover:bg-slate-800 focus-visible:outline-slate-900'
+            }`}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span>Signing in...</span>
+            </div>
           ) : (
-            <Link to="/auth/signup" className="text-slate-900 hover:text-slate-700 font-medium hover:underline">
-              Sign up
-            </Link>
+            'Sign In'
           )}
-        </p>
-      </div>
-    </AuthFormLayout>
+        </Button>
+      </form>
+    </div>
   );
+}
+
+// Keeping original export for backward compatibility if needed elsewhere
+export function Login({ onSwitchToSignup }: LoginProps) {
+  const search = useSearch({ strict: false }) as { mode?: 'owner' | 'provider' };
+  const mode = search?.mode || 'owner';
+  
+  return <LoginComponent mode={mode} />;
 }

@@ -3,11 +3,25 @@ export declare class PlatformService {
     private readonly db;
     constructor(db: PrismaService);
     getStats(): Promise<{
-        customers: number;
-        providers: number;
+        totalUsers: number;
+        totalVehicles: number;
+        activeJobs: number;
+        totalRevenue: number;
         jobsCompleted: number;
-        averageSavings: number;
     }>;
+    getActivity(): Promise<({
+        user: {
+            name: string;
+            email: string;
+        };
+    } & {
+        id: string;
+        userId: string;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        type: string;
+        description: string;
+    })[]>;
     getSettings(): Promise<{
         businessHours: {
             monday: {

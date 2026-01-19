@@ -4,8 +4,8 @@ import {
   useMaintenanceControllerCreate,
   useMaintenanceControllerDelete,
   getMaintenanceControllerFindAllQueryKey,
-} from '@/api/generated/maintenance/maintenance';
-import { CreateMaintenanceRecordDto } from '@/api/generated/model';
+} from '@/services/generated/maintenance/maintenance';
+import { CreateMaintenanceRecordDto } from '@/services/generated/model';
 
 export const useMaintenance = (vehicleId: string) => {
   const queryClient = useQueryClient();

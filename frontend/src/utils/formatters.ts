@@ -80,15 +80,6 @@ export function getServiceTypeLabel(serviceType: string): string {
   return labels[serviceType] || serviceType;
 }
 
-export function getUrgencyColor(urgency: 'low' | 'medium' | 'high'): string {
-  const colors = {
-    low: 'bg-green-100 text-green-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-red-100 text-red-800',
-  };
-  return colors[urgency];
-}
-
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',

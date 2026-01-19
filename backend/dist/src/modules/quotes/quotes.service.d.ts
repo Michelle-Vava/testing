@@ -1,6 +1,6 @@
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { EmailService } from '../../shared/services/email.service';
+import { EmailService } from '../../shared/services/email/email.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { QuoteEntity } from './entities/quote.entity';
 export declare class QuotesService {
@@ -14,12 +14,14 @@ export declare class QuotesService {
         quote: {
             id: string;
             createdAt: Date;
-            description: string | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.QuoteStatus;
+            description: string | null;
             requestId: string;
             providerId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
+            laborCost: import("@prisma/client/runtime/library").Decimal | null;
+            partsCost: import("@prisma/client/runtime/library").Decimal | null;
             estimatedDuration: string;
             notes: string | null;
             includesWarranty: boolean;
@@ -28,24 +30,26 @@ export declare class QuotesService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.JobStatus;
             ownerId: string;
             requestId: string;
             providerId: string;
+            quoteId: string;
             startedAt: Date | null;
             completedAt: Date | null;
-            quoteId: string;
         };
     }>;
     reject(quoteId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
-        description: string | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.QuoteStatus;
+        description: string | null;
         requestId: string;
         providerId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
+        laborCost: import("@prisma/client/runtime/library").Decimal | null;
+        partsCost: import("@prisma/client/runtime/library").Decimal | null;
         estimatedDuration: string;
         notes: string | null;
         includesWarranty: boolean;

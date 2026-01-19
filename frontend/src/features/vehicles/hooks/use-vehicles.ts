@@ -6,9 +6,9 @@ import {
   vehiclesControllerFindOne,
   vehiclesControllerUpdate,
   vehiclesControllerDelete
-} from '@/api/generated/vehicles/vehicles';
+} from '@/services/generated/vehicles/vehicles';
 import { customInstance } from '@/lib/axios';
-import type { VehiclesControllerFindAllParams } from '@/api/generated/model';
+import type { VehiclesControllerFindAllParams } from '@/services/generated/model';
 import type { Vehicle } from '@/features/vehicles/types/vehicle';
 
 export function useVehicles(initialPage = 1, initialLimit = 20) {

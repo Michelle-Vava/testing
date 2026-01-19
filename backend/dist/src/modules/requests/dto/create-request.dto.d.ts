@@ -5,7 +5,10 @@ export declare enum RequestUrgency {
     URGENT = "urgent"
 }
 export declare class CreateRequestDto {
-    vehicleId: string;
+    vehicleId?: string;
+    make?: string;
+    model?: string;
+    year?: number;
     title: string;
     description: string;
     urgency: RequestUrgency;

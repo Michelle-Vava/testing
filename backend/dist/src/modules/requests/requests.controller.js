@@ -20,12 +20,12 @@ const swagger_1 = require("@nestjs/swagger");
 const platform_express_1 = require("@nestjs/platform-express");
 const file_validation_pipe_1 = require("../../shared/pipes/file-validation.pipe");
 const requests_service_1 = require("./requests.service");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const create_request_dto_1 = require("./dto/create-request.dto");
 const update_request_dto_1 = require("./dto/update-request.dto");
 const request_response_dto_1 = require("./dto/request-response.dto");
 const requests_query_dto_1 = require("./dto/requests-query.dto");
 const upload_service_1 = require("../../shared/services/upload.service");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 let RequestsController = RequestsController_1 = class RequestsController {
     requestsService;
     uploadService;
@@ -39,24 +39,24 @@ let RequestsController = RequestsController_1 = class RequestsController {
         return this.requestsService.findPublicRecent();
     }
     async findAll(req, query) {
-        this.logger.log(`User ${req.user.sub} fetching all requests with query: ${JSON.stringify(query)}`);
-        return this.requestsService.findAll(req.user.sub, req.user.roles, query);
+        this.logger.log(`User ${req.user.id} fetching all requests with query: ${JSON.stringify(query)}`);
+        return this.requestsService.findAll(req.user.id, req.user.roles, query);
     }
     async create(req, requestData) {
-        this.logger.log(`User ${req.user.sub} creating request`);
-        return this.requestsService.create(req.user.sub, requestData);
+        this.logger.log(`User ${req.user.id} creating request`);
+        return this.requestsService.create(req.user.id, requestData);
     }
     async findOne(req, id) {
-        this.logger.log(`User ${req.user.sub} fetching request ${id}`);
-        return this.requestsService.findOne(id, req.user.sub, req.user.roles);
+        this.logger.log(`User ${req.user.id} fetching request ${id}`);
+        return this.requestsService.findOne(id, req.user.id, req.user.roles);
     }
     async update(req, id, updateData) {
-        this.logger.log(`User ${req.user.sub} updating request ${id}`);
-        return this.requestsService.update(id, req.user.sub, updateData);
+        this.logger.log(`User ${req.user.id} updating request ${id}`);
+        return this.requestsService.update(id, req.user.id, updateData);
     }
     async uploadImages(req, id, files) {
-        this.logger.log(`User ${req.user.sub} uploading images for request ${id}`);
-        await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+        this.logger.log(`User ${req.user.id} uploading images for request ${id}`);
+        await this.requestsService.findOne(id, req.user.id, req.user.roles);
         if (!files || files.length === 0) {
             throw new common_1.BadRequestException('No images provided');
         }
@@ -64,14 +64,15 @@ let RequestsController = RequestsController_1 = class RequestsController {
         return this.requestsService.addImages(id, imageUrls);
     }
     async deleteImage(req, id, imageUrl) {
-        this.logger.log(`User ${req.user.sub} deleting image from request ${id}`);
-        await this.requestsService.findOne(id, req.user.sub, req.user.roles);
+        this.logger.log(`User ${req.user.id} deleting image from request ${id}`);
+        await this.requestsService.findOne(id, req.user.id, req.user.roles);
         await this.uploadService.deleteImage(imageUrl);
         return this.requestsService.removeImage(id, imageUrl);
     }
 };
 exports.RequestsController = RequestsController;
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('public/recent'),
     (0, swagger_1.ApiOperation)({ summary: 'Get recent public service requests (no auth required)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return recent public requests.' }),
@@ -82,7 +83,6 @@ __decorate([
 ], RequestsController.prototype, "findPublicRecent", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get all service requests (owners see theirs, providers see all open)' }),
     (0, swagger_1.ApiResponse)({
@@ -99,7 +99,6 @@ __decorate([
 ], RequestsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new service request' }),
     (0, swagger_1.ApiBody)({ type: create_request_dto_1.CreateRequestDto }),
@@ -113,7 +112,6 @@ __decorate([
 ], RequestsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get a specific service request by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Service request details', type: request_response_dto_1.RequestResponseDto }),
@@ -127,7 +125,6 @@ __decorate([
 ], RequestsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Update a service request' }),
     (0, swagger_1.ApiBody)({ type: update_request_dto_1.UpdateRequestDto }),
@@ -143,7 +140,6 @@ __decorate([
 ], RequestsController.prototype, "update", null);
 __decorate([
     (0, common_1.Post)(':id/images'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Upload images for a service request' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
@@ -159,7 +155,6 @@ __decorate([
 ], RequestsController.prototype, "uploadImages", null);
 __decorate([
     (0, common_1.Delete)(':id/images'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Delete an image from a service request' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Image deleted successfully', type: request_response_dto_1.RequestResponseDto }),

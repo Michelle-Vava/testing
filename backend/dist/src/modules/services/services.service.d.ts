@@ -6,8 +6,8 @@ export declare class ServicesService {
         id: string;
         createdAt: Date;
         name: string;
-        description: string | null;
         updatedAt: Date;
+        description: string | null;
         slug: string;
         icon: string | null;
         isPopular: boolean;
@@ -18,8 +18,8 @@ export declare class ServicesService {
         id: string;
         createdAt: Date;
         name: string;
-        description: string | null;
         updatedAt: Date;
+        description: string | null;
         slug: string;
         icon: string | null;
         isPopular: boolean;
@@ -30,8 +30,8 @@ export declare class ServicesService {
         id: string;
         createdAt: Date;
         name: string;
-        description: string | null;
         updatedAt: Date;
+        description: string | null;
         slug: string;
         icon: string | null;
         isPopular: boolean;

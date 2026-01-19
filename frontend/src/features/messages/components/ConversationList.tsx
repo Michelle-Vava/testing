@@ -1,36 +1,50 @@
 import { useEffect } from 'react';
-import { useMessagesStore } from '../hooks/useMessagesStore';
+import { useMessagesStore, useMessagesUIStore } from '@/lib/store';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { useToken } from '@/lib/hooks';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageSquare, Car } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
 
 export function ConversationList() {
   const { user } = useAuth();
-  const { conversations, loadConversations, setActiveConversation, connect, disconnect } = useMessagesStore();
+  const token = useToken();
+  const navigate = useNavigate();
+  const { conversations, loadConversations } = useMessagesStore();
+  const { setActiveConversation } = useMessagesUIStore();
 
   useEffect(() => {
-    if (user) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        connect(user.id, token);
-        loadConversations();
-      }
+    if (user && token) {
+      loadConversations();
     }
+  }, [user, token, loadConversations]);
 
-    return () => {
-      disconnect();
-    };
-  }, [user, connect, disconnect, loadConversations]);
-
-  if (conversations.length === 0) {
+  if (!conversations || conversations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-1">No messages yet</h3>
-        <p className="text-sm text-gray-500 text-center max-w-sm">
-          Start a conversation with a service provider or vehicle owner from a job.
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-md mx-auto">
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          <MessageSquare className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-slate-900 mb-2">No messages yet</h3>
+        <p className="text-slate-600 mb-6">
+          Messages unlock after you accept a quote. Start by browsing providers or viewing your requests.
         </p>
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <Button 
+            onClick={() => navigate({ to: '/owner/requests' })}
+            className="flex-1"
+          >
+            View My Requests
+          </Button>
+          <Button 
+            onClick={() => navigate({ to: '/owner/providers' })}
+            variant="outline"
+            className="flex-1"
+          >
+            Browse Providers
+          </Button>
+        </div>
       </div>
     );
   }
@@ -40,7 +54,7 @@ export function ConversationList() {
       {conversations.map((conversation) => {
         const isOwner = user?.id === conversation.owner.id;
         const otherParty = isOwner ? conversation.provider : conversation.owner;
-        const lastMessage = conversation.messages[conversation.messages.length - 1];
+        const lastMessage = conversation.messages?.[conversation.messages.length - 1];
 
         return (
           <Link

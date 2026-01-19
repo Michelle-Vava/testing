@@ -17,7 +17,6 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const maintenance_service_1 = require("./maintenance.service");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const create_maintenance_record_dto_1 = require("./dto/create-maintenance-record.dto");
 let MaintenanceController = class MaintenanceController {
     maintenanceService;
@@ -25,13 +24,13 @@ let MaintenanceController = class MaintenanceController {
         this.maintenanceService = maintenanceService;
     }
     async findAll(req, vehicleId) {
-        return this.maintenanceService.findAllForVehicle(vehicleId, req.user.sub);
+        return this.maintenanceService.findAllForVehicle(vehicleId, req.user.id);
     }
     async create(req, vehicleId, data) {
-        return this.maintenanceService.create(vehicleId, req.user.sub, data);
+        return this.maintenanceService.create(vehicleId, req.user.id, data);
     }
     async delete(req, id) {
-        return this.maintenanceService.delete(id, req.user.sub);
+        return this.maintenanceService.delete(id, req.user.id);
     }
 };
 exports.MaintenanceController = MaintenanceController;
@@ -73,7 +72,6 @@ exports.MaintenanceController = MaintenanceController = __decorate([
     (0, swagger_1.ApiTags)('maintenance'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [maintenance_service_1.MaintenanceService])
 ], MaintenanceController);
 //# sourceMappingURL=maintenance.controller.js.map

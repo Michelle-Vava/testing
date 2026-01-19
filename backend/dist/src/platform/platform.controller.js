@@ -14,7 +14,6 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const platform_service_1 = require("./platform.service");
-const jwt_auth_guard_1 = require("../modules/auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../shared/guards/roles.guard");
 const roles_decorator_1 = require("../shared/decorators/roles.decorator");
 const user_role_enum_1 = require("../shared/enums/user-role.enum");
@@ -26,6 +25,9 @@ let PlatformController = class PlatformController {
     async getStats() {
         return this.platformService.getStats();
     }
+    async getActivity() {
+        return this.platformService.getActivity();
+    }
     async getSettings() {
         return this.platformService.getSettings();
     }
@@ -33,7 +35,7 @@ let PlatformController = class PlatformController {
 exports.PlatformController = PlatformController;
 __decorate([
     (0, common_1.Get)('stats'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN),
     (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get platform statistics (Admin only)' }),
@@ -42,6 +44,17 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], PlatformController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Get)('activity'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get platform activity feed (Admin only)' }),
+    openapi.ApiResponse({ status: 200, type: [Object] }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], PlatformController.prototype, "getActivity", null);
 __decorate([
     (0, common_1.Get)('settings'),
     (0, swagger_1.ApiOperation)({ summary: 'Get platform settings (public)' }),

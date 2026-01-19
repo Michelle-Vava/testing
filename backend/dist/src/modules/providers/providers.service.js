@@ -12,8 +12,8 @@ var ProvidersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProvidersService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("../../infrastructure/database/prisma.service");
 const client_1 = require("@prisma/client");
+const prisma_service_1 = require("../../infrastructure/database/prisma.service");
 let ProvidersService = ProvidersService_1 = class ProvidersService {
     prisma;
     logger = new common_1.Logger(ProvidersService_1.name);
@@ -25,111 +25,75 @@ let ProvidersService = ProvidersService_1 = class ProvidersService {
         const providers = await this.prisma.user.findMany({
             where: {
                 roles: { has: 'provider' },
-                providerStatus: client_1.ProviderStatus.ACTIVE,
-                rating: { not: null },
+                providerProfile: {
+                    status: client_1.ProviderStatus.ACTIVE,
+                },
             },
             take: 4,
             select: {
                 id: true,
                 name: true,
-                businessName: true,
-                serviceTypes: true,
-                city: true,
-                state: true,
-                rating: true,
-                reviewCount: true,
-                isVerified: true,
+                providerProfile: {
+                    select: {
+                        businessName: true,
+                        serviceTypes: true,
+                        shopCity: true,
+                        shopState: true,
+                        serviceRadius: true,
+                    }
+                }
             },
-            orderBy: [
-                { rating: 'desc' },
-                { reviewCount: 'desc' },
-            ],
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
         return providers.map(provider => ({
             id: provider.id,
-            name: provider.businessName || provider.name,
-            rating: Number(provider.rating) || 0,
-            reviewCount: provider.reviewCount,
-            isVerified: provider.isVerified,
-            specialties: provider.serviceTypes.slice(0, 3),
-            city: provider.city,
-            state: provider.state,
+            name: provider.providerProfile?.businessName || provider.name,
+            specialties: provider.providerProfile?.serviceTypes?.slice(0, 3) || [],
+            city: provider.providerProfile?.shopCity || '',
+            state: provider.providerProfile?.shopState || '',
         }));
     }
     async findAll(filters) {
-        const where = {
-            roles: { has: 'provider' },
-            providerStatus: client_1.ProviderStatus.ACTIVE,
+        const providerProfileFilter = {
+            status: client_1.ProviderStatus.ACTIVE,
         };
         if (filters.serviceType) {
-            where.serviceTypes = { has: filters.serviceType };
+            providerProfileFilter.serviceTypes = { has: filters.serviceType };
         }
-        if (filters.mobileService !== undefined) {
-            where.isMobileService = filters.mobileService;
-        }
-        if (filters.shopService !== undefined) {
-            where.isShopService = filters.shopService;
-        }
-        if (filters.minRating) {
-            where.rating = { gte: filters.minRating };
-        }
+        const where = {
+            roles: { has: 'provider' },
+            providerProfile: providerProfileFilter,
+        };
         const providers = await this.prisma.user.findMany({
             where,
             take: filters.limit || 20,
-            select: {
-                id: true,
-                name: true,
-                businessName: true,
-                bio: true,
-                serviceTypes: true,
-                yearsInBusiness: true,
-                certifications: true,
-                city: true,
-                state: true,
-                serviceArea: true,
-                isMobileService: true,
-                isShopService: true,
-                isVerified: true,
-                rating: true,
-                reviewCount: true,
-                shopAddress: true,
-                shopCity: true,
-                shopState: true,
-                shopZipCode: true,
+            include: {
+                providerProfile: true,
             },
             orderBy: {
-                rating: 'desc',
+                createdAt: 'desc',
             },
         });
-        return providers;
+        return providers.map(p => {
+            const pp = p.providerProfile || {};
+            return {
+                id: p.id,
+                name: p.name,
+                businessName: pp.businessName,
+                serviceTypes: pp.serviceTypes,
+                shopCity: pp.shopCity,
+                shopState: pp.shopState,
+                serviceRadius: pp.serviceRadius,
+            };
+        });
     }
     async findOne(id) {
         const provider = await this.prisma.user.findUnique({
             where: { id },
-            select: {
-                id: true,
-                name: true,
-                businessName: true,
-                bio: true,
-                avatarUrl: true,
-                phone: true,
-                email: true,
-                serviceTypes: true,
-                yearsInBusiness: true,
-                certifications: true,
-                city: true,
-                state: true,
-                serviceArea: true,
-                isMobileService: true,
-                isShopService: true,
-                isVerified: true,
-                rating: true,
-                reviewCount: true,
-                shopAddress: true,
-                shopCity: true,
-                shopState: true,
-                shopZipCode: true,
-                shopPhotos: true,
+            include: {
+                providerProfile: true,
                 _count: {
                     select: {
                         providedQuotes: true,
@@ -141,7 +105,32 @@ let ProvidersService = ProvidersService_1 = class ProvidersService {
         if (!provider) {
             throw new common_1.NotFoundException(`Provider with ID ${id} not found`);
         }
-        return provider;
+        const pp = provider.providerProfile || {};
+        return {
+            id: provider.id,
+            name: provider.name,
+            businessName: pp.businessName,
+            phone: provider.phone,
+            email: provider.email,
+            serviceTypes: pp.serviceTypes,
+            shopCity: pp.shopCity,
+            shopState: pp.shopState,
+            serviceRadius: pp.serviceRadius,
+            _count: provider._count,
+        };
+    }
+    async updateProfile(userId, data) {
+        this.logger.log(`Updating provider profile for user ${userId}`);
+        return this.prisma.providerProfile.upsert({
+            where: { userId },
+            create: {
+                userId,
+                ...data,
+            },
+            update: {
+                ...data,
+            },
+        });
     }
 };
 exports.ProvidersService = ProvidersService;

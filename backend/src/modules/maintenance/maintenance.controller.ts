@@ -1,14 +1,12 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { MaintenanceService } from './maintenance.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateMaintenanceRecordDto } from './dto/create-maintenance-record.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 
 @ApiTags('maintenance')
 @ApiBearerAuth()
 @Controller()
-@UseGuards(JwtAuthGuard)
 export class MaintenanceController {
   constructor(private maintenanceService: MaintenanceService) {}
 
@@ -16,7 +14,7 @@ export class MaintenanceController {
   @ApiOperation({ summary: 'Get maintenance history for a vehicle' })
   @ApiResponse({ status: 200, description: 'List of maintenance records' })
   async findAll(@Request() req: AuthenticatedRequest, @Param('vehicleId') vehicleId: string) {
-    return this.maintenanceService.findAllForVehicle(vehicleId, req.user.sub);
+    return this.maintenanceService.findAllForVehicle(vehicleId, req.user.id);
   }
 
   @Post('vehicles/:vehicleId/maintenance')
@@ -27,13 +25,17 @@ export class MaintenanceController {
     @Param('vehicleId') vehicleId: string,
     @Body() data: CreateMaintenanceRecordDto
   ) {
-    return this.maintenanceService.create(vehicleId, req.user.sub, data);
+    return this.maintenanceService.create(vehicleId, req.user.id, data);
   }
 
   @Delete('maintenance/:id')
   @ApiOperation({ summary: 'Delete a maintenance record' })
   @ApiResponse({ status: 200, description: 'Maintenance record deleted successfully' })
   async delete(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.maintenanceService.delete(id, req.user.sub);
+    return this.maintenanceService.delete(id, req.user.id);
   }
 }
+
+
+
+

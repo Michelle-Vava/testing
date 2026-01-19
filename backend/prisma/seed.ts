@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -13,6 +12,48 @@ async function main() {
   
   // 1. CREATE SERVICES
   const services = await Promise.all([
+    // Non-Mechanic Services (Detailing, Cosmetic)
+    prisma.service.create({
+      data: {
+        name: 'Mobile Detailing',
+        slug: 'mobile-detailing',
+        description: 'Full interior and exterior detailing at your location',
+        icon: '✨',
+        isPopular: true,
+        displayOrder: 1,
+      },
+    }),
+    prisma.service.create({
+      data: {
+        name: 'Car Wash',
+        slug: 'car-wash',
+        description: 'Exterior wash and dry',
+        icon: '🚿',
+        isPopular: true,
+        displayOrder: 2,
+      },
+    }),
+    prisma.service.create({
+      data: {
+        name: 'Interior Cleaning',
+        slug: 'interior-cleaning',
+        description: 'Deep clean of upholstery, carpets, and surfaces',
+        icon: '🧹',
+        isPopular: false,
+        displayOrder: 3,
+      },
+    }),
+    prisma.service.create({
+      data: {
+        name: 'Window Tinting',
+        slug: 'window-tinting',
+        description: 'Professional window tint installation',
+        icon: '🕶️',
+        isPopular: false,
+        displayOrder: 4,
+      },
+    }),
+    // Light Maintenance (Often allowed without full mech license)
     prisma.service.create({
       data: {
         name: 'Oil Change',
@@ -20,17 +61,17 @@ async function main() {
         description: 'Regular oil and filter replacement',
         icon: '🛢️',
         isPopular: true,
-        displayOrder: 1,
+        displayOrder: 5,
       },
     }),
     prisma.service.create({
       data: {
-        name: 'Brake Service',
-        slug: 'brake-service',
-        description: 'Brake pad replacement, rotor resurfacing',
-        icon: '🛑',
+        name: 'Tire Service',
+        slug: 'tire-service',
+        description: 'Rotation, seasonal swap, or puncture repair',
+        icon: '🛞',
         isPopular: true,
-        displayOrder: 2,
+        displayOrder: 6,
       },
     }),
     prisma.service.create({
@@ -40,37 +81,18 @@ async function main() {
         description: 'Battery testing and replacement',
         icon: '🔋',
         isPopular: true,
-        displayOrder: 3,
+        displayOrder: 7,
       },
     }),
+    // Heavier stuff
     prisma.service.create({
       data: {
-        name: 'Tire Rotation',
-        slug: 'tire-rotation',
-        description: 'Tire rotation and balance',
-        icon: '🔄',
-        isPopular: true,
-        displayOrder: 4,
-      },
-    }),
-    prisma.service.create({
-      data: {
-        name: 'Engine Diagnostic',
-        slug: 'engine-diagnostic',
-        description: 'Computer diagnostics and error code reading',
-        icon: '🔧',
+        name: 'Brake Service',
+        slug: 'brake-service',
+        description: 'Brake pad replacement, rotor resurfacing',
+        icon: '🛑',
         isPopular: false,
-        displayOrder: 5,
-      },
-    }),
-    prisma.service.create({
-      data: {
-        name: 'Inspection',
-        slug: 'inspection',
-        description: 'Safety and emissions inspection',
-        icon: '✅',
-        isPopular: true,
-        displayOrder: 6,
+        displayOrder: 8,
       },
     }),
   ]);
@@ -78,20 +100,27 @@ async function main() {
   console.log('✅ Created services');
 
   // 2. CREATE USERS WITH ENHANCED PROVIDER PROFILES
+  // Note: With Clerk auth, users are created via Clerk webhooks
+  // These seed users use externalAuthId for Clerk user IDs (placeholder values for dev)
   const ownerUser = await prisma.user.upsert({
     where: { email: 'owner@shanda.com' },
     update: {},
     create: {
       email: 'owner@shanda.com',
       name: 'John Owner',
-      password: await bcrypt.hash('password123', 10),
+      externalAuthId: 'clerk_seed_owner_001',
+      authProvider: 'clerk',
       phone: '+1 (902) 555-0100',
       roles: ['owner'],
-      onboardingComplete: true,
-      city: 'Halifax',
-      state: 'NS',
-      address: '123 Spring Garden Road',
-      zipCode: 'B3H 1Y6',
+      ownerProfile: {
+        create: {
+          city: 'Halifax',
+          state: 'NS',
+          address: '123 Spring Garden Road',
+          zipCode: 'B3H 1Y6',
+          onboardingComplete: true,
+        }
+      }
     },
   });
 
@@ -101,27 +130,34 @@ async function main() {
     create: {
       email: 'provider@shanda.com',
       name: 'Mike Thompson',
-      password: await bcrypt.hash('password123', 10),
+      externalAuthId: 'clerk_seed_provider_001',
+      authProvider: 'clerk',
       phone: '+1 (902) 555-0101',
       roles: ['provider'],
-      onboardingComplete: true,
-      providerOnboardingComplete: true,
-      businessName: 'Halifax Auto Care',
-      bio: 'Family-owned shop serving Halifax for over 15 years. ASE certified mechanics specializing in all makes and models.',
-      serviceTypes: ['Oil Change', 'Brake Service', 'Diagnostics', 'Tire Service'],
-      yearsInBusiness: 15,
-      certifications: ['ASE Certified', 'Red Seal Certified', 'AAA Approved'],
-      city: 'Halifax',
-      state: 'NS',
-      shopAddress: '1500 Bedford Highway',
-      shopCity: 'Halifax',
-      shopState: 'NS',
-      shopZipCode: 'B3M 2K2',
-      serviceArea: ['Halifax', 'Dartmouth', 'Bedford', 'Sackville'],
-      isMobileService: false,
-      isShopService: true,
-      rating: 4.8,
-      reviewCount: 124,
+      ownerProfile: {
+        create: {
+          city: 'Halifax',
+          state: 'NS',
+          onboardingComplete: true,
+          bio: 'Family-owned shop serving Halifax for over 15 years. ASE certified mechanics specializing in all makes and models.',
+        }
+      },
+      providerProfile: {
+        create: {
+          onboardingComplete: true, // Explicitly set to true for development
+          businessName: 'Halifax Auto Care',
+          serviceTypes: ['Oil Change', 'Brake Service', 'Diagnostics', 'Tire Service'],
+          yearsInBusiness: 15,
+          shopAddress: '1500 Bedford Highway',
+          shopCity: 'Halifax',
+          shopState: 'NS',
+          shopZipCode: 'B3M 2K2',
+          serviceArea: ['Halifax', 'Dartmouth', 'Bedford', 'Sackville'],
+          isMobileService: false,
+          isShopService: true,
+          status: 'ACTIVE',
+        }
+      }
     },
   });
 
@@ -131,23 +167,29 @@ async function main() {
     create: {
       email: 'mobile@shanda.com',
       name: 'Sarah Mobile',
-      password: await bcrypt.hash('password123', 10),
+      externalAuthId: 'clerk_seed_provider_002',
+      authProvider: 'clerk',
       phone: '+1 (902) 555-0102',
       roles: ['provider'],
-      onboardingComplete: true,
-      providerOnboardingComplete: true,
-      businessName: 'Mobile Mechanic HFX',
-      bio: 'Bringing the shop to you! Convenient mobile service for busy professionals. Available evenings and weekends.',
-      serviceTypes: ['Oil Change', 'Battery', 'Tire Service', 'Brake Service'],
-      yearsInBusiness: 7,
-      certifications: ['Red Seal Certified', 'Mobile Service Certified'],
-      city: 'Halifax',
-      state: 'NS',
-      serviceArea: ['Halifax', 'Dartmouth', 'Bedford'],
-      isMobileService: true,
-      isShopService: false,
-      rating: 4.9,
-      reviewCount: 87,
+      ownerProfile: {
+        create: {
+          city: 'Halifax',
+          state: 'NS',
+          onboardingComplete: true,
+          bio: 'Bringing the shop to you! Convenient mobile service for busy professionals. Available evenings and weekends.',
+        }
+      },
+      providerProfile: {
+        create: {
+          businessName: 'Mobile Mechanic HFX',
+          serviceTypes: ['Oil Change', 'Battery', 'Tire Service', 'Brake Service'],
+          yearsInBusiness: 7,
+          serviceArea: ['Halifax', 'Dartmouth', 'Bedford'],
+          isMobileService: true,
+          isShopService: false,
+          status: 'ACTIVE',
+        }
+      }
     },
   });
 
@@ -157,27 +199,105 @@ async function main() {
     create: {
       email: 'elite@shanda.com',
       name: 'Tom Richardson',
-      password: await bcrypt.hash('password123', 10),
+      externalAuthId: 'clerk_seed_provider_003',
+      authProvider: 'clerk',
       phone: '+1 (902) 555-0103',
       roles: ['provider'],
-      onboardingComplete: true,
-      providerOnboardingComplete: true,
-      businessName: 'Elite Motors Halifax',
-      bio: 'Premium automotive service specializing in European and luxury vehicles. State-of-the-art diagnostic equipment.',
-      serviceTypes: ['Engine Repair', 'Transmission', 'AC Service', 'Diagnostics'],
-      yearsInBusiness: 12,
-      certifications: ['ASE Master Certified', 'BMW Certified', 'Mercedes Certified'],
-      city: 'Halifax',
-      state: 'NS',
-      shopAddress: '2000 Robie Street',
-      shopCity: 'Halifax',
-      shopState: 'NS',
-      shopZipCode: 'B3K 4N5',
-      serviceArea: ['Halifax', 'Dartmouth'],
-      isMobileService: false,
-      isShopService: true,
-      rating: 4.7,
-      reviewCount: 56,
+      ownerProfile: {
+        create: {
+          city: 'Halifax',
+          state: 'NS',
+          onboardingComplete: true,
+          bio: 'Premium automotive service specializing in European and luxury vehicles. State-of-the-art diagnostic equipment.',
+        }
+      },
+      providerProfile: {
+        create: {
+          businessName: 'Elite Motors Halifax',
+          serviceTypes: ['Engine Repair', 'Transmission', 'AC Service', 'Diagnostics'],
+          yearsInBusiness: 12,
+          shopAddress: '2000 Robie Street',
+          shopCity: 'Halifax',
+          shopState: 'NS',
+          shopZipCode: 'B3K 4N5',
+          serviceArea: ['Halifax', 'Dartmouth'],
+          isMobileService: false,
+          isShopService: true,
+          status: 'ACTIVE',
+        }
+      }
+    },
+  });
+
+  const provider4 = await prisma.user.upsert({
+    where: { email: 'quickfix@shanda.com' },
+    update: {},
+    create: {
+      email: 'quickfix@shanda.com',
+      name: 'David Quick',
+      externalAuthId: 'clerk_seed_provider_004',
+      authProvider: 'clerk',
+      phone: '+1 (902) 555-0104',
+      roles: ['provider'],
+      ownerProfile: {
+        create: {
+          city: 'Dartmouth',
+          state: 'NS',
+          onboardingComplete: true,
+          bio: 'Fastest service in town. No appointment needed for oil changes and basic maintenance.',
+        }
+      },
+      providerProfile: {
+        create: {
+          businessName: 'Quick Fix Auto',
+          serviceTypes: ['Oil Change', 'Tire Service', 'Inspection'],
+          yearsInBusiness: 5,
+          shopAddress: '55 Main Street',
+          shopCity: 'Dartmouth',
+          shopState: 'NS',
+          shopZipCode: 'B2X 1R5',
+          serviceArea: ['Dartmouth', 'Cole Harbour'],
+          isMobileService: false,
+          isShopService: true,
+          status: 'ACTIVE',
+        }
+      }
+    },
+  });
+
+  const provider5 = await prisma.user.upsert({
+    where: { email: 'budget@shanda.com' },
+    update: {},
+    create: {
+      email: 'budget@shanda.com',
+      name: 'Bob Miller',
+      externalAuthId: 'clerk_seed_provider_005',
+      authProvider: 'clerk',
+      phone: '+1 (902) 555-0105',
+      roles: ['provider'],
+      ownerProfile: {
+        create: {
+          city: 'Sackville',
+          state: 'NS',
+          onboardingComplete: true,
+          bio: 'Affordable auto repair for everyone. We match any competitor price.',
+        }
+      },
+      providerProfile: {
+        create: {
+          businessName: 'Budget Auto Repair',
+          serviceTypes: ['General Repair', 'Brake Service', 'Suspension'],
+          yearsInBusiness: 20,
+          shopAddress: '100 Sackville Drive',
+          shopCity: 'Lower Sackville',
+          shopState: 'NS',
+          shopZipCode: 'B4C 2R0',
+          serviceArea: ['Sackville', 'Bedford'],
+          isMobileService: false,
+          isShopService: true,
+          status: 'ACTIVE',
+        }
+      }
     },
   });
 

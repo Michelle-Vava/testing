@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Star, MapPin, Clock, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useProvidersControllerFindFeatured } from '@/api/generated/providers/providers';
+import { useProvidersControllerFindFeatured } from '@/services/generated/providers/providers';
 
 interface Provider {
   id: string;
@@ -25,13 +25,9 @@ export function ProviderPreview() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 animate-pulse">
-        <div className="h-6 bg-slate-200 rounded w-1/3 mb-4"></div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-slate-200 rounded-lg"></div>
-          ))}
-        </div>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="h-6 bg-slate-200 rounded w-1/3 mb-4 animate-pulse"></div>
+        <GridSkeleton items={3} />
       </div>
     );
   }

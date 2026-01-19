@@ -20,9 +20,9 @@ import {
   useVehiclesControllerRemove,
   getVehiclesControllerFindAllQueryKey,
   getVehiclesControllerFindOneQueryKey,
-} from '@/api/generated/vehicles/vehicles';
-import type { CreateVehicleDto, UpdateVehicleDto } from '@/api/generated/model';
-import { useApiError } from '@/hooks/useApiError';
+} from '@/services/generated/vehicles/vehicles';
+import type { CreateVehicleDto, UpdateVehicleDto } from '@/services/generated/model';
+import { useApiError } from '@/features/errors/hooks/useApiError';
 import { eventBus, EVENTS } from '@/lib/event-bus';
 
 /**

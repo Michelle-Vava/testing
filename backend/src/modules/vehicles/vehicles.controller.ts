@@ -3,7 +3,6 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse, ApiConsume
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from '../../shared/pipes/file-validation.pipe';
 import { VehiclesService } from './vehicles.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { UpdateMileageDto } from './dto/update-mileage.dto';
@@ -11,6 +10,10 @@ import { VehicleResponseDto } from './dto/vehicle-response.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 import { UploadService } from '../../shared/services/upload.service';
+
+import { RolesGuard } from '../../shared/guards/roles.guard';
+import { Roles } from '../../shared/decorators/roles.decorator';
+import { UserRole } from '../../shared/enums/user-role.enum';
 
 /**
  * VehiclesController handles all vehicle management endpoints
@@ -21,7 +24,7 @@ import { UploadService } from '../../shared/services/upload.service';
 @ApiTags('vehicles')
 @ApiBearerAuth()
 @Controller('vehicles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(RolesGuard)
 export class VehiclesController {
   constructor(
     private vehiclesService: VehiclesService,
@@ -47,7 +50,7 @@ export class VehiclesController {
     type: [VehicleResponseDto]
   })
   async findAll(@Request() req: AuthenticatedRequest, @Query() paginationDto: PaginationDto) {
-    return this.vehiclesService.findAll(req.user.sub, paginationDto);
+    return this.vehiclesService.findAll(req.user.id, paginationDto);
   }
 
   /**
@@ -60,10 +63,11 @@ export class VehiclesController {
    * @returns Created vehicle entity
    */
   @Post()
+  @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Create a new vehicle' })
   @ApiResponse({ status: 201, description: 'Vehicle created successfully', type: VehicleResponseDto })
   async create(@Request() req: AuthenticatedRequest, @Body() vehicleData: CreateVehicleDto) {
-    return this.vehiclesService.create(req.user.sub, vehicleData);
+    return this.vehiclesService.create(req.user.id, vehicleData);
   }
 
   /**
@@ -81,7 +85,7 @@ export class VehiclesController {
   @ApiOperation({ summary: 'Get a specific vehicle by ID' })
   @ApiResponse({ status: 200, description: 'Vehicle details', type: VehicleResponseDto })
   async findOne(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.vehiclesService.findOne(id, req.user.sub);
+    return this.vehiclesService.findOne(id, req.user.id);
   }
 
   /**
@@ -100,7 +104,7 @@ export class VehiclesController {
   @ApiOperation({ summary: 'Update a vehicle' })
   @ApiResponse({ status: 200, description: 'Vehicle updated successfully', type: VehicleResponseDto })
   async update(@Request() req: AuthenticatedRequest, @Param('id') id: string, @Body() vehicleData: UpdateVehicleDto) {
-    return this.vehiclesService.update(id, req.user.sub, vehicleData);
+    return this.vehiclesService.update(id, req.user.id, vehicleData);
   }
 
   /**
@@ -119,7 +123,7 @@ export class VehiclesController {
   @ApiOperation({ summary: 'Update vehicle mileage' })
   @ApiResponse({ status: 200, description: 'Mileage updated successfully', type: VehicleResponseDto })
   async updateMileage(@Request() req: AuthenticatedRequest, @Param('id') id: string, @Body() mileageData: UpdateMileageDto) {
-    return this.vehiclesService.updateMileage(id, req.user.sub, mileageData.mileage);
+    return this.vehiclesService.updateMileage(id, req.user.id, mileageData.mileage);
   }
 
   /**
@@ -137,7 +141,7 @@ export class VehiclesController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a vehicle' })
   async delete(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.vehiclesService.delete(id, req.user.sub);
+    return this.vehiclesService.delete(id, req.user.id);
   }
 
   /**
@@ -165,7 +169,7 @@ export class VehiclesController {
     @UploadedFiles(new FileValidationPipe()) files: Express.Multer.File[],
   ) {
     // Validate vehicle ownership first
-    await this.vehiclesService.findOne(id, req.user.sub);
+    await this.vehiclesService.findOne(id, req.user.id);
 
     if (!files || files.length === 0) {
       throw new BadRequestException('No images provided');
@@ -200,7 +204,7 @@ export class VehiclesController {
     @Body('imageUrl') imageUrl: string,
   ) {
     // Validate vehicle ownership first
-    await this.vehiclesService.findOne(id, req.user.sub);
+    await this.vehiclesService.findOne(id, req.user.id);
 
     // Delete image from Cloudinary
     await this.uploadService.deleteImage(imageUrl);
@@ -209,3 +213,5 @@ export class VehiclesController {
     return this.vehiclesService.removeImage(id, imageUrl);
   }
 }
+
+

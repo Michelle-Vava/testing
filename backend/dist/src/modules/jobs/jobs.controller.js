@@ -18,7 +18,6 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const jobs_service_1 = require("./jobs.service");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const update_job_status_dto_1 = require("./dto/update-job-status.dto");
 const job_response_dto_1 = require("./dto/job-response.dto");
 const pagination_dto_1 = require("../../shared/dto/pagination.dto");
@@ -29,16 +28,16 @@ let JobsController = JobsController_1 = class JobsController {
         this.jobsService = jobsService;
     }
     async findAll(req, paginationDto) {
-        this.logger.log(`User ${req.user.sub} fetching all jobs`);
-        return this.jobsService.findAll(req.user.sub, req.user.roles, paginationDto);
+        this.logger.log(`User ${req.user.id} fetching all jobs`);
+        return this.jobsService.findAll(req.user.id, req.user.roles, paginationDto);
     }
     async findOne(req, id) {
-        this.logger.log(`User ${req.user.sub} fetching job ${id}`);
-        return this.jobsService.findOne(id, req.user.sub);
+        this.logger.log(`User ${req.user.id} fetching job ${id}`);
+        return this.jobsService.findOne(id, req.user.id);
     }
     async updateStatus(req, id, statusData) {
-        this.logger.log(`User ${req.user.sub} updating job ${id} status to ${statusData.status}`);
-        return this.jobsService.updateStatus(id, req.user.sub, statusData);
+        this.logger.log(`User ${req.user.id} updating job ${id} status to ${statusData.status}`);
+        return this.jobsService.updateStatus(id, req.user.id, statusData);
     }
 };
 exports.JobsController = JobsController;
@@ -91,7 +90,6 @@ exports.JobsController = JobsController = JobsController_1 = __decorate([
     (0, swagger_1.ApiTags)('jobs'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('jobs'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [jobs_service_1.JobsService])
 ], JobsController);
 //# sourceMappingURL=jobs.controller.js.map

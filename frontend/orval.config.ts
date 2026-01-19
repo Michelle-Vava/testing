@@ -2,8 +2,8 @@ export default {
   shanda: {
     output: {
       mode: 'tags-split',
-      target: 'src/api/generated',
-      schemas: 'src/api/generated/model',
+      target: 'src/services/generated',
+      schemas: 'src/services/generated/model',
       client: 'react-query',
       override: {
         mutator: {

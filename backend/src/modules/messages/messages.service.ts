@@ -1,7 +1,47 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { EmailService } from '../../shared/services/email.service';
+import { EmailService } from '../../shared/services/email/email.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+
+// Type-safe include objects for Prisma queries
+const conversationIncludes = {
+  messages: {
+    include: {
+      sender: {
+        select: {
+          id: true,
+          name: true,
+          ownerProfile: { select: { avatarUrl: true } },
+          providerProfile: { select: { businessName: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
+  owner: { 
+    select: { 
+      id: true, 
+      name: true, 
+      ownerProfile: { select: { avatarUrl: true } } 
+    } 
+  },
+  provider: { 
+    select: { 
+      id: true, 
+      name: true, 
+      ownerProfile: { select: { avatarUrl: true } },
+      providerProfile: { select: { businessName: true } }
+    } 
+  },
+  job: {
+    include: {
+      request: { select: { title: true } },
+    },
+  },
+} satisfies Prisma.ConversationInclude;
+
+type ConversationWithIncludes = Prisma.ConversationGetPayload<{ include: typeof conversationIncludes }>;
 
 @Injectable()
 export class MessagesService {
@@ -20,8 +60,21 @@ export class MessagesService {
     const job = await this.prisma.job.findUnique({
       where: { id: jobId },
       include: {
-        owner: { select: { id: true, name: true, avatarUrl: true } },
-        provider: { select: { id: true, name: true, avatarUrl: true, businessName: true } },
+        owner: { 
+          select: { 
+            id: true, 
+            name: true, 
+            ownerProfile: { select: { avatarUrl: true } } 
+          } 
+        },
+        provider: { 
+          select: { 
+            id: true, 
+            name: true, 
+            ownerProfile: { select: { avatarUrl: true } },
+            providerProfile: { select: { businessName: true } } 
+          } 
+        },
       },
     });
 
@@ -34,30 +87,9 @@ export class MessagesService {
     }
 
     // Check if conversation already exists
-    let conversation = await this.prisma.conversation.findUnique({
+    let conversation: ConversationWithIncludes | null = await this.prisma.conversation.findUnique({
       where: { jobId },
-      include: {
-        messages: {
-          include: {
-            sender: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-                businessName: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'asc' },
-        },
-        owner: { select: { id: true, name: true, avatarUrl: true } },
-        provider: { select: { id: true, name: true, avatarUrl: true, businessName: true } },
-        job: {
-          include: {
-            request: { select: { title: true } },
-          },
-        },
-      },
+      include: conversationIncludes,
     });
 
     if (!conversation) {
@@ -68,33 +100,44 @@ export class MessagesService {
           ownerId: job.ownerId,
           providerId: job.providerId,
         },
-        include: {
-          messages: {
-            include: {
-              sender: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatarUrl: true,
-                  businessName: true,
-                },
-              },
-            },
-          },
-          owner: { select: { id: true, name: true, avatarUrl: true } },
-          provider: { select: { id: true, name: true, avatarUrl: true, businessName: true } },
-          job: {
-            include: {
-              request: { select: { title: true } },
-            },
-          },
-        },
+        include: conversationIncludes,
       });
 
       this.logger.log(`Created new conversation ${conversation.id} for job ${jobId}`);
     }
 
-    return conversation;
+    // Map response for frontend compatibility
+    const owner = {
+      ...conversation.owner,
+      avatarUrl: conversation.owner.ownerProfile?.avatarUrl,
+      ownerProfile: undefined
+    };
+    
+    const provider = {
+      ...conversation.provider,
+      avatarUrl: conversation.provider.ownerProfile?.avatarUrl,
+      businessName: conversation.provider.providerProfile?.businessName,
+      ownerProfile: undefined,
+      providerProfile: undefined
+    };
+
+    const messages = conversation.messages.map((msg) => ({
+      ...msg,
+      sender: {
+        ...msg.sender,
+        avatarUrl: msg.sender.ownerProfile?.avatarUrl,
+        businessName: msg.sender.providerProfile?.businessName,
+        ownerProfile: undefined,
+        providerProfile: undefined
+      }
+    }));
+
+    return {
+      ...conversation,
+      owner,
+      provider,
+      messages
+    };
   }
 
   /**
@@ -118,8 +161,8 @@ export class MessagesService {
           select: {
             id: true,
             name: true,
-            avatarUrl: true,
-            businessName: true,
+            ownerProfile: { select: { avatarUrl: true } },
+            providerProfile: { select: { businessName: true } },
           },
         },
       },
@@ -142,18 +185,30 @@ export class MessagesService {
 
     if (recipient) {
       const messagePreview = content.length > 100 ? content.substring(0, 100) : content;
+      const senderData = message.sender as any;
+      const senderName = senderData.providerProfile?.businessName || senderData.name;
       
       await this.emailService.sendNewMessageEmail({
         recipientEmail: recipient.email,
         recipientName: recipient.name,
-        senderName: message.sender.businessName || message.sender.name,
+        senderName,
         messagePreview,
         conversationId: conversation.id,
       });
     }
 
+    // Map sender for flattened response
+    const sender = {
+      ...message.sender,
+      avatarUrl: (message.sender as any).ownerProfile?.avatarUrl,
+      businessName: (message.sender as any).providerProfile?.businessName,
+      ownerProfile: undefined,
+      providerProfile: undefined
+    };
+
     return {
       ...message,
+      sender,
       conversationId: conversation.id,
       recipientId: conversation.ownerId === senderId ? conversation.providerId : conversation.ownerId,
     };
@@ -179,13 +234,34 @@ export class MessagesService {
               select: {
                 id: true,
                 name: true,
-                avatarUrl: true,
+                ownerProfile: {
+                  select: { avatarUrl: true }
+                },
               },
             },
           },
         },
-        owner: { select: { id: true, name: true, avatarUrl: true } },
-        provider: { select: { id: true, name: true, avatarUrl: true, businessName: true } },
+        owner: { 
+          select: { 
+            id: true, 
+            name: true, 
+            ownerProfile: {
+              select: { avatarUrl: true }
+            }
+          } 
+        },
+        provider: { 
+          select: { 
+            id: true, 
+            name: true,
+            ownerProfile: {
+              select: { avatarUrl: true }
+            },
+            providerProfile: {
+              select: { businessName: true }
+            }
+          } 
+        },
         job: {
           include: {
             request: { select: { title: true, vehicle: { select: { make: true, model: true, year: true } } } },
@@ -205,12 +281,40 @@ export class MessagesService {
       orderBy: { lastMessageAt: 'desc' },
     });
 
-    return conversations.map((conv) => ({
-      ...conv,
-      unreadCount: conv._count.messages,
-      lastMessage: conv.messages[0] || null,
-      otherUser: conv.ownerId === userId ? conv.provider : conv.owner,
-    }));
+    return conversations.map((conv) => {
+      // Map nested profiles to flat properties for compatibility
+      const owner = {
+        ...conv.owner,
+        avatarUrl: conv.owner.ownerProfile?.avatarUrl,
+        ownerProfile: undefined // Hide from output
+      };
+      
+      const provider = {
+        ...conv.provider,
+        avatarUrl: conv.provider.ownerProfile?.avatarUrl,
+        businessName: conv.provider.providerProfile?.businessName,
+        ownerProfile: undefined,
+        providerProfile: undefined
+      };
+
+      const lastMessage = conv.messages[0] ? {
+        ...conv.messages[0],
+        sender: {
+          ...conv.messages[0].sender,
+          avatarUrl: conv.messages[0].sender.ownerProfile?.avatarUrl,
+          ownerProfile: undefined
+        }
+      } : null;
+
+      return {
+        ...conv,
+        owner,
+        provider,
+        unreadCount: conv._count.messages,
+        lastMessage,
+        otherUser: conv.ownerId === userId ? provider : owner,
+      };
+    });
   }
 
   /**

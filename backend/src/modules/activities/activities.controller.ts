@@ -1,12 +1,10 @@
 import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ActivitiesService } from './activities.service';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 
 @ApiTags('activities')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('activities')
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
@@ -16,6 +14,11 @@ export class ActivitiesController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(@Request() req: AuthenticatedRequest, @Query('limit') limit?: string) {
     const limitNum = limit ? parseInt(limit, 10) : 10;
-    return this.activitiesService.findByUserId(req.user.sub, limitNum);
+    return this.activitiesService.findByUserId(req.user.id, limitNum);
   }
 }
+
+
+
+
+

@@ -19,13 +19,15 @@ const swagger_1 = require("@nestjs/swagger");
 const platform_express_1 = require("@nestjs/platform-express");
 const file_validation_pipe_1 = require("../../shared/pipes/file-validation.pipe");
 const vehicles_service_1 = require("./vehicles.service");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const create_vehicle_dto_1 = require("./dto/create-vehicle.dto");
 const update_vehicle_dto_1 = require("./dto/update-vehicle.dto");
 const update_mileage_dto_1 = require("./dto/update-mileage.dto");
 const vehicle_response_dto_1 = require("./dto/vehicle-response.dto");
 const pagination_dto_1 = require("../../shared/dto/pagination.dto");
 const upload_service_1 = require("../../shared/services/upload.service");
+const roles_guard_1 = require("../../shared/guards/roles.guard");
+const roles_decorator_1 = require("../../shared/decorators/roles.decorator");
+const user_role_enum_1 = require("../../shared/enums/user-role.enum");
 let VehiclesController = class VehiclesController {
     vehiclesService;
     uploadService;
@@ -34,25 +36,25 @@ let VehiclesController = class VehiclesController {
         this.uploadService = uploadService;
     }
     async findAll(req, paginationDto) {
-        return this.vehiclesService.findAll(req.user.sub, paginationDto);
+        return this.vehiclesService.findAll(req.user.id, paginationDto);
     }
     async create(req, vehicleData) {
-        return this.vehiclesService.create(req.user.sub, vehicleData);
+        return this.vehiclesService.create(req.user.id, vehicleData);
     }
     async findOne(req, id) {
-        return this.vehiclesService.findOne(id, req.user.sub);
+        return this.vehiclesService.findOne(id, req.user.id);
     }
     async update(req, id, vehicleData) {
-        return this.vehiclesService.update(id, req.user.sub, vehicleData);
+        return this.vehiclesService.update(id, req.user.id, vehicleData);
     }
     async updateMileage(req, id, mileageData) {
-        return this.vehiclesService.updateMileage(id, req.user.sub, mileageData.mileage);
+        return this.vehiclesService.updateMileage(id, req.user.id, mileageData.mileage);
     }
     async delete(req, id) {
-        return this.vehiclesService.delete(id, req.user.sub);
+        return this.vehiclesService.delete(id, req.user.id);
     }
     async uploadImages(req, id, files) {
-        await this.vehiclesService.findOne(id, req.user.sub);
+        await this.vehiclesService.findOne(id, req.user.id);
         if (!files || files.length === 0) {
             throw new common_1.BadRequestException('No images provided');
         }
@@ -60,7 +62,7 @@ let VehiclesController = class VehiclesController {
         return this.vehiclesService.addImages(id, imageUrls);
     }
     async deleteImage(req, id, imageUrl) {
-        await this.vehiclesService.findOne(id, req.user.sub);
+        await this.vehiclesService.findOne(id, req.user.id);
         await this.uploadService.deleteImage(imageUrl);
         return this.vehiclesService.removeImage(id, imageUrl);
     }
@@ -85,6 +87,7 @@ __decorate([
 ], VehiclesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)(user_role_enum_1.UserRole.OWNER),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new vehicle' }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Vehicle created successfully', type: vehicle_response_dto_1.VehicleResponseDto }),
     openapi.ApiResponse({ status: 201 }),
@@ -169,7 +172,7 @@ exports.VehiclesController = VehiclesController = __decorate([
     (0, swagger_1.ApiTags)('vehicles'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('vehicles'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [vehicles_service_1.VehiclesService,
         upload_service_1.UploadService])
 ], VehiclesController);

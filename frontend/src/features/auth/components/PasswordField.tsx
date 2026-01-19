@@ -35,11 +35,14 @@ interface PasswordFieldProps {
  * />
  * ```
  */
-export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(({
+// PasswordField with updated styles
+export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps & { register?: any, isProvider?: boolean }>(({
   id = 'password',
   placeholder = '••••••••',
   error,
   showStrengthIndicator = true,
+  isProvider = false,
+  register, // react-hook-form register
   ...rest
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -57,18 +60,49 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(({
     if (rest.onChange) rest.onChange(e);
   };
 
+  // Allow passing react-hook-form register directly
+  const registration = register ? register(id, {
+    required: 'Password is required',
+    minLength: { value: 8, message: 'Password must be at least 8 characters' }
+  }) : {};
+
   return (
     <div>
       <div className="relative">
         <motion.input
           id={id}
           type={showPassword ? 'text' : 'password'}
+          
+          {...registration}
           {...rest}
-          ref={ref}
-          onChange={handleChange}
+          ref={(e) => {
+            // Merge refs: react-hook-form ref + forwarded ref
+            if (registration.ref) {
+              registration.ref(e);
+            }
+            if (typeof ref === 'function') {
+              ref(e);
+            } else if (ref) {
+              (ref as any).current = e;
+            }
+          }}
+          
+          onChange={(e) => {
+             registration.onChange?.(e);
+             handleChange(e);
+          }}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyDown}
-          className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+          onBlur={registration.onBlur}
+          
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all pr-10
+            bg-white border-slate-300 text-slate-900 placeholder:text-slate-500
+            ${isProvider 
+              ? 'focus:ring-[#F5B700]' 
+              : 'focus:ring-blue-500'
+            }
+            ${error ? 'border-red-500' : ''}
+          `}
           placeholder={placeholder}
           whileFocus={{ scale: 1.01 }}
           transition={{ duration: 0.15 }}
@@ -76,11 +110,12 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          className={`absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-80 transition-opacity ${isProvider ? 'text-slate-400' : 'text-slate-500'}`}
         >
           {showPassword ? <EyeOffIcon /> : <EyeIcon />}
         </button>
       </div>
+
 
       {/* Password Strength Indicator */}
       {showStrengthIndicator && password && (

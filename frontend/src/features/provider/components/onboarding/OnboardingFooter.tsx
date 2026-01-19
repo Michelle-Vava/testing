@@ -10,7 +10,9 @@ interface OnboardingFooterProps {
   errors: FieldError;
   onBack: () => void;
   onContinue: () => void;
+  onSkip?: () => void;
   onSubmit: () => void;
+  isSimplified?: boolean;
 }
 
 export function OnboardingFooter({
@@ -21,7 +23,9 @@ export function OnboardingFooter({
   errors,
   onBack,
   onContinue,
+  onSkip,
   onSubmit,
+  isSimplified = false,
 }: OnboardingFooterProps) {
   return (
     <motion.div 
@@ -34,9 +38,11 @@ export function OnboardingFooter({
         <div className="flex items-center justify-between">
           {/* Left: Progress + Save Status */}
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-600 font-medium">
-              Step {stepConfig[currentStep].number} of 3 • {stepConfig[currentStep].title}
-            </span>
+            {!isSimplified && (
+              <span className="text-sm text-slate-600 font-medium">
+                Step {stepConfig[currentStep].number} of 3 • {stepConfig[currentStep].title}
+              </span>
+            )}
             <AnimatePresence>
               {lastSaved && (
                 <motion.span 
@@ -57,30 +63,8 @@ export function OnboardingFooter({
 
           {/* Right: Action Buttons */}
           <div className="flex items-center gap-3">
-            {currentStep !== 'business' && (
-              <Button
-                variant="outline"
-                onClick={onBack}
-                disabled={isSaving}
-              >
-                Back
-              </Button>
-            )}
-
-            {currentStep !== 'review' ? (
-              <motion.div
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  onClick={onContinue}
-                  disabled={isSaving}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Continue
-                </Button>
-              </motion.div>
-            ) : (
+            {isSimplified ? (
+              // Simplified: Single "Get Started" Button
               <motion.div
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.98 }}
@@ -96,13 +80,76 @@ export function OnboardingFooter({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Completing...
+                      Getting Started...
                     </>
                   ) : (
-                    'Complete Setup'
+                    'Get Started'
                   )}
                 </Button>
               </motion.div>
+            ) : (
+              // Multi-step: Continue/Back/Skip Buttons
+              <>
+                {/* Skip Button for Services Step */}
+                {currentStep === 'services' && onSkip && (
+                  <Button
+                    variant="ghost"
+                    onClick={onSkip}
+                    disabled={isSaving}
+                    className="text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                  >
+                    Skip for now
+                  </Button>
+                )}
+
+                {currentStep !== 'business' && (
+                  <Button
+                    variant="outline"
+                    onClick={onBack}
+                    disabled={isSaving}
+                  >
+                    Back
+                  </Button>
+                )}
+
+                {currentStep !== 'review' ? (
+                  <motion.div
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      onClick={onContinue}
+                      disabled={isSaving}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Continue
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      onClick={onSubmit}
+                      disabled={isSaving}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSaving ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Completing...
+                        </>
+                      ) : (
+                        'Complete Setup'
+                      )}
+                    </Button>
+                  </motion.div>
+                )}
+              </>
             )}
           </div>
         </div>

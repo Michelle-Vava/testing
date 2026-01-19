@@ -1,7 +1,6 @@
 import { Controller, Get, Put, Param, Body, UseGuards, Request, Logger, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
 import { JobResponseDto } from './dto/job-response.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
@@ -17,7 +16,6 @@ import { AuthenticatedRequest } from '../../shared/types/express-request.interfa
 @ApiTags('jobs')
 @ApiBearerAuth()
 @Controller('jobs')
-@UseGuards(JwtAuthGuard)
 export class JobsController {
   private readonly logger = new Logger(JobsController.name);
 
@@ -43,8 +41,8 @@ export class JobsController {
     type: [JobResponseDto]
   })
   async findAll(@Request() req: AuthenticatedRequest, @Query() paginationDto: PaginationDto) {
-    this.logger.log(`User ${req.user.sub} fetching all jobs`);
-    return this.jobsService.findAll(req.user.sub, req.user.roles, paginationDto);
+    this.logger.log(`User ${req.user.id} fetching all jobs`);
+    return this.jobsService.findAll(req.user.id, req.user.roles, paginationDto);
   }
 
   /**
@@ -65,8 +63,8 @@ export class JobsController {
   @ApiResponse({ status: 404, description: 'Job not found.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async findOne(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    this.logger.log(`User ${req.user.sub} fetching job ${id}`);
-    return this.jobsService.findOne(id, req.user.sub);
+    this.logger.log(`User ${req.user.id} fetching job ${id}`);
+    return this.jobsService.findOne(id, req.user.id);
   }
 
   /**
@@ -89,7 +87,11 @@ export class JobsController {
   @ApiResponse({ status: 404, description: 'Job not found.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async updateStatus(@Request() req: AuthenticatedRequest, @Param('id') id: string, @Body() statusData: UpdateJobStatusDto) {
-    this.logger.log(`User ${req.user.sub} updating job ${id} status to ${statusData.status}`);
-    return this.jobsService.updateStatus(id, req.user.sub, statusData);
+    this.logger.log(`User ${req.user.id} updating job ${id} status to ${statusData.status}`);
+    return this.jobsService.updateStatus(id, req.user.id, statusData);
   }
 }
+
+
+
+

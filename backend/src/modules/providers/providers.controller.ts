@@ -19,10 +19,11 @@ import {
 } from '@nestjs/swagger';
 import { ProvidersService } from './providers.service';
 import { ProviderStatusService } from './provider-status.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProviderStatusGuard, RequireProviderStatus } from '../../shared/guards/provider-status.guard';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 import { ProviderStatus } from '@prisma/client';
+import { UpdateProviderProfileDto } from './dto/update-provider-profile.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('providers')
 @Controller('providers')
@@ -34,6 +35,7 @@ export class ProvidersController {
     private providerStatusService: ProviderStatusService,
   ) {}
 
+  @Public()
   @Get('public/featured')
   @ApiOperation({ summary: 'Get featured providers (no auth required)' })
   @ApiResponse({ status: 200, description: 'Return featured providers.' })
@@ -72,35 +74,43 @@ export class ProvidersController {
     return this.providersService.findOne(id);
   }
 
+  @Put('profile')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update provider profile' })
+  async updateProfile(@Request() req: AuthenticatedRequest, @Body() data: UpdateProviderProfileDto) {
+    return this.providersService.updateProfile(req.user.id, data);
+  }
+
   // Provider onboarding endpoints
 
   @Get('onboarding/status')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get provider onboarding status and checklist' })
   async getOnboardingStatus(@Request() req: AuthenticatedRequest) {
-    return this.providerStatusService.getOnboardingStatus(req.user.sub);
+    return this.providerStatusService.getOnboardingStatus(req.user.id);
   }
 
   @Post('onboarding/complete')
-  @UseGuards(JwtAuthGuard, ProviderStatusGuard)
+  @UseGuards(ProviderStatusGuard)
   @RequireProviderStatus(ProviderStatus.DRAFT, ProviderStatus.NONE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Complete provider onboarding' })
   async completeOnboarding(@Request() req: AuthenticatedRequest) {
-    return this.providerStatusService.completeOnboarding(req.user.sub);
+    return this.providerStatusService.completeOnboarding(req.user.id);
   }
 
   @Put('onboarding/start')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Start provider onboarding (NONE → DRAFT)' })
   async startOnboarding(@Request() req: AuthenticatedRequest) {
     return this.providerStatusService.updateStatus(
-      req.user.sub,
+      req.user.id,
       ProviderStatus.DRAFT,
       'Started onboarding',
     );
   }
 }
+
+
+
 

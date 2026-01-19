@@ -5,37 +5,29 @@ import { PaginationDto } from '../../shared/dto/pagination.dto';
 export declare class VehiclesService {
     private prisma;
     constructor(prisma: PrismaService);
-    findAll(ownerId: string, paginationDto: PaginationDto): Promise<{
-        data: {
-            id: string;
-            createdAt: Date;
-            deletedAt: Date | null;
-            updatedAt: Date;
-            year: number;
-            make: string;
-            model: string;
-            vin: string | null;
-            licensePlate: string | null;
-            color: string | null;
-            mileage: number | null;
-            ownerId: string;
-            imageUrls: string[];
-        }[];
-        meta: {
-            total: number;
-            page: number;
-            limit: number;
-            totalPages: number;
-        };
-    }>;
+    findAll(ownerId: string, paginationDto: PaginationDto): Promise<import("../../shared/utils/pagination.helper").PaginatedResult<{
+        id: string;
+        createdAt: Date;
+        deletedAt: Date | null;
+        updatedAt: Date;
+        make: string;
+        model: string;
+        year: number;
+        vin: string | null;
+        licensePlate: string | null;
+        color: string | null;
+        mileage: number | null;
+        ownerId: string;
+        imageUrls: string[];
+    }>>;
     create(ownerId: string, vehicleData: CreateVehicleDto): Promise<{
         id: string;
         createdAt: Date;
         deletedAt: Date | null;
         updatedAt: Date;
-        year: number;
         make: string;
         model: string;
+        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
@@ -55,9 +47,9 @@ export declare class VehiclesService {
         createdAt: Date;
         deletedAt: Date | null;
         updatedAt: Date;
-        year: number;
         make: string;
         model: string;
+        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
@@ -70,9 +62,9 @@ export declare class VehiclesService {
         createdAt: Date;
         deletedAt: Date | null;
         updatedAt: Date;
-        year: number;
         make: string;
         model: string;
+        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
@@ -88,9 +80,9 @@ export declare class VehiclesService {
         createdAt: Date;
         deletedAt: Date | null;
         updatedAt: Date;
-        year: number;
         make: string;
         model: string;
+        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
@@ -103,9 +95,9 @@ export declare class VehiclesService {
         createdAt: Date;
         deletedAt: Date | null;
         updatedAt: Date;
-        year: number;
         make: string;
         model: string;
+        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;
@@ -118,9 +110,9 @@ export declare class VehiclesService {
         createdAt: Date;
         deletedAt: Date | null;
         updatedAt: Date;
-        year: number;
         make: string;
         model: string;
+        year: number;
         vin: string | null;
         licensePlate: string | null;
         color: string | null;

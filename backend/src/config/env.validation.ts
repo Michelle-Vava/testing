@@ -11,12 +11,18 @@ export const envValidationSchema = Joi.object({
   // Database
   DATABASE_URL: Joi.string().required(),
   
-  // Supabase
-  SUPABASE_URL: Joi.string().uri().required(),
-  SUPABASE_ANON_KEY: Joi.string().required(),
+  // Supabase (for database only)
+  SUPABASE_URL: Joi.string().uri().optional(),
+  SUPABASE_ANON_KEY: Joi.string().optional(),
 
-  // Auth
-  JWT_SECRET: Joi.string().required(),
+  // Clerk Auth
+  CLERK_SECRET_KEY: Joi.string().required(),
+  CLERK_PUBLISHABLE_KEY: Joi.string().required(),
+  CLERK_WEBHOOK_SECRET: Joi.string().optional(), // Required in production
+  CLERK_JWT_KEY: Joi.string().optional(), // Public key for JWT verification
+  
+  // Legacy JWT (can be removed once migration complete)
+  JWT_SECRET: Joi.string().optional(),
   
   // Stripe
   STRIPE_SECRET_KEY: Joi.string().required(),

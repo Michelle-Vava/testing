@@ -20,6 +20,10 @@ let UserEntity = class UserEntity {
     roles;
     onboardingComplete;
     providerOnboardingComplete;
+    providerStatus;
+    stripeAccountId;
+    avatarUrl;
+    bio;
     address;
     city;
     state;
@@ -27,7 +31,6 @@ let UserEntity = class UserEntity {
     businessName;
     serviceTypes;
     yearsInBusiness;
-    certifications;
     shopAddress;
     shopCity;
     shopState;
@@ -35,7 +38,6 @@ let UserEntity = class UserEntity {
     serviceArea;
     isMobileService;
     isShopService;
-    isVerified;
     shopPhotos;
     rating;
     reviewCount;
@@ -43,13 +45,59 @@ let UserEntity = class UserEntity {
     updatedAt;
     password;
     constructor(partial) {
-        Object.assign(this, partial);
+        if (!partial)
+            return;
+        this.id = partial.id;
+        this.email = partial.email;
+        this.name = partial.name;
+        this.phone = partial.phone;
+        this.roles = partial.roles || [];
+        this.createdAt = partial.createdAt;
+        this.updatedAt = partial.updatedAt;
+        const owner = partial.ownerProfile;
+        if (owner) {
+            this.onboardingComplete = owner.onboardingComplete;
+            this.address = owner.address;
+            this.city = owner.city;
+            this.state = owner.state;
+            this.zipCode = owner.zipCode;
+            this.avatarUrl = owner.avatarUrl;
+            this.bio = owner.bio;
+        }
+        else {
+            this.onboardingComplete = false;
+        }
+        const provider = partial.providerProfile;
+        if (provider) {
+            this.providerOnboardingComplete = provider.onboardingComplete;
+            this.providerStatus = provider.status;
+            this.stripeAccountId = provider.stripeAccountId;
+            this.businessName = provider.businessName;
+            this.serviceTypes = provider.serviceTypes || [];
+            this.yearsInBusiness = provider.yearsInBusiness;
+            this.shopAddress = provider.shopAddress;
+            this.shopCity = provider.shopCity;
+            this.shopState = provider.shopState;
+            this.shopZipCode = provider.shopZipCode;
+            this.serviceArea = provider.serviceArea || [];
+            this.isMobileService = provider.isMobileService || false;
+            this.isShopService = provider.isShopService || false;
+            this.shopPhotos = provider.shopPhotos || [];
+            this.reviewCount = provider.reviewCount || 0;
+            this.rating = provider.rating;
+        }
+        else {
+            this.providerOnboardingComplete = false;
+            this.serviceTypes = [];
+            this.serviceArea = [];
+            this.shopPhotos = [];
+        }
         if (this.rating && typeof this.rating === 'object' && 'toNumber' in this.rating) {
             this.rating = this.rating.toNumber();
         }
     }
     static _OPENAPI_METADATA_FACTORY() {
-        return { id: { required: true, type: () => String }, email: { required: true, type: () => String }, name: { required: true, type: () => String }, phone: { required: false, type: () => String, nullable: true }, roles: { required: true, type: () => [String] }, onboardingComplete: { required: true, type: () => Boolean }, providerOnboardingComplete: { required: true, type: () => Boolean }, address: { required: false, type: () => String, nullable: true }, city: { required: false, type: () => String, nullable: true }, state: { required: false, type: () => String, nullable: true }, zipCode: { required: false, type: () => String, nullable: true }, businessName: { required: false, type: () => String, nullable: true }, serviceTypes: { required: true, type: () => [String] }, yearsInBusiness: { required: false, type: () => Number, nullable: true }, certifications: { required: false, type: () => [String] }, shopAddress: { required: false, type: () => String, nullable: true }, shopCity: { required: false, type: () => String, nullable: true }, shopState: { required: false, type: () => String, nullable: true }, shopZipCode: { required: false, type: () => String, nullable: true }, serviceArea: { required: false, type: () => [String] }, isMobileService: { required: true, type: () => Boolean }, isShopService: { required: true, type: () => Boolean }, isVerified: { required: true, type: () => Boolean }, shopPhotos: { required: true, type: () => [String] }, rating: { required: false, type: () => Number, nullable: true }, reviewCount: { required: true, type: () => Number }, createdAt: { required: true, type: () => Date }, updatedAt: { required: true, type: () => Date }, password: { required: true, type: () => String } };
+        return { id: { required: true, type: () => String }, email: { required: true, type: () => String }, name: { required: true, type: () => String }, phone: { required: false, type: () => String, nullable: true }, roles: { required: true, type: () => [String] }, onboardingComplete: { required: true, type: () => Boolean }, providerOnboardingComplete: { required: true, type: () => Boolean }, providerStatus: { required: false, type: () => Object }, stripeAccountId: { required: false, type: () => String, nullable: true }, avatarUrl: { required: false, type: () => String, nullable: true }, bio: { required: false, type: () => String, nullable: true }, address: { required: false, type: () => String, nullable: true }, city: { required: false, type: () => String, nullable: true }, state: { required: false, type: () => String, nullable: true }, zipCode: { required: false, type: () => String, nullable: true }, businessName: { required: false, type: () => String, nullable: true }, serviceTypes: { required: true, type: () => [String] }, yearsInBusiness: { required: false, type: () => Number, nullable: true }, shopAddress: { required: false, type: () => String, nullable: true }, shopCity: { required: false, type: () => String, nullable: true }, shopState: { required: false, type: () => String, nullable: true }, shopZipCode: { required: false, type: () => String, nullable: true }, serviceArea: { required: false, type: () => [String] }, isMobileService: { required: true, type: () => Boolean }, isShopService: { required: true, type: () => Boolean }, shopPhotos: { required: true, type: () => [String] }, rating: { required: false, type: () => Number, nullable: true }, reviewCount: { required: true, type: () => Number }, createdAt: { required: true, type: () => Date }, updatedAt: { required: true, type: () => Date }, password: { required: true, type: () => String } };
     }
 };
 exports.UserEntity = UserEntity;

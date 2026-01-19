@@ -2,26 +2,29 @@ import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { authGateStore } from '@/features/auth/stores/auth-gate-store';
 import { Footer } from '@/components/layout/footer';
-import { HeroSection } from '@/routes/-components/HeroSection';
-import { HowItWorksSection } from '@/routes/-components/HowItWorksSection';
-import { ProviderSection } from '@/routes/-components/ProviderSection';
-import { TopProvidersSection } from '@/routes/-components/TopProvidersSection';
-import { RecentRequestsSection } from '@/routes/-components/RecentRequestsSection';
-import { CTASection } from '@/routes/-components/CTASection';
-import { useLandingData, getUrgencyColor } from '../hooks/use-landing-data';
+import { HeroSection } from '@/features/marketing/components/HeroSection';
+import { HowItWorksSection } from '@/features/marketing/components/HowItWorksSection';
+import { TopProvidersSection } from '@/features/marketing/components/TopProvidersSection';
+import { CTASection } from '@/features/marketing/components/CTASection';
+import { useLandingData } from '../hooks/use-landing-data';
+import { UserRoles } from '@/lib/constants';
+import { ROUTES } from '@/lib/routes';
+import { useToast } from '@/components/ui/ToastContext';
+import { hasRole } from '@/features/auth/utils/auth-utils';
 
 export function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { providers, providersLoading, requests, requestsLoading, requestsError } = useLandingData();
+  const { providers, providersLoading } = useLandingData();
+  const { error } = useToast();
 
   const handleRequestQuote = () => {
     if (!user) {
       authGateStore.open({ action: 'request a quote' });
-    } else if (user.role === 'owner') {
-      navigate({ to: '/owner/requests/new', search: { serviceType: undefined, providerId: undefined } });
+    } else if (hasRole(user, 'owner')) {
+      navigate({ to: ROUTES.OWNER_REQUESTS_NEW, search: { serviceType: undefined, providerId: undefined } });
     } else {
-      alert('Providers cannot request quotes. Switch to owner role to request services.');
+      error('Providers cannot request quotes. Switch to owner role to request services.');
     }
   };
 
@@ -29,18 +32,13 @@ export function Landing() {
     <div className="min-h-screen">
       <HeroSection />
       <HowItWorksSection />
-      <ProviderSection />
+      
       <TopProvidersSection
         providers={providers}
         handleRequestQuote={handleRequestQuote}
         loading={providersLoading}
       />
-      <RecentRequestsSection
-        requests={requests}
-        loading={requestsLoading}
-        error={requestsError as Error | null}
-        getUrgencyColor={getUrgencyColor}
-      />
+
       <CTASection />
       <Footer />
     </div>

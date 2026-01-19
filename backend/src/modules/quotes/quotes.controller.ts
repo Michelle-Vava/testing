@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { QuotesService } from './quotes.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProviderStatusGuard, RequireProviderStatus } from '../../shared/guards/provider-status.guard';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
@@ -16,7 +15,6 @@ import { ProviderStatus } from '@prisma/client';
 @ApiTags('quotes')
 @ApiBearerAuth()
 @Controller('quotes')
-@UseGuards(JwtAuthGuard)
 export class QuotesController {
   constructor(private quotesService: QuotesService) {}
 
@@ -33,7 +31,7 @@ export class QuotesController {
   @Get('request/:requestId')
   @ApiOperation({ summary: 'Get all quotes for a service request' })
   async findByRequest(@Request() req: AuthenticatedRequest, @Param('requestId') requestId: string) {
-    return this.quotesService.findByRequest(requestId, req.user.sub, req.user.roles);
+    return this.quotesService.findByRequest(requestId, req.user.id, req.user.roles);
   }
 
   /**
@@ -52,7 +50,7 @@ export class QuotesController {
   @RequireProviderStatus(ProviderStatus.ACTIVE)
   @ApiOperation({ summary: 'Create a new quote (active providers only)' })
   async create(@Request() req: AuthenticatedRequest, @Body() quoteData: CreateQuoteDto) {
-    return this.quotesService.create(req.user.sub, req.user.roles, quoteData);
+    return this.quotesService.create(req.user.id, req.user.roles, quoteData);
   }
 
   /**
@@ -70,7 +68,7 @@ export class QuotesController {
   @Post(':id/accept')
   @ApiOperation({ summary: 'Accept a quote (creates a job)' })
   async accept(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.quotesService.accept(id, req.user.sub);
+    return this.quotesService.accept(id, req.user.id);
   }
 
   /**
@@ -86,6 +84,9 @@ export class QuotesController {
   @Post(':id/reject')
   @ApiOperation({ summary: 'Reject a quote' })
   async reject(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.quotesService.reject(id, req.user.sub);
+    return this.quotesService.reject(id, req.user.id);
   }
 }
+
+
+

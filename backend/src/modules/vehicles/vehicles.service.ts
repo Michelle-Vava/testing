@@ -3,6 +3,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
+import { paginate } from '../../shared/utils/pagination.helper';
 
 /**
  * VehiclesService handles all vehicle management business logic
@@ -26,23 +27,15 @@ export class VehiclesService {
     
     const [vehicles, total] = await Promise.all([
       this.prisma.vehicle.findMany({
-        where: { ownerId },
+        where: { ownerId, deletedAt: null },
         orderBy: { createdAt: 'desc' },
         skip,
         take,
       }),
-      this.prisma.vehicle.count({ where: { ownerId } }),
+      this.prisma.vehicle.count({ where: { ownerId, deletedAt: null } }),
     ]);
 
-    return {
-      data: vehicles,
-      meta: {
-        total,
-        page: paginationDto.page,
-        limit: paginationDto.limit,
-        totalPages: Math.ceil(total / paginationDto.limit),
-      },
-    };
+    return paginate(vehicles, total, paginationDto);
   }
 
   /**
@@ -74,7 +67,7 @@ export class VehiclesService {
    */
   async findOne(id: string, userId: string) {
     const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         owner: {
           select: {
@@ -110,7 +103,7 @@ export class VehiclesService {
    */
   async update(id: string, userId: string, vehicleData: UpdateVehicleDto) {
     const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!vehicle) {
@@ -140,7 +133,7 @@ export class VehiclesService {
    */
   async delete(id: string, userId: string) {
     const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!vehicle) {
@@ -151,8 +144,10 @@ export class VehiclesService {
       throw new ForbiddenException(`Delete denied: Vehicle ${id} belongs to another user`);
     }
 
-    await this.prisma.vehicle.delete({
+    // Soft delete instead of hard delete
+    await this.prisma.vehicle.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
 
     return { message: `Vehicle ${vehicle.make} ${vehicle.model} deleted successfully` };
@@ -172,7 +167,7 @@ export class VehiclesService {
    */
   async updateMileage(id: string, userId: string, mileage: number) {
     const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!vehicle) {
@@ -200,7 +195,7 @@ export class VehiclesService {
    */
   async addImages(id: string, imageUrls: string[]) {
     const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!vehicle) {
@@ -228,7 +223,7 @@ export class VehiclesService {
    */
   async removeImage(id: string, imageUrl: string) {
     const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!vehicle) {

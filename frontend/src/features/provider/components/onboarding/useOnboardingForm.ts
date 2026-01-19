@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { useOnboardingStore } from '@/lib/store';
 import { validatePostalCode, validatePhoneNumber } from '../../utils/validation';
 import type { OnboardingStep, ProviderProfile, FieldError } from './types';
 
 export function useOnboardingForm() {
   const navigate = useNavigate();
   const { updateProfile, refreshUser } = useAuth();
+  const { draft, saveDraft, clearDraft } = useOnboardingStore();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('business');
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -26,46 +28,46 @@ export function useOnboardingForm() {
     serviceRadius: 25,
   });
 
-  // Autosave draft
+  // Autosave draft using Zustand
   useEffect(() => {
     // Prevent autosaving empty state on initial mount
     const isDefaultState = !profile.businessName && !profile.address && profile.serviceTypes.length === 0;
     if (isDefaultState) return;
 
     const timeoutId = setTimeout(() => {
-      saveDraft();
+      saveDraft({
+        businessName: profile.businessName,
+        city: profile.city,
+        province: profile.province,
+        serviceTypes: profile.serviceTypes,
+        serviceRadius: profile.serviceRadius,
+      });
+      setLastSaved(new Date());
     }, 800);
 
     return () => clearTimeout(timeoutId);
-  }, [profile]);
+  }, [profile, saveDraft]);
 
-  // Load draft on mount
+  // Load draft on mount from Zustand store
   useEffect(() => {
-    const draft = localStorage.getItem('provider-onboarding-draft');
     if (draft) {
-      try {
-        const parsed = JSON.parse(draft);
-        setProfile(parsed);
-      } catch (e) {
-        console.error('Failed to load draft:', e);
-      }
+      setProfile(prev => ({
+        ...prev,
+        businessName: draft.businessName || '',
+        city: draft.city || '',
+        province: draft.province || '',
+        serviceTypes: draft.serviceTypes || [],
+        serviceRadius: draft.serviceRadius || 25,
+      }));
     }
   }, []);
 
-  const saveDraft = () => {
-    localStorage.setItem('provider-onboarding-draft', JSON.stringify(profile));
-    setLastSaved(new Date());
-  };
-
+  // Phase 1: Simplified validation - only check essential fields
   const validateBusinessInfo = (): boolean => {
     const newErrors: FieldError = {};
 
     if (!profile.businessName || profile.businessName.length < 2) {
       newErrors.businessName = 'Business name must be at least 2 characters';
-    }
-
-    if (!validatePhoneNumber(profile.phoneNumber)) {
-      newErrors.phoneNumber = 'Please enter a valid 10-digit phone number';
     }
 
     if (!profile.city) {
@@ -76,15 +78,17 @@ export function useOnboardingForm() {
       newErrors.province = 'Province is required';
     }
 
-    if (profile.yearsInBusiness < 0 || profile.yearsInBusiness > 100) {
-      newErrors.yearsInBusiness = 'Please enter a valid number of years';
+    if (profile.serviceTypes.length === 0) {
+      newErrors.serviceTypes = 'Please select at least one service';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const validateServices = (): boolean => {
+  const validateServices = (skipValidation = false): boolean => {
+    if (skipValidation) return true;
+
     const newErrors: FieldError = {};
 
     if (!profile.address) {
@@ -107,21 +111,15 @@ export function useOnboardingForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Phase 1: Remove multi-step validation - single step only
   const handleContinue = () => {
-    if (currentStep === 'business') {
-      if (validateBusinessInfo()) {
-        setCurrentStep('services');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        const firstErrorField = Object.keys(errors)[0];
-        document.getElementById(firstErrorField)?.focus();
-      }
-    } else if (currentStep === 'services') {
-      if (validateServices()) {
-        setCurrentStep('review');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
+    // Phase 1: Direct submission, no multi-step
+    handleSubmit();
+  };
+
+  const handleSkipServices = () => {
+    setCurrentStep('review');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
@@ -133,33 +131,37 @@ export function useOnboardingForm() {
   };
 
   const handleSubmit = async () => {
+    // Phase 1: Validate before submission
+    if (!validateBusinessInfo()) {
+      const firstErrorField = Object.keys(errors)[0];
+      document.getElementById(firstErrorField)?.focus();
+      return;
+    }
+
     setIsSaving(true);
     
     try {
-      const formattedAddress = `${profile.address}${profile.unit ? `, ${profile.unit}` : ''}`;
-      
+      // Phase 1: Minimal required fields
       await updateProfile({
         businessName: profile.businessName,
-        phoneNumber: profile.phoneNumber,
-        address: formattedAddress,
         city: profile.city,
         state: profile.province,
-        zipCode: profile.postalCode,
-        shopAddress: formattedAddress,
         shopCity: profile.city,
         shopState: profile.province,
-        shopZipCode: profile.postalCode,
         serviceTypes: profile.serviceTypes,
-        yearsInBusiness: profile.yearsInBusiness,
+        // Optional fields
+        ...(profile.serviceRadius && { serviceRadius: profile.serviceRadius }),
         onboardingComplete: true,
       });
 
-      localStorage.removeItem('provider-onboarding-draft');
+      clearDraft();
       await refreshUser();
       navigate({ to: '/provider/dashboard' });
-    } catch (error) {
-      console.error('Failed to complete onboarding:', error);
-      setErrors({ submit: 'Failed to save profile. Please try again.' });
+    } catch (error: any) {
+      setErrors({ 
+        ...errors, 
+        submit: error.message || 'Failed to complete setup. Please try again.' 
+      });
     } finally {
       setIsSaving(false);
     }
@@ -186,6 +188,7 @@ export function useOnboardingForm() {
     isSaving,
     lastSaved,
     handleContinue,
+    handleSkipServices,
     handleBack,
     handleSubmit,
     toggleServiceType,

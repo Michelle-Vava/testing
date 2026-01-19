@@ -1,33 +1,24 @@
 import { useNavigate, Link, useSearch } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { useToast } from '@/contexts/ToastContext';
-import { ROUTES } from '@/config/routes';
+import { useToast } from '@/components/ui/ToastContext';
+import { ROUTES } from '@/lib/routes';
 import { AnimatePresence, motion } from 'framer-motion';
+import { CheckCircle } from 'lucide-react';
 import { AuthFormLayout } from './AuthFormLayout';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
-import { FormField } from './FormField';
+import { FormField } from '@/components/ui/FormField';
 import { PasswordField } from './PasswordField';
 
-interface SignupFormValues {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  agreeToTerms: boolean;
-}
-
-interface SignupProps {
-  onSwitchToLogin?: () => void;
-}
-
-export function Signup({ onSwitchToLogin }: SignupProps) {
+// Wrapper for SignupComponent
+export function SignupComponent({ mode }: { mode: 'owner' | 'provider' }) {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { mode?: 'owner' | 'provider' };
-  const mode = search?.mode || 'owner';
   const { signup } = useAuth();
   const toast = useToast();
+  const isProvider = mode === 'provider';
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch, setError } = useForm<SignupFormValues>({
     defaultValues: {
@@ -60,14 +51,9 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
         roles,
       });
 
-      toast.success('Account created successfully!');
+      // toast.success('Account created successfully!');
+      setIsSuccess(true);
       
-      // Route based on mode
-      if (mode === 'provider') {
-        navigate({ to: '/provider/onboarding' });
-      } else {
-        navigate({ to: ROUTES.OWNER_DASHBOARD });
-      }
     } catch (error: any) {
       const message = error.response?.data?.message || error.message;
       
@@ -82,20 +68,56 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
     }
   };
 
+  const handlePostSignupAction = () => {
+    if (mode === 'provider') {
+      navigate({ to: '/provider/onboarding' });
+    } else {
+      navigate({ to: ROUTES.OWNER_DASHBOARD });
+    }
+  };
+
+  if (isSuccess) {
+    return (
+      <div className="w-full text-center py-8">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center justify-center space-y-6"
+        >
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isProvider ? 'bg-yellow-100' : 'bg-green-100'}`}>
+            <CheckCircle className={`w-10 h-10 ${isProvider ? 'text-yellow-600' : 'text-green-600'}`} />
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="text-2xl font-bold text-slate-900">Your account is ready!</h3>
+            <p className="text-slate-600 max-w-xs mx-auto">
+              {isProvider 
+                ? "Let's verify your business so you can start winning jobs." 
+                : "Let's get your vehicle set up for your first quote."}
+            </p>
+          </div>
+
+          <Button 
+            size="lg" 
+            className={`w-full max-w-xs ${isProvider ? 'bg-[#F5B700] hover:bg-yellow-500 text-slate-900' : 'bg-slate-900 hover:bg-slate-800 text-white'}`}
+            onClick={handlePostSignupAction}
+          >
+            {isProvider ? 'Start Verification' : 'Get My First Quote'}
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <AuthFormLayout
-      title="Create your account"
-      subtitle="Compare verified quotes. No spam."
-      mode={mode}
-      authType="signup"
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <div className="w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Google OAuth Button */}
-        <GoogleOAuthButton />
+        <GoogleOAuthButton isProvider={false} />
 
         {/* Divider */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
+        <div className="relative pt-2">
+          <div className="absolute inset-0 flex items-center pt-2">
             <div className="w-full border-t border-slate-200"></div>
           </div>
           <div className="relative flex justify-center text-sm">
@@ -103,115 +125,127 @@ export function Signup({ onSwitchToLogin }: SignupProps) {
           </div>
         </div>
 
-        {/* Name Fields */}
         <div className="grid grid-cols-2 gap-4">
-          <FormField
-            id="firstName"
-            label="First name"
-            error={errors.firstName?.message}
-            placeholder="John"
-            autoComplete="given-name"
-            {...register('firstName', { required: 'First name is required' })}
-          />
-          <FormField
-            id="lastName"
-            label="Last name"
-            error={errors.lastName?.message}
-            placeholder="Doe"
-            autoComplete="family-name"
-            {...register('lastName', { required: 'Last name is required' })}
-          />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-slate-700">
+              First Name
+            </label>
+            <input
+              type="text"
+              placeholder=""
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 bg-white border-slate-300 text-slate-900 
+                ${isProvider ? 'focus:ring-[#F5B700]' : 'focus:ring-blue-500'}
+                ${errors.firstName ? 'border-red-500' : ''}
+              `}
+              {...register('firstName', { required: 'Required' })}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-slate-700">
+              Last Name
+            </label>
+            <input
+              type="text"
+              placeholder=""
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 bg-white border-slate-300 text-slate-900 
+                ${isProvider ? 'focus:ring-[#F5B700]' : 'focus:ring-blue-500'}
+                ${errors.lastName ? 'border-red-500' : ''}
+              `}
+              {...register('lastName', { required: 'Required' })}
+            />
+          </div>
         </div>
 
         {/* Email Field */}
-        <FormField
-          id="email"
-          label="Email address"
-          type="email"
-          error={errors.email?.message}
-          placeholder="you@example.com"
-          autoComplete="email"
-          {...register('email', {
-            required: 'Email is required',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Please enter a valid email address'
-            }
-          })}
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-slate-700">
+            Email address
+          </label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 bg-white border-slate-300 text-slate-900 
+              ${isProvider ? 'focus:ring-[#F5B700] placeholder:text-slate-500' : 'focus:ring-blue-500'}
+              ${errors.email ? 'border-red-500' : ''}
+            `}
+            {...register('email', { 
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Please enter a valid email address'
+              }
+            })}
+          />
+          {errors.email?.message && (
+            <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+          )}
+        </div>
 
-        {/* Password Field */}
-        <PasswordField
-          register={register}
-          errors={errors}
-          password={password}
-          showStrengthIndicator
-        />
+        {/* Password Fields */}
+         <div className="space-y-1">
+            <label className={`block text-sm font-medium ${isProvider ? 'text-slate-300' : 'text-slate-700'}`}>
+              Password
+            </label>
+           <PasswordField 
+             register={register} 
+             error={errors.password?.message}
+             isProvider={isProvider}
+           />
+        </div>
 
-        {/* Terms Checkbox */}
-        <div>
-          <div className="flex items-start">
+        <div className="flex items-start">
+          <div className="flex h-5 items-center">
             <input
               id="agreeToTerms"
               type="checkbox"
+              className={`h-4 w-4 rounded border-gray-300 bg-white ${isProvider ? 'text-[#F5B700] focus:ring-[#F5B700]' : 'text-blue-600 focus:ring-blue-500'}`}
               {...register('agreeToTerms', { required: true })}
-              className="h-4 w-4 mt-0.5 text-slate-900 focus:ring-slate-500 border-slate-300 rounded cursor-pointer"
             />
-            <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-slate-700 cursor-pointer">
+          </div>
+          <div className="ml-2 text-sm">
+            <label htmlFor="agreeToTerms" className="text-slate-600">
               I agree to the{' '}
-              <Link to="/terms" className="text-slate-900 hover:text-slate-700 font-medium hover:underline">
+              <Link to="/terms" className={`font-medium hover:underline ${isProvider ? 'text-[#F5B700]' : 'text-blue-600'}`}>
                 Terms of Service
-              </Link>
-              {' '}and{' '}
-              <Link to="/privacy" className="text-slate-900 hover:text-slate-700 font-medium hover:underline">
+              </Link>{' '}
+              and{' '}
+              <Link to="/privacy" className={`font-medium hover:underline ${isProvider ? 'text-[#F5B700]' : 'text-blue-600'}`}>
                 Privacy Policy
               </Link>
             </label>
-          </div>
-          <AnimatePresence mode="wait">
             {errors.agreeToTerms && (
-              <motion.p
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mt-1.5 text-sm text-red-600"
-              >
-                {errors.agreeToTerms.message}
-              </motion.p>
+               <p className="text-sm text-red-500 mt-1">{errors.agreeToTerms.message}</p>
             )}
-          </AnimatePresence>
+          </div>
         </div>
 
-        {/* Submit Button */}
-        <Button type="submit" fullWidth isLoading={isSubmitting}>
-          {isSubmitting ? 'Creating account...' : 'Create Account'}
-        </Button>
-
-        {/* Trust Signal */}
-        <p className="text-xs text-center text-slate-500">
-          No spam. No phone calls. Your data is encrypted in transit.
-        </p>
-      </form>
-
-      {/* Sign In Link */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-slate-600">
-          Already have an account?{' '}
-          {onSwitchToLogin ? (
-            <button
-              type="button"
-              onClick={onSwitchToLogin}
-              className="text-slate-900 hover:text-slate-700 font-medium hover:underline"
-            >
-              Sign in
-            </button>
+        <Button
+          type="submit"
+          className={`w-full py-2.5 font-semibold text-white shadow-sm transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+            ${isProvider 
+              ? 'bg-[#F5B700] text-slate-900 hover:bg-yellow-500 focus-visible:outline-yellow-500' 
+              : 'bg-slate-900 hover:bg-slate-800 focus-visible:outline-slate-900'
+            }`}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span>Creating account...</span>
+            </div>
           ) : (
-            <Link to="/auth/login" className="text-slate-900 hover:text-slate-700 font-medium hover:underline">
-              Sign in
-            </Link>
+            'Create Account'
           )}
-        </p>
-      </div>
-    </AuthFormLayout>
+        </Button>
+      </form>
+    </div>
   );
+}
+
+// Kept for backward compatibility
+export function Signup({ onSwitchToLogin }: SignupProps) {
+  const search = useSearch({ strict: false }) as { mode?: 'owner' | 'provider' };
+  const mode = search?.mode || 'owner';
+  
+  return <SignupComponent mode={mode} />;
 }

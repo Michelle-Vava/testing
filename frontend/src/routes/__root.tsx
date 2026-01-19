@@ -1,9 +1,8 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
-import { motion, AnimatePresence } from 'framer-motion';
 import { PublicHeader } from '@/components/layout/public-header';
 import { NotFound } from '@/components/layout/not-found';
-import { AuthGateModal } from '@/routes/-components/auth-gate-modal';
-import { ToastProvider } from '@/contexts/ToastContext';
+import { AuthGateModal } from '@/features/auth/components/AuthGateModal';
+import { ToastProvider } from '@/components/ui/ToastContext';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 
 export const Route = createRootRoute({
@@ -17,24 +16,23 @@ function RootComponent() {
   
   // Only show PublicHeader on marketing/auth pages
   // Dashboard routes (owner, provider) have their own headers in layouts
-  const isAppRoute = location.pathname.startsWith('/owner') || location.pathname.startsWith('/provider');
+  // Note: '/providers' is the marketing page, '/provider/*...' are dashboard pages
+  const isOwnerApp = location.pathname.startsWith('/owner');
+  const isProviderApp = location.pathname.startsWith('/provider') && !location.pathname.startsWith('/providers');
+  const isAppRoute = isOwnerApp || isProviderApp;
+  
   const showPublicHeader = !isAppRoute;
+
+  // App routes (dashboard) need a fixed viewport to prevent double scrollbars
+  const rootClass = isAppRoute 
+    ? "bg-gray-50 flex flex-col min-h-screen" // App Shell pattern
+    : "min-h-screen bg-gray-50";
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className={`${rootClass} dark:bg-[#070B12]`}>
         {showPublicHeader && <PublicHeader />}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <Outlet />
         <AuthGateModal />
       </div>
     </ToastProvider>

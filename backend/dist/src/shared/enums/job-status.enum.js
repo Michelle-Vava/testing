@@ -4,6 +4,7 @@ exports.JobStatus = void 0;
 var JobStatus;
 (function (JobStatus) {
     JobStatus["PENDING"] = "pending";
+    JobStatus["PENDING_CONFIRMATION"] = "pending_confirmation";
     JobStatus["IN_PROGRESS"] = "in_progress";
     JobStatus["COMPLETED"] = "completed";
     JobStatus["CANCELLED"] = "cancelled";

@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { EmailService } from './services/email.service';
+import { EmailService } from './services/email/email.service';
 import { UploadService } from './services/upload.service';
 import { AuditService } from './services/audit.service';
 

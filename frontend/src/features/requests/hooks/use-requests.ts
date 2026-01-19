@@ -5,14 +5,14 @@ import {
   requestsControllerCreate,
   requestsControllerFindOne,
   requestsControllerUpdate
-} from '@/api/generated/requests/requests';
+} from '@/services/generated/requests/requests';
 import {
   quotesControllerFindByRequest,
   quotesControllerCreate,
   quotesControllerAccept,
   quotesControllerReject
-} from '@/api/generated/quotes/quotes';
-import type { CreateRequestDto, UpdateRequestDto, RequestsControllerFindAllParams } from '@/api/generated/model';
+} from '@/services/generated/quotes/quotes';
+import type { CreateRequestDto, UpdateRequestDto, RequestsControllerFindAllParams } from '@/services/generated/model';
 import type { ServiceRequest, Quote } from '@/features/requests/types/request';
 
 export function useRequests(initialPage = 1, initialLimit = 20, initialStatus?: string, initialSort?: string) {

@@ -1,30 +1,23 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { authGateStore } from '@/features/auth/stores/auth-gate-store';
+import { getDashboardRoute } from '@/lib/routes';
+import { getPrimaryRole } from '@/features/auth/utils/auth-utils';
 
 export const PublicHeader: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAuthPage = location.pathname.startsWith('/auth');
-  const isLandingPage = location.pathname === '/';
+  const isProviderPage = location.pathname === '/providers';
+  const isHomePage = location.pathname === '/';
+  const isPublicPage = isHomePage || isProviderPage;
 
   const handleLogoClick = (e: React.MouseEvent) => {
-    if (user) {
+    if (user && user.roles && user.roles.length > 0) {
       e.preventDefault();
-      const path = user.role === 'owner' ? '/owner/dashboard' : user.role === 'provider' ? '/provider/dashboard' : '/owner/dashboard';
+      const path = getDashboardRoute(getPrimaryRole(user) as any);
       navigate({ to: path });
-    }
-  };
-
-  const handleProviderClick = () => {
-    if (!user) {
-      navigate({ to: '/auth/signup', search: { mode: 'provider' } });
-    } else if (user.providerOnboardingComplete) {
-      navigate({ to: '/provider/dashboard' });
-    } else {
-      navigate({ to: '/provider/onboarding' });
     }
   };
 
@@ -56,27 +49,37 @@ export const PublicHeader: React.FC = () => {
                 </svg>
                 Back to Home
               </Link>
-            ) : isLandingPage && (
+            ) : isPublicPage && (
               <>
-                <button
-                  onClick={handleProviderClick}
-                  className="text-[#CBD5E1] hover:text-[#FFFFFF] px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  For Providers
-                </button>
+                {isProviderPage ? (
+                  <Link
+                    to="/"
+                    className="text-[#CBD5E1] hover:text-[#FFFFFF] px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    For Car Owners
+                  </Link>
+                ) : (
+                  <Link
+                    to="/providers"
+                    className="text-[#CBD5E1] hover:text-[#FFFFFF] px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    For Providers
+                  </Link>
+                )}
+                
                 <Link
                   to="/auth/login"
-                  search={{ mode: 'owner' }}
+                  search={{ mode: isProviderPage ? 'provider' : 'owner' }}
                   className="text-[#CBD5E1] hover:text-[#FFFFFF] px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/auth/signup"
-                  search={{ mode: 'owner' }}
+                  search={{ mode: isProviderPage ? 'provider' : 'owner' }}
                   className="bg-[#F5B700] text-[#0F172A] hover:bg-yellow-600 px-4 py-2 rounded-md text-sm font-semibold transition-colors shadow-lg"
                 >
-                  Get Started
+                  {isProviderPage ? 'Apply Now' : 'Get Started'}
                 </Link>
               </>
             )}

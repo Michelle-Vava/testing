@@ -1,15 +1,6 @@
 export type RequestStatus = 'draft' | 'open' | 'quoted' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
 
-export type ServiceType = 
-  | 'oil_change'
-  | 'tire_rotation'
-  | 'brake_service'
-  | 'engine_diagnostic'
-  | 'transmission_service'
-  | 'battery_replacement'
-  | 'air_conditioning'
-  | 'general_maintenance'
-  | 'other';
+export type ServiceType = string;
 
 export interface ServiceRequest {
   id: string;
@@ -36,6 +27,7 @@ export interface ServiceRequest {
     licensePlate?: string;
     mileage?: number;
   };
+  quotes?: Quote[];
 }
 
 export interface Quote {

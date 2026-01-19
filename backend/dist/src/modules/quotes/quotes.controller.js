@@ -17,7 +17,6 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const quotes_service_1 = require("./quotes.service");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const provider_status_guard_1 = require("../../shared/guards/provider-status.guard");
 const create_quote_dto_1 = require("./dto/create-quote.dto");
 const client_1 = require("@prisma/client");
@@ -27,16 +26,16 @@ let QuotesController = class QuotesController {
         this.quotesService = quotesService;
     }
     async findByRequest(req, requestId) {
-        return this.quotesService.findByRequest(requestId, req.user.sub, req.user.roles);
+        return this.quotesService.findByRequest(requestId, req.user.id, req.user.roles);
     }
     async create(req, quoteData) {
-        return this.quotesService.create(req.user.sub, req.user.roles, quoteData);
+        return this.quotesService.create(req.user.id, req.user.roles, quoteData);
     }
     async accept(req, id) {
-        return this.quotesService.accept(id, req.user.sub);
+        return this.quotesService.accept(id, req.user.id);
     }
     async reject(req, id) {
-        return this.quotesService.reject(id, req.user.sub);
+        return this.quotesService.reject(id, req.user.id);
     }
 };
 exports.QuotesController = QuotesController;
@@ -86,7 +85,6 @@ exports.QuotesController = QuotesController = __decorate([
     (0, swagger_1.ApiTags)('quotes'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Controller)('quotes'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [quotes_service_1.QuotesService])
 ], QuotesController);
 //# sourceMappingURL=quotes.controller.js.map

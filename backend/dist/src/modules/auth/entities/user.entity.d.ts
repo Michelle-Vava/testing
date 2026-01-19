@@ -1,3 +1,4 @@
+import { ProviderStatus } from '@prisma/client';
 export declare class UserEntity {
     id: string;
     email: string;
@@ -6,6 +7,10 @@ export declare class UserEntity {
     roles: string[];
     onboardingComplete: boolean;
     providerOnboardingComplete: boolean;
+    providerStatus?: ProviderStatus;
+    stripeAccountId?: string | null;
+    avatarUrl?: string | null;
+    bio?: string | null;
     address?: string | null;
     city?: string | null;
     state?: string | null;
@@ -13,7 +18,6 @@ export declare class UserEntity {
     businessName?: string | null;
     serviceTypes: string[];
     yearsInBusiness?: number | null;
-    certifications?: string[];
     shopAddress?: string | null;
     shopCity?: string | null;
     shopState?: string | null;
@@ -21,7 +25,6 @@ export declare class UserEntity {
     serviceArea?: string[];
     isMobileService: boolean;
     isShopService: boolean;
-    isVerified: boolean;
     shopPhotos: string[];
     rating?: number | null;
     reviewCount: number;

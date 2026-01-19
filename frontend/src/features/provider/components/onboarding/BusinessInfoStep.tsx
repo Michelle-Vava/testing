@@ -1,84 +1,58 @@
-import { CANADIAN_PROVINCES, formatPhoneNumber } from '../../utils/validation';
-import type { ProviderProfile, FieldError } from './types';
-import { FormField } from './FormField';
+import { CANADIAN_PROVINCES } from '../../utils/validation';
+import { FormFieldWrapper } from '@/components/ui/FormField';
+import { UseFormReturn } from 'react-hook-form';
+import { ProviderOnboardingFormData } from '@/lib/schemas/form-schemas';
 
 interface BusinessInfoStepProps {
-  profile: ProviderProfile;
-  errors: FieldError;
-  updateField: (field: keyof ProviderProfile, value: any) => void;
+  form: UseFormReturn<ProviderOnboardingFormData>;
+  serviceTypes: string[];
 }
 
-export function BusinessInfoStep({ profile, errors, updateField }: BusinessInfoStepProps) {
+export function BusinessInfoStep({ form, serviceTypes }: BusinessInfoStepProps) {
+  const { register, formState: { errors }, watch, setValue } = form;
+  const selectedServiceTypes = watch('serviceTypes') || [];
+
+  const toggleServiceType = (type: string) => {
+    const current = selectedServiceTypes;
+    const updated = current.includes(type)
+      ? current.filter(t => t !== type)
+      : [...current, type];
+    setValue('serviceTypes', updated, { shouldValidate: true });
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-1">Business Information</h2>
-        <p className="text-sm text-slate-600">Let's start with the basics</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-1">Quick Setup</h2>
+        <p className="text-sm text-slate-600">Tell us about your business - just the basics</p>
       </div>
 
-      <FormField label="Business Name" error={errors.businessName} required>
+      <FormFieldWrapper label="Business Name" error={errors.businessName?.message} required>
         <input
-          id="businessName"
+          {...register('businessName')}
           type="text"
-          value={profile.businessName}
-          onChange={(e) => updateField('businessName', e.target.value)}
           className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
             errors.businessName ? 'border-red-500' : 'border-slate-300'
           }`}
           placeholder="ABC Auto Repair"
         />
-      </FormField>
+      </FormFieldWrapper>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="Phone Number" error={errors.phoneNumber} required>
+        <FormFieldWrapper label="City" error={errors.city?.message} required>
           <input
-            id="phoneNumber"
-            type="tel"
-            value={profile.phoneNumber}
-            onChange={(e) => updateField('phoneNumber', formatPhoneNumber(e.target.value))}
-            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
-              errors.phoneNumber ? 'border-red-500' : 'border-slate-300'
-            }`}
-            placeholder="(555) 123-4567"
-          />
-        </FormField>
-
-        <FormField label="Years in Business" error={errors.yearsInBusiness} required>
-          <input
-            id="yearsInBusiness"
-            type="number"
-            value={profile.yearsInBusiness || ''}
-            onChange={(e) => updateField('yearsInBusiness', parseInt(e.target.value) || 0)}
-            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
-              errors.yearsInBusiness ? 'border-red-500' : 'border-slate-300'
-            }`}
-            placeholder="5"
-            min="0"
-            max="100"
-          />
-        </FormField>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="City" error={errors.city} required>
-          <input
-            id="city"
+            {...register('city')}
             type="text"
-            value={profile.city}
-            onChange={(e) => updateField('city', e.target.value)}
             className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
               errors.city ? 'border-red-500' : 'border-slate-300'
             }`}
-            placeholder="Halifax"
+            placeholder="Toronto"
           />
-        </FormField>
+        </FormFieldWrapper>
 
-        <FormField label="Province" error={errors.province} required>
+        <FormFieldWrapper label="Province" error={errors.province?.message} required>
           <select
-            id="province"
-            aria-label="Select province"
-            value={profile.province}
-            onChange={(e) => updateField('province', e.target.value)}
+            {...register('province')}
             className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
               errors.province ? 'border-red-500' : 'border-slate-300'
             }`}
@@ -90,7 +64,64 @@ export function BusinessInfoStep({ profile, errors, updateField }: BusinessInfoS
               </option>
             ))}
           </select>
-        </FormField>
+        </FormFieldWrapper>
+      </div>
+
+      {/* Service Types */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-3">
+          Services You Offer * 
+          {errors.serviceTypes && (
+            <span className="text-red-500 text-xs ml-2">{errors.serviceTypes.message}</span>
+          )}
+        </label>
+        <p className="text-xs text-slate-500 mb-3">Select all that apply</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {serviceTypes.map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => toggleServiceType(type)}
+              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                selectedServiceTypes.includes(type)
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Service Radius - Optional */}
+      <FormFieldWrapper 
+        label="Service Radius (Optional)" 
+        error={errors.serviceRadius?.message}
+        helpText="How far will you travel for jobs?"
+      >
+        <div className="relative">
+          <input
+            {...register('serviceRadius', { 
+              setValueAs: (v) => v === '' ? undefined : Number(v) 
+            })}
+            type="number"
+            min="1"
+            max="500"
+            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
+              errors.serviceRadius ? 'border-red-500' : 'border-slate-300'
+            }`}
+            placeholder="25"
+          />
+          <span className="absolute right-3 top-2.5 text-slate-500">km</span>
+        </div>
+      </FormFieldWrapper>
+
+      {/* Informational Note */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-blue-800">
+          💡 <strong>Quick start:</strong> You can add more details like phone number, address, and years in business later from your profile settings.
+        </p>
       </div>
     </div>
   );

@@ -1,14 +1,13 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { Sidebar } from '@/components/layout/sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
-import { Footer } from '@/components/layout/footer';
+import { DashboardShell } from '@/components/layout/DashboardShell';
 import { requireOnboarding } from '@/features/auth/utils/guards';
 import { LayoutDashboard, Car, FileText, Wrench, Settings, MessageSquare } from 'lucide-react';
 
 export const Route = createFileRoute('/owner/_layout')({
   beforeLoad: () => {
     const user = requireOnboarding();
-    if (user.role !== 'owner') {
+    if (!user.roles?.includes('owner')) {
       throw redirect({ to: '/unauthorized' });
     }
   },
@@ -50,17 +49,8 @@ function OwnerLayout() {
   ];
 
   return (
-    <div className="flex h-full bg-slate-50">
-      <Sidebar links={sidebarLinks} />
-      <div className="flex-1 flex flex-col min-w-0 h-screen">
-        <DashboardHeader />
-        <div className="flex-1 overflow-y-auto flex flex-col">
-          <main className="flex-1 p-6">
-            <Outlet />
-          </main>
-          <Footer />
-        </div>
-      </div>
-    </div>
+    <DashboardShell header={<DashboardHeader />} sidebarLinks={sidebarLinks}>
+      <Outlet />
+    </DashboardShell>
   );
 }

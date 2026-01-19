@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { EmailService } from '../../shared/services/email.service';
+import { EmailService } from '../../shared/services/email/email.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteStatusDto } from './dto/update-quote-status.dto';
 import { QuoteStatus, RequestStatus, JobStatus } from '../../shared/enums';
@@ -41,13 +41,26 @@ export class QuotesService {
             name: true,
             phone: true,
             email: true,
+            providerProfile: { select: { businessName: true } }
+          },
+        },
+        quoteParts: {
+          include: {
+            part: true,
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return quotes.map(quote => new QuoteEntity(quote));
+    return quotes.map(quote => {
+      const provider = {
+        ...quote.provider,
+        businessName: quote.provider.providerProfile?.businessName,
+        providerProfile: undefined
+      };
+      return new QuoteEntity({ ...quote, provider });
+    });
   }
 
   async create(userId: string, userRoles: string[], quoteData: CreateQuoteDto) {
@@ -67,11 +80,27 @@ export class QuotesService {
       throw new BadRequestException(`Service request ${quoteData.requestId} is no longer accepting quotes (status: ${request.status})`);
     }
 
+    // Extract parts data before creating quote
+    const { parts, ...quoteDataWithoutParts } = quoteData;
+
     const quote = await this.prisma.quote.create({
       data: {
-        ...quoteData,
+        ...quoteDataWithoutParts,
         providerId: userId,
         status: 'pending',
+        // Create parts if provided
+        ...(parts && parts.length > 0 && {
+          quoteParts: {
+            create: parts.map(part => ({
+              partId: part.partId,
+              name: part.name,
+              condition: part.condition,
+              price: part.price,
+              quantity: part.quantity,
+              notes: part.notes,
+            })),
+          },
+        }),
       },
       include: {
         provider: {
@@ -79,6 +108,12 @@ export class QuotesService {
             id: true,
             name: true,
             phone: true,
+            providerProfile: { select: { businessName: true } }
+          },
+        },
+        quoteParts: {
+          include: {
+            part: true,
           },
         },
       },
@@ -100,6 +135,12 @@ export class QuotesService {
       `You have received a new quote for your request: ${request.title}`,
       `/requests/${request.id}`
     );
+     
+    const provider = {
+      ...quote.provider,
+      businessName: quote.provider.providerProfile?.businessName,
+      providerProfile: undefined
+    };
 
     // Send email notification to owner
     const owner = await this.prisma.user.findUnique({
@@ -119,7 +160,7 @@ export class QuotesService {
       });
     }
 
-    return new QuoteEntity(quote);
+    return new QuoteEntity({ ...quote, provider });
   }
 
   async accept(quoteId: string, userId: string) {
@@ -140,6 +181,17 @@ export class QuotesService {
 
     if (quote.status !== QuoteStatus.PENDING) {
       throw new BadRequestException(`Quote ${quoteId} cannot be accepted (current status: ${quote.status})`);
+    }
+
+    // Check if another quote has already been accepted (job locking)
+    const existingJob = await this.prisma.job.findFirst({
+      where: {
+        requestId: quote.requestId,
+      },
+    });
+
+    if (existingJob) {
+      throw new BadRequestException(`This service request already has an accepted quote. Only one quote can be accepted per request.`);
     }
 
     // Start a transaction: accept quote, reject others, update request, create job

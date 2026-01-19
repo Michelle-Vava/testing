@@ -1,25 +1,50 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertBox } from '@/components/ui/alert-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Link } from '@tanstack/react-router';
 import { Loader2, MapPin, Calendar, DollarSign, User, Car, MessageSquare, Star, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
-import { PaymentModal } from '@/features/payments/components/PaymentModal';
-import { ReviewForm } from '@/features/reviews/components/ReviewForm';
-import { ReviewCard } from '@/features/reviews/components/ReviewCard';
 
-interface JobDetailsViewProps {
-  job: any;
-  review?: any;
-  isLoading: boolean;
-  error: any;
-  onCreateReview: (data: { rating: number; comment: string }) => void;
+// Job type matching backend response structure
+interface JobDetails {
+  id: string;
+  status: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  request: {
+    title: string;
+    description: string;
+    vehicle: {
+      year: number;
+      make: string;
+      model: string;
+      vin?: string | null;
+      mileage?: number | null;
+    };
+  };
+  provider: {
+    id: string;
+    name: string;
+    city?: string;
+  };
+  quote: {
+    laborCost?: number | null;
+    partsCost?: number | null;
+    amount: number;
+  };
 }
 
-export function JobDetailsView({ job, review, isLoading, error, onCreateReview }: JobDetailsViewProps) {
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
+interface JobDetailsViewProps {
+  job: JobDetails | null;
+  isLoading: boolean;
+  error: Error | null;
+  onConfirmCompletion?: () => void;
+  isConfirming?: boolean;
+}
+
+export function JobDetailsView({ job, isLoading, error, onConfirmCompletion, isConfirming }: JobDetailsViewProps) {
+  // Phase 1: Removed payment and review state
 
   if (isLoading) {
     return (
@@ -39,8 +64,8 @@ export function JobDetailsView({ job, review, isLoading, error, onCreateReview }
   }
 
   const isCompleted = job.status === 'completed';
-  const isPaid = job.payments && job.payments.length > 0 && job.payments.some((p: any) => p.status === 'completed');
-  const canPay = isCompleted && !isPaid;
+  const isPendingConfirmation = job.status === 'pending_confirmation';
+  // Phase 1: Payment and review functionality removed
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -50,8 +75,8 @@ export function JobDetailsView({ job, review, isLoading, error, onCreateReview }
           <h1 className="text-2xl font-bold text-gray-900">{job.request.title}</h1>
           <p className="text-gray-500">Job ID: {job.id}</p>
         </div>
-        <Badge variant={isCompleted ? (isPaid ? "default" : "secondary") : "outline"} className="text-sm px-3 py-1">
-          {isPaid ? 'Paid' : job.status.replace('_', ' ')}
+        <Badge variant={isCompleted ? "default" : "outline"} className="text-sm px-3 py-1">
+          {job.status.replace('_', ' ')}
         </Badge>
       </div>
 
@@ -139,78 +164,67 @@ export function JobDetailsView({ job, review, isLoading, error, onCreateReview }
               <CardTitle className="text-lg">Payment Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Service Quote</span>
-                <span className="font-medium">${Number(job.quote.amount).toFixed(2)}</span>
-              </div>
-              <Separator />
+              {job.quote.laborCost !== null && job.quote.partsCost !== null && (
+                <>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Labor</span>
+                    <span className="font-medium">${Number(job.quote.laborCost).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Parts</span>
+                    <span className="font-medium">${Number(job.quote.partsCost).toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
               <div className="flex justify-between items-center text-lg font-bold">
                 <span>Total</span>
                 <span>${Number(job.quote.amount).toFixed(2)}</span>
               </div>
 
-              {canPay && (
-                <Button className="w-full mt-4" onClick={() => setIsPaymentModalOpen(true)}>
-                  Pay Now
-                </Button>
-              )}
-              
-              {isPaid && (
-                <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-center text-sm font-medium">
-                  Payment Completed
-                </div>
-              )}
-
-              {/* Review Section */}
-              {isCompleted && !review && !showReviewForm && (
-                <div className="mt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowReviewForm(true)}
-                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50"
+              {/* Owner Confirmation Button (Phase 1) */}
+              {isPendingConfirmation && onConfirmCompletion && (
+                <div className="mt-4 pt-4 border-t">
+                  <AlertBox variant="purple" className="mb-3">
+                    <p className="text-sm font-medium mb-1">Work Complete!</p>
+                    <p className="text-xs">The provider has finished the work. Please confirm completion.</p>
+                  </AlertBox>
+                  <Button 
+                    onClick={onConfirmCompletion}
+                    disabled={isConfirming}
+                    className="w-full bg-green-600 hover:bg-green-700"
                   >
-                    <Star className="h-4 w-4 mr-2" />
-                    Leave a Review
+                    {isConfirming ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Confirming...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Confirm Work Done
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
+
+              {isCompleted && (
+                <div className="mt-4 pt-4 border-t">
+                  <AlertBox variant="success" icon={<CheckCircle className="w-5 h-5" />}>
+                    <div>
+                      <p className="font-medium">Work Confirmed</p>
+                      <p className="text-xs mt-1">You confirmed this job was completed successfully.</p>
+                    </div>
+                  </AlertBox>
+                </div>
+              )}
+
+              {/* Phase 1: Payment and Review sections removed - coming in Phase 2 */}
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Review Section */}
-      {isCompleted && (
-        <div className="mt-6">
-          {showReviewForm ? (
-            <ReviewForm
-              jobId={job.id}
-              providerName={job.provider.name}
-              onSubmit={(data) => {
-                onCreateReview(data);
-                setShowReviewForm(false);
-              }}
-              onCancel={() => setShowReviewForm(false)}
-            />
-          ) : review ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Review</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ReviewCard review={review} />
-              </CardContent>
-            </Card>
-          ) : null}
-        </div>
-      )}
-
-      <PaymentModal 
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        jobId={job.id}
-        amount={Number(job.quote.amount)}
-      />
     </div>
   );
 }

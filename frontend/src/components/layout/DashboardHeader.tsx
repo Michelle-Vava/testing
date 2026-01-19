@@ -1,6 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { UserRole } from '@/types/enums';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
+import { RoleSwitcher } from '@/components/role-switcher';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,16 +16,21 @@ import { Badge } from '@/components/ui/badge';
 import { User, Settings, LogOut, Briefcase } from 'lucide-react';
 
 export function DashboardHeader() {
-  const { user, logout } = useAuth();
+  const { user, logout, selectRole } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate({ to: '/auth/login' });
+    navigate({ to: '/' });
   };
 
   const handleProviderClick = () => {
-    if (user?.providerOnboardingComplete) {
+    // Check providerStatus if available, fall back to boolean flag
+    const providerStatus = (user as any)?.providerStatus || 'NONE';
+    const isComplete = user?.providerOnboardingComplete || (providerStatus !== 'NONE' && providerStatus !== 'DRAFT');
+
+    if (isComplete) {
+      selectRole(UserRole.PROVIDER);
       navigate({ to: '/provider/dashboard' });
     } else {
       navigate({ to: '/provider/onboarding' });
@@ -34,6 +41,7 @@ export function DashboardHeader() {
     <header className="bg-[#0F172A] border-b border-[#1E293B] h-16 px-8 flex items-center justify-end sticky top-0 z-30 shadow-lg">
       {/* Right: Notifications + Avatar */}
       <div className="flex items-center gap-3">
+        <RoleSwitcher />
         <NotificationBell />
         
         <div className="h-6 w-px bg-[#334155]" />
@@ -48,7 +56,7 @@ export function DashboardHeader() {
                   <User className="w-4 h-4 text-slate-500" />
                 )}
               </div>
-              {user?.providerOnboardingComplete && (
+              {(user?.providerOnboardingComplete || ((user as any)?.providerStatus !== 'NONE' && (user as any)?.providerStatus !== 'DRAFT')) && (
                 <span className="absolute top-1 left-6 w-2 h-2 bg-[#F5B700] rounded-full border border-[#0F172A]" title="Provider mode available" />
               )}
               <span className="text-sm font-medium text-[#CBD5E1] hidden md:block">
@@ -67,21 +75,22 @@ export function DashboardHeader() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
+            
             <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-[#64748B] font-normal">App</DropdownMenuLabel>
             
             {/* Provider Mode Toggle */}
-            <DropdownMenuItem onClick={handleProviderClick}>
+            <DropdownMenuItem onClick={handleProviderClick} className="flex items-center">
               <Briefcase className="mr-2 h-4 w-4" />
-              <div className="flex items-center justify-between w-full">
-                <span>
-                  {user?.providerOnboardingComplete ? 'Provider Dashboard' : 'Become a Provider'}
-                </span>
-                {!user?.providerOnboardingComplete && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    Earn
-                  </Badge>
-                )}
-              </div>
+              <span>
+                {(user?.providerOnboardingComplete || ((user as any)?.providerStatus !== 'NONE' && (user as any)?.providerStatus !== 'DRAFT')) 
+                 ? 'Switch to Provider Mode' : 'Become a Provider'}
+              </span>
+              {!(user?.providerOnboardingComplete || ((user as any)?.providerStatus !== 'NONE' && (user as any)?.providerStatus !== 'DRAFT')) && (
+                <Badge variant="warning" className="ml-auto text-xs">
+                  Earn
+                </Badge>
+              )}
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

@@ -10,7 +10,7 @@ export const ROLES_KEY = 'roles';
  * Roles decorator to specify which user roles are allowed to access an endpoint
  * 
  * Use with RolesGuard to enforce role-based access control (RBAC).
- * Must be used after JwtAuthGuard to ensure user is authenticated.
+ * ClerkAuthGuard is applied globally, so user is already authenticated.
  * 
  * @param roles - Array of allowed user roles (UserRole enum values)
  * @returns Metadata decorator
@@ -18,7 +18,7 @@ export const ROLES_KEY = 'roles';
  * @example
  * ```typescript
  * @Roles(UserRole.ADMIN, UserRole.PROVIDER)
- * @UseGuards(JwtAuthGuard, RolesGuard)
+ * @UseGuards(RolesGuard)
  * async getProviderStats() {
  *   // Only admins and providers can access this
  * }

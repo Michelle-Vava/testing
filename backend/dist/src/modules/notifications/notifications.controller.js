@@ -16,7 +16,6 @@ exports.NotificationsController = void 0;
 const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const notifications_service_1 = require("./notifications.service");
 let NotificationsController = class NotificationsController {
     notificationsService;
@@ -24,16 +23,16 @@ let NotificationsController = class NotificationsController {
         this.notificationsService = notificationsService;
     }
     findAll(req) {
-        return this.notificationsService.findByUserId(req.user.sub);
+        return this.notificationsService.findByUserId(req.user.id);
     }
     getUnreadCount(req) {
-        return this.notificationsService.getUnreadCount(req.user.sub);
+        return this.notificationsService.getUnreadCount(req.user.id);
     }
     markAsRead(id, req) {
-        return this.notificationsService.markAsRead(id, req.user.sub);
+        return this.notificationsService.markAsRead(id, req.user.id);
     }
     markAllAsRead(req) {
-        return this.notificationsService.markAllAsRead(req.user.sub);
+        return this.notificationsService.markAllAsRead(req.user.id);
     }
 };
 exports.NotificationsController = NotificationsController;
@@ -77,7 +76,6 @@ __decorate([
 exports.NotificationsController = NotificationsController = __decorate([
     (0, swagger_1.ApiTags)('notifications'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('notifications'),
     __metadata("design:paramtypes", [notifications_service_1.NotificationsService])
 ], NotificationsController);

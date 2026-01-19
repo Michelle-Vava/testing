@@ -1,6 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
@@ -8,22 +9,21 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { SharedModule } from './shared/shared.module';
 import { LoggerUserInterceptor } from './shared/interceptors/logger-user.interceptor';
 import { HttpLoggingInterceptor } from './shared/interceptors/http-logging.interceptor';
-import { AuthModule } from './modules/auth/auth.module';
+import { ClerkAuthModule } from './modules/auth/clerk/clerk-auth.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { RequestsModule } from './modules/requests/requests.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { JobsModule } from './modules/jobs/jobs.module';
-import { PaymentsModule } from './modules/payments/payments.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { ServicesModule } from './modules/services/services.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { MessagesModule } from './modules/messages/messages.module';
-import { ReviewsModule } from './modules/reviews/reviews.module';
+import { PartsModule } from './modules/parts/parts.module';
 import { HealthModule } from './health/health.module';
 import { PlatformModule } from './platform/platform.module';
-// import { CsrfGuard } from './modules/auth/guards/csrf.guard';
+import { CsrfGuard } from './shared/guards/csrf.guard';
 import { envValidationSchema } from './config/env.validation';
 
 @Module({
@@ -33,6 +33,7 @@ import { envValidationSchema } from './config/env.validation';
       envFilePath: '.env',
       validationSchema: envValidationSchema,
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{
       ttl: 60000, // 1 minute
       limit: 100, // 100 requests per minute
@@ -90,19 +91,18 @@ import { envValidationSchema } from './config/env.validation';
     }),
     DatabaseModule,
     SharedModule,
-    AuthModule,
+    ClerkAuthModule,
     VehiclesModule,
     RequestsModule,
     QuotesModule,
     JobsModule,
-    PaymentsModule,
     ProvidersModule,
     ServicesModule,
     NotificationsModule,
     ActivitiesModule,
     MaintenanceModule,
     MessagesModule,
-    ReviewsModule,
+    PartsModule,
     HealthModule,
     PlatformModule,
   ],
@@ -111,10 +111,7 @@ import { envValidationSchema } from './config/env.validation';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: CsrfGuard,
-    // },
+    // CsrfGuard removed - Clerk handles auth security
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggerUserInterceptor,

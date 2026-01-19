@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehiclesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../infrastructure/database/prisma.service");
+const pagination_helper_1 = require("../../shared/utils/pagination.helper");
 let VehiclesService = class VehiclesService {
     prisma;
     constructor(prisma) {
@@ -21,22 +22,14 @@ let VehiclesService = class VehiclesService {
         const { skip, take } = paginationDto;
         const [vehicles, total] = await Promise.all([
             this.prisma.vehicle.findMany({
-                where: { ownerId },
+                where: { ownerId, deletedAt: null },
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take,
             }),
-            this.prisma.vehicle.count({ where: { ownerId } }),
+            this.prisma.vehicle.count({ where: { ownerId, deletedAt: null } }),
         ]);
-        return {
-            data: vehicles,
-            meta: {
-                total,
-                page: paginationDto.page,
-                limit: paginationDto.limit,
-                totalPages: Math.ceil(total / paginationDto.limit),
-            },
-        };
+        return (0, pagination_helper_1.paginate)(vehicles, total, paginationDto);
     }
     async create(ownerId, vehicleData) {
         return this.prisma.vehicle.create({
@@ -48,7 +41,7 @@ let VehiclesService = class VehiclesService {
     }
     async findOne(id, userId) {
         const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
             include: {
                 owner: {
                     select: {
@@ -70,7 +63,7 @@ let VehiclesService = class VehiclesService {
     }
     async update(id, userId, vehicleData) {
         const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!vehicle) {
             throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
@@ -85,7 +78,7 @@ let VehiclesService = class VehiclesService {
     }
     async delete(id, userId) {
         const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!vehicle) {
             throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
@@ -93,14 +86,15 @@ let VehiclesService = class VehiclesService {
         if (vehicle.ownerId !== userId) {
             throw new common_1.ForbiddenException(`Delete denied: Vehicle ${id} belongs to another user`);
         }
-        await this.prisma.vehicle.delete({
+        await this.prisma.vehicle.update({
             where: { id },
+            data: { deletedAt: new Date() },
         });
         return { message: `Vehicle ${vehicle.make} ${vehicle.model} deleted successfully` };
     }
     async updateMileage(id, userId, mileage) {
         const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!vehicle) {
             throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
@@ -115,7 +109,7 @@ let VehiclesService = class VehiclesService {
     }
     async addImages(id, imageUrls) {
         const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!vehicle) {
             throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);
@@ -131,7 +125,7 @@ let VehiclesService = class VehiclesService {
     }
     async removeImage(id, imageUrl) {
         const vehicle = await this.prisma.vehicle.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
         });
         if (!vehicle) {
             throw new common_1.NotFoundException(`Vehicle with ID ${id} not found`);

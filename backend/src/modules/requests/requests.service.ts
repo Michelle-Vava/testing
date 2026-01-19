@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
@@ -18,6 +19,7 @@ export class RequestsService {
     const requests = await this.prisma.serviceRequest.findMany({
       where: {
         status: { in: [RequestStatus.OPEN, RequestStatus.QUOTED] },
+        deletedAt: null,
       },
       take: 4,
       select: {
@@ -57,7 +59,7 @@ export class RequestsService {
     const skip = (page - 1) * limit;
     const take = limit;
 
-    const orderBy: any = {};
+    const orderBy: Prisma.ServiceRequestOrderByWithRelationInput = {};
     if (sort === RequestSort.OLDEST) {
       orderBy.createdAt = 'asc';
     } else {
@@ -66,15 +68,12 @@ export class RequestsService {
 
     if (isProvider) {
       // Providers see all open requests
-      const where: any = {
-        status: {
+      const where: Prisma.ServiceRequestWhereInput = {
+        status: status ? status as RequestStatus : {
           in: [RequestStatus.OPEN, RequestStatus.QUOTED],
         },
+        deletedAt: null,
       };
-      
-      if (status) {
-        where.status = status;
-      }
 
       const [requests, total] = await Promise.all([
         this.prisma.serviceRequest.findMany({
@@ -119,13 +118,11 @@ export class RequestsService {
       };
     } else {
       // Owners see only their own requests
-      const where: any = {
+      const where: Prisma.ServiceRequestWhereInput = {
         ownerId: userId,
+        deletedAt: null,
+        ...(status && { status: status as RequestStatus }),
       };
-
-      if (status) {
-        where.status = status;
-      }
 
       const [requests, total] = await Promise.all([
         this.prisma.serviceRequest.findMany({
@@ -159,22 +156,46 @@ export class RequestsService {
 
   async create(userId: string, requestData: CreateRequestDto) {
     this.logger.debug(`Creating request for user ${userId}`);
-    // Verify vehicle belongs to user
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: requestData.vehicleId },
-    });
+    
+    let vehicleId = requestData.vehicleId;
 
-    if (!vehicle) {
-      throw new NotFoundException(`Vehicle with ID ${requestData.vehicleId} not found`);
-    }
+    // If no vehicleId provided, create vehicle inline (frictionless request creation)
+    if (!vehicleId) {
+      if (!requestData.make || !requestData.model || !requestData.year) {
+        throw new ForbiddenException('Either vehicleId or vehicle details (make, model, year) must be provided');
+      }
 
-    if (vehicle.ownerId !== userId) {
-      throw new ForbiddenException(`Access denied: You can only create service requests for vehicles you own (Vehicle ID: ${requestData.vehicleId})`);
+      const vehicle = await this.prisma.vehicle.create({
+        data: {
+          ownerId: userId,
+          make: requestData.make,
+          model: requestData.model,
+          year: requestData.year,
+        },
+      });
+
+      vehicleId = vehicle.id;
+    } else {
+      // Verify the user owns this vehicle
+      const vehicle = await this.prisma.vehicle.findUnique({
+        where: { id: requestData.vehicleId },
+      });
+
+      if (!vehicle) {
+        throw new NotFoundException(`Vehicle with ID ${requestData.vehicleId} not found`);
+      }
+
+      if (vehicle.ownerId !== userId) {
+        throw new ForbiddenException(`Access denied: You can only create service requests for vehicles you own (Vehicle ID: ${requestData.vehicleId})`);
+      }
     }
 
     return this.prisma.serviceRequest.create({
       data: {
-        ...requestData,
+        vehicleId,
+        title: requestData.title,
+        description: requestData.description,
+        urgency: requestData.urgency,
         ownerId: userId,
         status: RequestStatus.OPEN,
       },
@@ -187,7 +208,7 @@ export class RequestsService {
   async findOne(id: string, userId: string, userRoles: string[]) {
     this.logger.debug(`Finding request ${id} for user ${userId}`);
     const request = await this.prisma.serviceRequest.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         vehicle: true,
         owner: {
@@ -229,7 +250,7 @@ export class RequestsService {
 
   async update(id: string, userId: string, updateData: UpdateRequestDto) {
     const request = await this.prisma.serviceRequest.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!request) {
@@ -257,7 +278,7 @@ export class RequestsService {
    */
   async addImages(id: string, imageUrls: string[]) {
     const request = await this.prisma.serviceRequest.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!request) {
@@ -285,7 +306,7 @@ export class RequestsService {
    */
   async removeImage(id: string, imageUrl: string) {
     const request = await this.prisma.serviceRequest.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     if (!request) {

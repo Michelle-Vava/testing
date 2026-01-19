@@ -2,9 +2,9 @@ import { Link } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useToast } from '@/contexts/ToastContext';
+import { useToast } from '@/components/ui/ToastContext';
 import { AXIOS_INSTANCE } from '@/lib/axios';
-import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/shared/utils/validation';
+import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/utils/validation';
 
 export function ForgotPassword() {
   const toast = useToast();

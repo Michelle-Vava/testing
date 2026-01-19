@@ -2,8 +2,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import React, { useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { useToast } from '@/contexts/ToastContext';
-import { useAuthControllerUpdateProfile } from '@/api/generated/auth/auth';
+import { useToast } from '@/components/ui/ToastContext';
+import { useClerkAuthControllerUpdateProfile } from '@/services/generated/auth/auth';
 
 /**
  * Profile settings form component
@@ -25,7 +25,7 @@ export function ProfileSettings() {
     avatarUrl: user?.avatarUrl || '',
   });
 
-  const { mutate: updateProfile, isPending: isSaving } = useAuthControllerUpdateProfile({
+  const { mutate: updateProfile, isPending: isSaving } = useClerkAuthControllerUpdateProfile({
     mutation: {
       onSuccess: async () => {
         toast.success('Profile updated successfully');
@@ -87,7 +87,22 @@ export function ProfileSettings() {
           )}
         </div>
 
-        <form onSubmit={handleSaveProfile} className="space-y-4">
+        <form onSubmit={handleSaveProfile} className="space-y-6">
+          {/* Profile Photo Section */}
+          <div className="flex items-center gap-6 pb-6 border-b border-gray-200">
+            <img
+              src={user?.avatarUrl || 'https://via.placeholder.com/80'}
+              alt={user?.name || 'User'}
+              className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-200"
+            />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-gray-900">Profile Photo</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Your profile photo is managed through your authentication provider
+              </p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -129,28 +144,11 @@ export function ProfileSettings() {
                 <div className={readOnlyClass}>{profileData.phone || '-'}</div>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Avatar URL
-              </label>
-              {isEditing ? (
-                <input
-                  type="url"
-                  value={profileData.avatarUrl}
-                  onChange={(e) => setProfileData({ ...profileData, avatarUrl: e.target.value })}
-                  className={inputClass}
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              ) : (
-                <div className={readOnlyClass}>{profileData.avatarUrl || '-'}</div>
-              )}
-            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address
+              Service area (for nearby quotes)
             </label>
             {isEditing ? (
               <input

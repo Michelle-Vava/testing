@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { EmailService } from '../../shared/services/email.service';
+import { EmailService } from '../../shared/services/email/email.service';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
 import { JobStatus, RequestStatus } from '../../shared/enums';
+import { paginate } from '../../shared/utils/pagination.helper';
 
 @Injectable()
 export class JobsService {
@@ -51,7 +53,6 @@ export class JobsService {
               email: true,
             },
           },
-          payments: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -60,15 +61,7 @@ export class JobsService {
       this.prisma.job.count({ where }),
     ]);
 
-    return {
-      data: jobs,
-      meta: {
-        total,
-        page: paginationDto.page,
-        limit: paginationDto.limit,
-        totalPages: Math.ceil(total / paginationDto.limit),
-      },
-    };
+    return paginate(jobs, total, paginationDto);
   }
 
   async findOne(id: string, userId: string) {
@@ -98,7 +91,6 @@ export class JobsService {
             email: true,
           },
         },
-        payments: true,
       },
     });
 
@@ -123,17 +115,34 @@ export class JobsService {
       throw new NotFoundException(`Job with ID ${id} not found`);
     }
 
-    // Only provider can update job status
-    if (job.providerId !== userId) {
-      throw new ForbiddenException(`Update denied: Only the assigned provider can update job ${id} status`);
+    // Phase 1: Allow both provider and owner to update status
+    // Provider can update any status (pending -> in_progress -> pending_confirmation)
+    // Owner can only update pending_confirmation -> completed
+    const isProvider = job.providerId === userId;
+    const isOwner = job.ownerId === userId;
+
+    if (!isProvider && !isOwner) {
+      throw new ForbiddenException(`Update denied: You are not associated with job ${id}`);
     }
 
-    // Don't allow status changes on completed jobs
+    // Owner can only confirm completion (pending_confirmation -> completed)
+    if (isOwner && !isProvider) {
+      if (job.status !== JobStatus.PENDING_CONFIRMATION || statusData.status !== JobStatus.COMPLETED) {
+        throw new ForbiddenException(`Owners can only confirm completion of jobs marked as pending confirmation`);
+      }
+    }
+
+    // Provider cannot update a job that's already completed or confirmed by owner
+    if (isProvider && !isOwner && job.status === JobStatus.COMPLETED && statusData.status !== JobStatus.COMPLETED) {
+      throw new BadRequestException(`Job ${id} is already completed and cannot be modified`);
+    }
+
+    // Don't allow status changes on completed jobs (for both roles)
     if (job.status === JobStatus.COMPLETED && statusData.status !== JobStatus.COMPLETED) {
       throw new BadRequestException(`Job ${id} is already completed and cannot be modified`);
     }
 
-    const updateData: any = { status: statusData.status };
+    const updateData: Prisma.JobUpdateInput = { status: statusData.status };
 
     // Set timestamps based on status
     if (statusData.status === JobStatus.IN_PROGRESS && !job.startedAt) {

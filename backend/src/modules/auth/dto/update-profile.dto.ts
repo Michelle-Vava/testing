@@ -107,16 +107,5 @@ export class UpdateProfileDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  certifications?: string[];
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  insuranceInfo?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
   onboardingComplete?: boolean;
 }

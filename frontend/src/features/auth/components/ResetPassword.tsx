@@ -2,10 +2,10 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useToast } from '@/contexts/ToastContext';
+import { useToast } from '@/components/ui/ToastContext';
 import { AXIOS_INSTANCE } from '@/lib/axios';
-import { ROUTES } from '@/config/routes';
-import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/shared/utils/validation';
+import { ROUTES } from '@/lib/routes';
+import { validateField, VALIDATION_RULES, getInputClasses, renderError } from '@/utils/validation';
 
 export function ResetPassword() {
   const navigate = useNavigate();

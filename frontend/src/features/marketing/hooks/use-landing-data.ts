@@ -1,5 +1,8 @@
-import { useRequestsControllerFindPublicRecent } from '@/api/generated/requests/requests';
-import { useProvidersControllerFindFeatured } from '@/api/generated/providers/providers';
+import { useRequestsControllerFindPublicRecent } from '@/services/generated/requests/requests';
+import { useProvidersControllerFindFeatured } from '@/services/generated/providers/providers';
+import { getUrgencyColorLight as getUrgencyColor } from '@/utils/status-helpers';
+
+export { getUrgencyColor };
 
 export function useLandingData() {
   // Fetch featured providers
@@ -48,13 +51,4 @@ function getTimeAgo(date: string) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)} mins ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
   return `${Math.floor(seconds / 86400)} days ago`;
-}
-
-export function getUrgencyColor(urgency: string) {
-  switch (urgency) {
-    case 'high': return 'bg-red-100 text-red-700';
-    case 'medium': return 'bg-yellow-100 text-yellow-700';
-    case 'low': return 'bg-green-100 text-green-700';
-    default: return 'bg-gray-100 text-gray-700';
-  }
 }

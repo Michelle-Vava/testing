@@ -1,6 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { UserRole } from '@/types/enums';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
+import { RoleSwitcher } from '@/components/role-switcher';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,15 +16,17 @@ import { Badge } from '@/components/ui/badge';
 import { User, Settings, LogOut, Home } from 'lucide-react';
 
 export function ProviderHeader() {
-  const { user, logout } = useAuth();
+  const { user, logout, selectRole } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate({ to: '/auth/login' });
+    // Redirect to provider login page so they can easily log back in
+    navigate({ to: '/auth/login', search: { mode: 'provider' } });
   };
 
   const handleOwnerClick = () => {
+    selectRole(UserRole.OWNER);
     navigate({ to: '/owner/dashboard' });
   };
 
@@ -30,6 +34,7 @@ export function ProviderHeader() {
     <header className="bg-white border-b border-slate-200 h-16 px-8 flex items-center justify-end sticky top-0 z-30 shadow-sm">
       {/* Right: Notifications + Avatar */}
       <div className="flex items-center gap-3">
+        <RoleSwitcher />
         <NotificationBell />
         
         <div className="h-6 w-px bg-slate-200" />

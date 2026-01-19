@@ -4,12 +4,9 @@ import {
   jobsControllerFindAll,
   jobsControllerFindOne,
   jobsControllerUpdateStatus
-} from '@/api/generated/jobs/jobs';
-import {
-  paymentsControllerListTransactions,
-  paymentsControllerCreateCharge
-} from '@/api/generated/payments/payments';
-import type { UpdateJobStatusDto, JobsControllerFindAllParams } from '@/api/generated/model';
+} from '@/services/generated/jobs/jobs';
+// Phase 1: Payment imports removed
+import type { UpdateJobStatusDto, JobsControllerFindAllParams } from '@/services/generated/model';
 import type { Job } from '@/features/jobs/types/job';
 
 export function useJobs() {
@@ -72,46 +69,5 @@ export function useJob(id: string) {
   return { job, isLoading, error };
 }
 
-export function usePayments() {
-  const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['payments', page, limit],
-    queryFn: async () => {
-      const result = await paymentsControllerListTransactions();
-      return result as any;
-    },
-  });
-
-  // Backend returns paginated response
-  const responseData = (data as any)?.data || data;
-  const payments = responseData?.data || [];
-  const meta = responseData?.meta || {
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0,
-  };
-
-  const createChargeMutation = useMutation({
-    mutationFn: (jobId: string) => paymentsControllerCreateCharge(jobId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-    },
-  });
-
-  return {
-    payments,
-    meta,
-    page,
-    setPage,
-    limit,
-    isLoading,
-    error,
-    createCharge: createChargeMutation.mutate,
-    isCreatingCharge: createChargeMutation.isPending,
-  };
-}
+// Phase 1: Payments removed - usePayments hook deprecated
+// TODO: Re-implement in Phase 2 with payment integration

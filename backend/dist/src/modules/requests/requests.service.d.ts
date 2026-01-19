@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
@@ -10,23 +11,23 @@ export declare class RequestsService {
         quoteCount: number;
         quotes: undefined;
         vehicle: {
-            year: number;
             make: string;
             model: string;
+            year: number;
         };
         id: string;
         createdAt: Date;
+        status: import(".prisma/client").$Enums.RequestStatus;
         description: string;
         title: string;
-        status: string;
         urgency: string;
     }[]>;
     findAll(userId: string, userRoles: string[], query: RequestsQueryDto): Promise<{
         data: ({
             vehicle: {
-                year: number;
                 make: string;
                 model: string;
+                year: number;
             };
             owner: {
                 name: string;
@@ -38,11 +39,11 @@ export declare class RequestsService {
         } & {
             id: string;
             createdAt: Date;
-            description: string;
-            title: string;
             deletedAt: Date | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.RequestStatus;
+            description: string;
+            title: string;
             ownerId: string;
             imageUrls: string[];
             vehicleId: string;
@@ -61,9 +62,9 @@ export declare class RequestsService {
                 createdAt: Date;
                 deletedAt: Date | null;
                 updatedAt: Date;
-                year: number;
                 make: string;
                 model: string;
+                year: number;
                 vin: string | null;
                 licensePlate: string | null;
                 color: string | null;
@@ -77,11 +78,11 @@ export declare class RequestsService {
         } & {
             id: string;
             createdAt: Date;
-            description: string;
-            title: string;
             deletedAt: Date | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.RequestStatus;
+            description: string;
+            title: string;
             ownerId: string;
             imageUrls: string[];
             vehicleId: string;
@@ -100,9 +101,9 @@ export declare class RequestsService {
             createdAt: Date;
             deletedAt: Date | null;
             updatedAt: Date;
-            year: number;
             make: string;
             model: string;
+            year: number;
             vin: string | null;
             licensePlate: string | null;
             color: string | null;
@@ -113,11 +114,11 @@ export declare class RequestsService {
     } & {
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -129,9 +130,9 @@ export declare class RequestsService {
             createdAt: Date;
             deletedAt: Date | null;
             updatedAt: Date;
-            year: number;
             make: string;
             model: string;
+            year: number;
             vin: string | null;
             licensePlate: string | null;
             color: string | null;
@@ -154,12 +155,14 @@ export declare class RequestsService {
         } & {
             id: string;
             createdAt: Date;
-            description: string | null;
             updatedAt: Date;
-            status: string;
+            status: import(".prisma/client").$Enums.QuoteStatus;
+            description: string | null;
             requestId: string;
             providerId: string;
-            amount: import("@prisma/client/runtime/library").Decimal;
+            amount: Prisma.Decimal;
+            laborCost: Prisma.Decimal | null;
+            partsCost: Prisma.Decimal | null;
             estimatedDuration: string;
             notes: string | null;
             includesWarranty: boolean;
@@ -167,11 +170,11 @@ export declare class RequestsService {
     } & {
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -180,11 +183,11 @@ export declare class RequestsService {
     update(id: string, userId: string, updateData: UpdateRequestDto): Promise<{
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -193,11 +196,11 @@ export declare class RequestsService {
     addImages(id: string, imageUrls: string[]): Promise<{
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;
@@ -206,11 +209,11 @@ export declare class RequestsService {
     removeImage(id: string, imageUrl: string): Promise<{
         id: string;
         createdAt: Date;
-        description: string;
-        title: string;
         deletedAt: Date | null;
         updatedAt: Date;
-        status: string;
+        status: import(".prisma/client").$Enums.RequestStatus;
+        description: string;
+        title: string;
         ownerId: string;
         imageUrls: string[];
         vehicleId: string;

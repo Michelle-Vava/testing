@@ -106,7 +106,7 @@ export function About() {
           <ContentText className="mb-6 max-w-2xl mx-auto">
             Join thousands of Canadians who've found better prices and better service on Shanda.
           </ContentText>
-          <Link to="/auth/signup">
+          <Link to="/auth/signup" search={{ mode: 'owner' }}>
             <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-slate-900">
               Create Free Account
             </Button>

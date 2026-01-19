@@ -7,12 +7,12 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
  * RolesGuard - Authorization guard that restricts endpoint access based on user roles
  * 
  * Checks if the authenticated user has one of the required roles specified by @Roles() decorator.
- * Must be used after JwtAuthGuard in the guards chain to ensure user is authenticated.
+ * This guard relies on ClerkAuthGuard (global) to ensure user is already authenticated.
  * 
  * @example
  * ```typescript
  * @Roles(UserRole.PROVIDER, UserRole.ADMIN)
- * @UseGuards(JwtAuthGuard, RolesGuard)
+ * @UseGuards(RolesGuard)
  * async updateProviderProfile() {
  *   // Only providers and admins can access
  * }
