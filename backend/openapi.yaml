@@ -76,6 +76,36 @@ paths:
         - bearer: []
       summary: Update user roles
       tags: *ref_0
+  /shanda/auth/update-roles:
+    put:
+      operationId: ClerkAuthController_updateRolesAlt
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+        - bearer: []
+      summary: Update user roles (alternative endpoint)
+      tags: *ref_0
+  /shanda/auth/set-primary-role:
+    put:
+      operationId: ClerkAuthController_setPrimaryRole
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEntity'
+      security:
+        - bearer: []
+      summary: Set primary role by reordering roles array
+      tags: *ref_0
   /shanda/vehicles:
     get:
       operationId: VehiclesController_findAll
@@ -1081,6 +1111,111 @@ components:
           type: string
         onboardingComplete:
           type: boolean
+    UserEntity:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+        onboardingComplete:
+          type: boolean
+        providerOnboardingComplete:
+          type: boolean
+        providerStatus:
+          type: object
+        stripeAccountId:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        zipCode:
+          type: string
+          nullable: true
+        businessName:
+          type: string
+          nullable: true
+        serviceTypes:
+          type: array
+          items:
+            type: string
+        yearsInBusiness:
+          type: number
+          nullable: true
+        shopAddress:
+          type: string
+          nullable: true
+        shopCity:
+          type: string
+          nullable: true
+        shopState:
+          type: string
+          nullable: true
+        shopZipCode:
+          type: string
+          nullable: true
+        serviceArea:
+          type: array
+          items:
+            type: string
+        isMobileService:
+          type: boolean
+        isShopService:
+          type: boolean
+        shopPhotos:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          nullable: true
+        reviewCount:
+          type: number
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        password:
+          type: string
+      required:
+        - id
+        - email
+        - name
+        - roles
+        - onboardingComplete
+        - providerOnboardingComplete
+        - serviceTypes
+        - isMobileService
+        - isShopService
+        - shopPhotos
+        - reviewCount
+        - createdAt
+        - updatedAt
+        - password
     VehicleResponseDto:
       type: object
       properties:

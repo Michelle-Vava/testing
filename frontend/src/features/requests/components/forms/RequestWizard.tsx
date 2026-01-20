@@ -67,9 +67,13 @@ export function RequestWizard() {
       return;
     }
 
-    // Step 2 (vehicle) is now optional - allow skipping
+    // Step 2 (vehicle) is required by backend
     if (state.step === 2) {
-      // No validation - vehicle is fully optional
+      const hasVehicle = state.selectedVehicleId || (state.vehicleMake && state.vehicleModel && state.vehicleYear);
+      if (!hasVehicle) {
+        error('Please select or enter vehicle details');
+        return;
+      }
     }
 
     if (state.step === 3 && !state.description.trim()) {
@@ -90,6 +94,9 @@ export function RequestWizard() {
     createRequest({
       data: {
         vehicleId: state.selectedVehicleId || undefined,
+        make: !state.selectedVehicleId ? state.vehicleMake : undefined,
+        model: !state.selectedVehicleId ? state.vehicleModel : undefined,
+        year: (!state.selectedVehicleId && state.vehicleYear) ? parseInt(state.vehicleYear) : undefined,
         title: serviceLabel,
         description: state.description,
         urgency: 'medium',
@@ -223,7 +230,7 @@ export function RequestWizard() {
     );
   }
 
-  // Step 2: Vehicle Details (Optional)
+  // Step 2: Vehicle Details
   if (state.step === 2) {
     const hasVehicleSelected = state.selectedVehicleId || (state.vehicleMake && state.vehicleModel);
     
@@ -234,10 +241,10 @@ export function RequestWizard() {
           <div className="lg:col-span-2">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white/92 mb-1">
-                Which vehicle? <span className="text-slate-500 text-lg font-normal">(Optional)</span>
+                Which vehicle?
               </h1>
               <p className="text-slate-600 dark:text-white/65 text-sm">
-                Select from garage, enter make/model, or skip for now
+                Select from garage or enter make/model
               </p>
             </div>
 
@@ -320,7 +327,7 @@ export function RequestWizard() {
                     />
                   </div>
                   <p className="text-xs text-slate-500 dark:text-white/50 mt-1.5">
-                    Helps providers give accurate quotes, but not required
+                    Helps providers give accurate quotes
                   </p>
                 </div>
 
@@ -331,15 +338,8 @@ export function RequestWizard() {
                   </Button>
                   <div className="flex gap-2">
                     <Button
-                      variant="ghost"
                       onClick={handleNext}
-                      size="sm"
-                      className="text-slate-600"
-                    >
-                      Skip for now
-                    </Button>
-                    <Button
-                      onClick={handleNext}
+                      disabled={!hasVehicleSelected}
                       className="bg-yellow-500 hover:bg-yellow-600 text-slate-900"
                       size="sm"
                     >

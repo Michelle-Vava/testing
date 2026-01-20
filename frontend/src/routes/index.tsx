@@ -3,7 +3,7 @@ import { Landing } from '@/features/marketing/components/Landing';
 import { useAuth } from '@clerk/clerk-react';
 import { useAuth as useAppAuth } from '@/features/auth/hooks/use-auth';
 import { useEffect } from 'react';
-import { getPrimaryRole, hasRole } from '@/features/auth/utils/auth-utils';
+import { getPrimaryRole, hasRole, updateStoredUser } from '@/features/auth/utils/auth-utils';
 
 export const Route = createFileRoute('/')({
   component: RootComponent,
@@ -20,6 +20,9 @@ function RootComponent() {
     
     // If signed in and we have user data, redirect directly to dashboard
     if (isSignedIn && appUser) {
+      // Force sync before navigation to avoid race conditions
+      updateStoredUser(appUser);
+      
       const primaryRole = getPrimaryRole(appUser);
       
       // Determine dashboard based on primary role and onboarding status

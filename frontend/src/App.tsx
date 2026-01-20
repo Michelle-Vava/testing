@@ -18,13 +18,13 @@ export default function App() {
   return (
     <React.StrictMode>
       <ErrorBoundary>
-        <AuthProvider>
-          <ClerkTokenProvider>
-            <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ClerkTokenProvider>
               <RouterProvider router={router} />
-            </QueryClientProvider>
-          </ClerkTokenProvider>
-        </AuthProvider>
+            </ClerkTokenProvider>
+          </AuthProvider>
+        </QueryClientProvider>
       </ErrorBoundary>
     </React.StrictMode>
   );
