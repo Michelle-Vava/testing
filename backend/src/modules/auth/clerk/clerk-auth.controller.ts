@@ -112,19 +112,9 @@ export class ClerkAuthController {
       return;
     }
 
-    // Check if user already exists (might have been created on first API call)
-    const existingUser = await this.clerkAuthService.findByExternalId(data.id);
-    if (existingUser) {
-      this.logger.log(`User already exists: ${data.id}`);
-      return;
-    }
-
     const name = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User';
     const phone = data.phone_numbers?.[0]?.phone_number;
 
-    // NOTE: Roles are managed in the backend database, NOT from Clerk metadata
-    // User will be created with default role ['owner']
-    // Roles can be updated via /auth/update-roles endpoint
     await this.clerkAuthService.createFromExternalAuth({
       externalAuthId: data.id,
       email,
@@ -132,7 +122,6 @@ export class ClerkAuthController {
       avatarUrl: data.image_url || undefined,
       phone,
       authProvider: 'clerk',
-      // Don't pass roles - let service use default
     });
 
     this.logger.log(`Created user from webhook: ${email}`);

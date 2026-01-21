@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma, ProviderStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { UpdateProviderProfileDto } from './dto/update-provider-profile.dto';
 
@@ -17,7 +17,7 @@ export class ProvidersService {
       where: {
         roles: { has: 'provider' },
         providerProfile: {
-          status: ProviderStatus.ACTIVE,
+          isActive: true,
         },
       },
       take: 4,
@@ -30,7 +30,6 @@ export class ProvidersService {
             serviceTypes: true,
             shopCity: true,
             shopState: true,
-            serviceRadius: true,
           }
         }
       },
@@ -54,7 +53,7 @@ export class ProvidersService {
     limit?: number;
   }) {
     const providerProfileFilter: Prisma.ProviderProfileWhereInput = {
-      status: ProviderStatus.ACTIVE,
+      isActive: true,
     };
 
     if (filters.serviceType) {

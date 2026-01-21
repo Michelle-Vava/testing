@@ -32,12 +32,12 @@ enum JobStatus {
 }
 
 model User {
-  id String @id @default(uuid())
-
+  id        String    @id @default(uuid())
+  
   // External Auth Provider (Clerk, Auth0, Supabase - easily swappable)
-  externalAuthId String @unique // Clerk: "user_xxx", Auth0: "auth0|xxx"
-  authProvider   String @default("clerk") // "clerk", "auth0", "supabase"
-
+  externalAuthId String?  @unique  // Clerk: "user_xxx", Auth0: "auth0|xxx" - nullable for migration
+  authProvider   String  @default("clerk")  // "clerk", "auth0", "supabase"
+  
   // User data (synced from auth provider via webhook)
   email     String    @unique
   name      String
@@ -46,16 +46,11 @@ model User {
   roles     String[]  @default(["owner"])
   deletedAt DateTime? // Soft delete
 
-  // Address (moved from OwnerProfile)
-  address String?
-  city    String?
-  state   String?
-  zipCode String?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Profiles
+  ownerProfile    OwnerProfile?
   providerProfile ProviderProfile?
 
   // Relations
@@ -65,10 +60,11 @@ model User {
   providerJobs          Job[]            @relation("JobProvider")
   ownerJobs             Job[]            @relation("JobOwner")
   notifications         Notification[]
+  activities            Activity[]
   sentMessages          Message[]        @relation("MessageSender")
   ownerConversations    Conversation[]   @relation("ConversationOwner")
   providerConversations Conversation[]   @relation("ConversationProvider")
-  ownerProfile          OwnerProfile?
+  partInventory         PartInventory[]  @relation("ProviderParts")
 
   @@index([externalAuthId])
   @@index([authProvider])
@@ -93,6 +89,8 @@ model OwnerProfile {
   updatedAt    DateTime @updatedAt
 
   stripeCustomerId String?
+
+  @@map("owner_profiles")
 }
 
 model ProviderProfile {
@@ -100,9 +98,8 @@ model ProviderProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  isActive        Boolean   @default(false)
-  statusReason    String?
-  statusChangedAt DateTime?
+  onboardingComplete Boolean @default(false)
+  isActive           Boolean @default(false) // Replaces ProviderStatus - true when can submit quotes
 
   // Business Information
   businessName    String?  @unique
@@ -112,11 +109,16 @@ model ProviderProfile {
   hourlyRate      Decimal? @db.Decimal(10, 2)
 
   // Location & Service Area
-  shopAddress String?
-  shopCity    String?
-  shopState   String?
-  shopZipCode String?
-  serviceArea String[] @default([])
+  shopAddress   String?
+  shopCity      String?
+  shopState     String?
+  shopZipCode   String?
+  serviceArea   String[] @default([])
+  serviceRadius Int?     // Service radius in kilometers
+
+  // Service Options
+  isMobileService Boolean @default(false)
+  isShopService   Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -142,8 +144,9 @@ model Vehicle {
   updatedAt    DateTime  @updatedAt
 
   // Relations
-  owner           User             @relation("VehicleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  serviceRequests ServiceRequest[]
+  owner              User                @relation("VehicleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  serviceRequests    ServiceRequest[]
+  maintenanceRecords MaintenanceRecord[]
 
   @@index([ownerId])
   @@map("vehicles")
@@ -191,9 +194,10 @@ model Quote {
   updatedAt         DateTime    @updatedAt
 
   // Relations
-  request  ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  provider User           @relation("QuoteProvider", fields: [providerId], references: [id], onDelete: Cascade)
-  jobs     Job[]
+  request    ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider   User           @relation("QuoteProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  jobs       Job[]
+  quoteParts QuotePart[]    // Parts included in this quote
 
   @@index([requestId])
   @@index([providerId])
@@ -226,6 +230,21 @@ model Job {
   @@map("jobs")
 }
 
+model Service {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String   @unique
+  description  String?
+  icon         String? // Icon name/emoji
+  isPopular    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("services")
+}
+
 model Notification {
   id        String   @id @default(uuid())
   userId    String
@@ -242,6 +261,40 @@ model Notification {
   @@index([userId])
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String // 'vehicle_added' | 'request_created' | 'quote_received' | 'job_completed'
+  description String
+  metadata    Json? // Additional data about the activity
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("activities")
+}
+
+model MaintenanceRecord {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  serviceType String // e.g., 'Oil Change', 'Tire Rotation', 'Brake Service'
+  serviceDate DateTime
+  mileage     Int?
+  cost        Decimal? @db.Decimal(10, 2)
+  notes       String?
+  performedBy String? // Shop name or provider
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("maintenance_records")
 }
 
 model Conversation {
@@ -280,4 +333,81 @@ model Message {
   @@index([senderId])
   @@index([createdAt])
   @@map("messages")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String? // User who performed the action
+  entityType String // 'User', 'Vehicle', 'ServiceRequest', 'Quote', 'Job', etc.
+  entityId   String // ID of the affected entity
+  action     String // 'CREATE', 'UPDATE', 'DELETE', 'SOFT_DELETE'
+  changes    Json? // Detailed changes (before/after)
+  metadata   Json? // Additional context (IP, user agent, etc.)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum PartCondition {
+  OEM          // Original Equipment Manufacturer
+  AFTERMARKET  // Aftermarket brand
+  USED         // Used/salvage
+}
+
+model PartInventory {
+  id          String        @id @default(uuid())
+  providerId  String
+  name        String
+  category    String?       // brakes, filters, fluids, etc
+  condition   PartCondition @default(AFTERMARKET)
+  price       Decimal       @db.Decimal(10, 2)
+  notes       String?       // fits 2011 Accord 2.4L, etc
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  provider   User        @relation("ProviderParts", fields: [providerId], references: [id], onDelete: Cascade)
+  quoteParts QuotePart[]
+
+  @@index([providerId])
+  @@index([category])
+  @@map("part_inventory")
+}
+
+model QuotePart {
+  id          String   @id @default(uuid())
+  quoteId     String
+  partId      String?  // Optional - can reference inventory or be custom
+  name        String   // Part name
+  condition   PartCondition
+  price       Decimal  @db.Decimal(10, 2)
+  quantity    Int      @default(1)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quote Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  part  PartInventory? @relation(fields: [partId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([partId])
+  @@map("quote_parts")
+}
+
+model ServiceCategory {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  label       String
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("service_categories")
 }

@@ -2,7 +2,6 @@ import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EmailService } from './services/email/email.service';
 import { UploadService } from './services/upload.service';
-import { AuditService } from './services/audit.service';
 
 /**
  * SharedModule provides globally available services
@@ -15,11 +14,10 @@ import { AuditService } from './services/audit.service';
   imports: [
     ConfigModule,
   ],
-  providers: [EmailService, UploadService, AuditService],
+  providers: [EmailService, UploadService],
   exports: [
     EmailService,
     UploadService,
-    AuditService,
   ],
 })
 export class SharedModule {}

@@ -1,5 +1,4 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { ProviderStatus } from '@prisma/client';
 
 @Expose()
 export class UserEntity {
@@ -9,13 +8,8 @@ export class UserEntity {
   phone?: string | null;
   roles!: string[];
 
-  onboardingComplete!: boolean;
-  providerOnboardingComplete!: boolean;
-  providerStatus?: ProviderStatus;
-  stripeAccountId?: string | null;
-
+  providerIsActive?: boolean;
   avatarUrl?: string | null;
-  bio?: string | null;
   
   address?: string | null;
   city?: string | null;
@@ -29,12 +23,8 @@ export class UserEntity {
   shopState?: string | null;
   shopZipCode?: string | null;
   serviceArea?: string[];
-  isMobileService!: boolean;
-  isShopService!: boolean;
-  shopPhotos!: string[];
-  @Transform(({ value }) => value ? Number(value) : null)
-  rating?: number | null;
-  reviewCount!: number;
+  hourlyRate?: number | null;
+  website?: string | null;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -50,30 +40,18 @@ export class UserEntity {
     this.name = partial.name;
     this.phone = partial.phone;
     this.roles = partial.roles || [];
+    this.avatarUrl = partial.avatarUrl;
+    this.address = partial.address;
+    this.city = partial.city;
+    this.state = partial.state;
+    this.zipCode = partial.zipCode;
     this.createdAt = partial.createdAt;
     this.updatedAt = partial.updatedAt;
-
-    // Owner Profile Flattening
-    const owner = partial.ownerProfile;
-    if (owner) {
-      this.onboardingComplete = owner.onboardingComplete;
-      this.address = owner.address;
-      this.city = owner.city;
-      this.state = owner.state;
-      this.zipCode = owner.zipCode;
-      this.avatarUrl = owner.avatarUrl;
-      this.bio = owner.bio;
-    } else {
-      // Logic: If no profile exists, defaults are null/false
-      this.onboardingComplete = false;
-    }
 
     // Provider Profile Flattening
     const provider = partial.providerProfile;
     if (provider) {
-      this.providerOnboardingComplete = provider.onboardingComplete;
-      this.providerStatus = provider.status;
-      this.stripeAccountId = provider.stripeAccountId;
+      this.providerIsActive = provider.isActive || false;
       this.businessName = provider.businessName;
       this.serviceTypes = provider.serviceTypes || [];
       this.yearsInBusiness = provider.yearsInBusiness;
@@ -82,21 +60,12 @@ export class UserEntity {
       this.shopState = provider.shopState;
       this.shopZipCode = provider.shopZipCode;
       this.serviceArea = provider.serviceArea || [];
-      this.isMobileService = provider.isMobileService || false;
-      this.isShopService = provider.isShopService || false;
-      this.shopPhotos = provider.shopPhotos || [];
-      this.reviewCount = provider.reviewCount || 0;
-      this.rating = provider.rating;
+      this.hourlyRate = provider.hourlyRate ? Number(provider.hourlyRate) : null;
+      this.website = provider.website;
     } else {
-      this.providerOnboardingComplete = false;
+      this.providerIsActive = false;
       this.serviceTypes = [];
       this.serviceArea = [];
-      this.shopPhotos = [];
-    }
-    
-    // Handle Decimal to number conversion for rating if needed
-    if (this.rating && typeof this.rating === 'object' && 'toNumber' in (this.rating as any)) {
-      this.rating = (this.rating as any).toNumber();
     }
   }
 }

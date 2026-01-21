@@ -10,9 +10,6 @@ import { VehicleResponseDto } from './dto/vehicle-response.dto';
 import { PaginationDto } from '../../shared/dto/pagination.dto';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
 import { UploadService } from '../../shared/services/upload.service';
-
-import { RolesGuard } from '../../shared/guards/roles.guard';
-import { Roles } from '../../shared/decorators/roles.decorator';
 import { UserRole } from '../../shared/enums/user-role.enum';
 
 /**
@@ -24,7 +21,6 @@ import { UserRole } from '../../shared/enums/user-role.enum';
 @ApiTags('vehicles')
 @ApiBearerAuth()
 @Controller('vehicles')
-@UseGuards(RolesGuard)
 export class VehiclesController {
   constructor(
     private vehiclesService: VehiclesService,
@@ -63,7 +59,6 @@ export class VehiclesController {
    * @returns Created vehicle entity
    */
   @Post()
-  @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Create a new vehicle' })
   @ApiResponse({ status: 201, description: 'Vehicle created successfully', type: VehicleResponseDto })
   async create(@Request() req: AuthenticatedRequest, @Body() vehicleData: CreateVehicleDto) {

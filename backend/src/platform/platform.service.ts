@@ -36,18 +36,8 @@ export class PlatformService {
   }
 
   async getActivity() {
-    return this.db.activity.findMany({
-      take: 20,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          }
-        }
-      }
-    });
+    // Activity model removed - returning empty array
+    return [];
   }
 
   async getSettings() {

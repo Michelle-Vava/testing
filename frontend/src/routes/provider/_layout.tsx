@@ -1,31 +1,13 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { ProviderHeader } from '@/components/layout/ProviderHeader';
-import { requireAuth } from '@/features/auth/utils/auth-utils';
+import { requireActiveProvider } from '@/features/auth/utils/auth-utils';
 
 export const Route = createFileRoute('/provider/_layout')({
   beforeLoad: async () => {
-    // Require authentication
-    const user = requireAuth();
-    
-    // Check provider status instead of boolean flag
-    const providerStatus = (user as any).providerStatus || 'NONE';
-    
-    // Route based on provider status
-    if (providerStatus === 'NONE' || providerStatus === 'DRAFT') {
-      // Not started or incomplete onboarding → redirect to onboarding
-      throw redirect({ to: '/provider/onboarding' });
-    }
-    
-    if (providerStatus === 'SUSPENDED') {
-      // Account suspended → show suspension page
-      throw redirect({ to: '/provider/suspended' });
-    }
-    
-    // LIMITED or ACTIVE status can access dashboard
-    // LIMITED users may have restricted features (enforced by backend)
-    
-    return { user, providerStatus };
+    // Require active provider (auto-redirects to onboarding if not active)
+    const user = requireActiveProvider();
+    return { user };
   },
   component: ProviderLayout,
 });

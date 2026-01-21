@@ -189,6 +189,39 @@ export function requireRole(): UserEntity {
 }
 
 /**
+ * Require owner role - redirect if not an owner
+ * @returns User entity
+ * @throws Redirect to /unauthorized if not owner
+ */
+export function requireOwner(): UserEntity {
+  const user = requireAuth();
+  if (!user.roles?.includes('owner')) {
+    throw redirect({ to: '/unauthorized' });
+  }
+  return user;
+}
+
+/**
+ * Require active provider - redirect to onboarding if not active
+ * @returns User entity
+ * @throws Redirect to /provider/onboarding if not active provider
+ */
+export function requireActiveProvider(): UserEntity {
+  const user = requireAuth();
+  
+  if (!user.roles?.includes('provider')) {
+    throw redirect({ to: '/unauthorized' });
+  }
+  
+  const providerIsActive = (user as any).providerIsActive;
+  if (!providerIsActive) {
+    throw redirect({ to: '/provider/onboarding' });
+  }
+  
+  return user;
+}
+
+/**
  * Require user to have completed onboarding - throws redirect if not complete
  */
 export function requireOnboarding(): UserEntity {

@@ -13,6 +13,7 @@ export * from './authResponseDto';
 export * from './clerkAuthControllerGetCurrentUser200';
 export * from './clerkAuthControllerUpdateProfile200';
 export * from './clerkAuthControllerUpdateRoles200';
+export * from './clerkAuthControllerUpdateRolesAlt200';
 export * from './createChargeResponseDto';
 export * from './createMaintenanceRecordDto';
 export * from './createMessageDto';

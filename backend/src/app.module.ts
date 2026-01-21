@@ -15,15 +15,10 @@ import { RequestsModule } from './modules/requests/requests.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { ProvidersModule } from './modules/providers/providers.module';
-import { ServicesModule } from './modules/services/services.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { ActivitiesModule } from './modules/activities/activities.module';
-import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { MessagesModule } from './modules/messages/messages.module';
-import { PartsModule } from './modules/parts/parts.module';
 import { HealthModule } from './health/health.module';
 import { PlatformModule } from './platform/platform.module';
-import { CsrfGuard } from './shared/guards/csrf.guard';
 import { envValidationSchema } from './config/env.validation';
 
 @Module({
@@ -97,12 +92,8 @@ import { envValidationSchema } from './config/env.validation';
     QuotesModule,
     JobsModule,
     ProvidersModule,
-    ServicesModule,
     NotificationsModule,
-    ActivitiesModule,
-    MaintenanceModule,
     MessagesModule,
-    PartsModule,
     HealthModule,
     PlatformModule,
   ],
