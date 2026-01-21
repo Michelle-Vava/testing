@@ -1,4 +1,4 @@
-# Shanda Automotive Marketplace
+# Automotive Marketplace
 
 A modern automotive services marketplace connecting vehicle owners with service providers.
 
