@@ -162,7 +162,7 @@ Create a `.env` file in the `backend/` directory:
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:your_password_here@localhost:5432/shanda_db"
+DATABASE_URL="postgresql://postgres:YOUR_SECURE_PASSWORD@localhost:5432/shanda_db"
 
 # Server
 PORT=4201
