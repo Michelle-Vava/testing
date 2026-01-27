@@ -162,7 +162,7 @@ Create a `.env` file in the `backend/` directory:
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:password@localhost:5432/shanda_db"
+DATABASE_URL="postgresql://postgres:your_password_here@localhost:5432/shanda_db"
 
 # Server
 PORT=4201
@@ -262,8 +262,10 @@ See `frontend/.env.example` for a complete template.
    docker-compose up
    ```
    - Frontend: `http://localhost:8080`
-   - Backend: `http://localhost:3000`
+   - Backend: `http://localhost:3000` (Note: runs on different port than dev mode)
    - PostgreSQL: `localhost:5432`
+   
+   > **Note**: When using Docker Compose, the backend runs on port 3000 (as defined in docker-compose.yml), whereas in local development mode it runs on port 4201 (as defined in .env).
 
 #### Production Mode
 
