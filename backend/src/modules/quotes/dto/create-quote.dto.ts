@@ -1,7 +1,6 @@
 import { IsString, IsNotEmpty, IsUUID, IsBoolean, IsOptional, Matches, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { AddQuotePartDto } from '../../parts/dto/add-quote-part.dto';
 
 /**
  * DTO for creating a new quote
@@ -44,11 +43,4 @@ export class CreateQuoteDto {
   @IsBoolean()
   @IsOptional()
   includesWarranty?: boolean;
-
-  @ApiPropertyOptional({ description: 'Parts included in the quote', type: [AddQuotePartDto] })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AddQuotePartDto)
-  parts?: AddQuotePartDto[];
 }

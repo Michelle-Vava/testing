@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RequestStatus {
+  open
+  quoted
+  accepted
+  in_progress
+  completed
+  cancelled
+}
+
+enum QuoteStatus {
+  pending
+  accepted
+  rejected
+  expired
+}
+
+enum JobStatus {
+  pending
+  pending_confirmation
+  in_progress
+  completed
+  cancelled
+}
+
+model User {
+  id        String    @id @default(uuid())
+  
+  // External Auth Provider (Clerk, Auth0, Supabase - easily swappable)
+  externalAuthId String?  @unique  // Clerk: "user_xxx", Auth0: "auth0|xxx" - nullable for migration
+  authProvider   String  @default("clerk")  // "clerk", "auth0", "supabase"
+  
+  // User data (synced from auth provider via webhook)
+  email     String    @unique
+  name      String
+  phone     String?   @unique
+  avatarUrl String?
+  roles     String[]  @default(["owner"])
+  deletedAt DateTime? // Soft delete
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profiles
+  ownerProfile    OwnerProfile?
+  providerProfile ProviderProfile?
+
+  // Relations
+  ownedVehicles         Vehicle[]        @relation("VehicleOwner")
+  serviceRequests       ServiceRequest[] @relation("RequestOwner")
+  providedQuotes        Quote[]          @relation("QuoteProvider")
+  providerJobs          Job[]            @relation("JobProvider")
+  ownerJobs             Job[]            @relation("JobOwner")
+  notifications         Notification[]
+  activities            Activity[]
+  sentMessages          Message[]        @relation("MessageSender")
+  ownerConversations    Conversation[]   @relation("ConversationOwner")
+  providerConversations Conversation[]   @relation("ConversationProvider")
+  partInventory         PartInventory[]  @relation("ProviderParts")
+
+  @@index([externalAuthId])
+  @@index([authProvider])
+  @@map("users")
+}
+
+model OwnerProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  onboardingComplete Boolean @default(false)
+  address            String?
+  city               String?
+  state              String?
+  zipCode            String?
+  avatarUrl          String?
+  bio                String?
+
+  stripeCardId String? // Mock storage for default card
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stripeCustomerId String?
+
+  @@map("owner_profiles")
+}
+
+model ProviderProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  onboardingComplete Boolean @default(false)
+  isActive           Boolean @default(false) // Replaces ProviderStatus - true when can submit quotes
+
+  // Business Information
+  businessName    String?  @unique
+  serviceTypes    String[] @default([])
+  yearsInBusiness Int?
+  website         String?
+  hourlyRate      Decimal? @db.Decimal(10, 2)
+
+  // Location & Service Area
+  shopAddress   String?
+  shopCity      String?
+  shopState     String?
+  shopZipCode   String?
+  serviceArea   String[] @default([])
+  serviceRadius Int?     // Service radius in kilometers
+
+  // Service Options
+  isMobileService Boolean @default(false)
+  isShopService   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([serviceTypes], type: Gin)
+  @@map("provider_profiles")
+}
+
+model Vehicle {
+  id           String    @id @default(uuid())
+  ownerId      String
+  make         String
+  model        String
+  year         Int
+  vin          String?
+  licensePlate String?
+  color        String?
+  mileage      Int?
+  imageUrls    String[]  @default([])
+  deletedAt    DateTime? // Soft delete
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  owner              User                @relation("VehicleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  serviceRequests    ServiceRequest[]
+  maintenanceRecords MaintenanceRecord[]
+
+  @@index([ownerId])
+  @@map("vehicles")
+}
+
+model ServiceRequest {
+  id          String        @id @default(uuid())
+  vehicleId   String
+  ownerId     String
+  title       String
+  description String
+  urgency     String // 'low' | 'medium' | 'high' | 'urgent'
+  status      RequestStatus @default(open)
+  imageUrls   String[]      @default([])
+  deletedAt   DateTime? // Soft delete
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  owner   User    @relation("RequestOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  quotes  Quote[]
+  jobs    Job[]
+
+  @@index([vehicleId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([status, createdAt])
+  @@map("service_requests")
+}
+
+model Quote {
+  id                String      @id @default(uuid())
+  requestId         String
+  providerId        String
+  amount            Decimal     @db.Decimal(10, 2)
+  laborCost         Decimal?    @db.Decimal(10, 2)
+  partsCost         Decimal?    @db.Decimal(10, 2)
+  estimatedDuration String
+  notes             String? // Deprecated - use description instead
+  description       String?
+  includesWarranty  Boolean     @default(false)
+  status            QuoteStatus @default(pending)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  request    ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider   User           @relation("QuoteProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  jobs       Job[]
+  quoteParts QuotePart[]    // Parts included in this quote
+
+  @@index([requestId])
+  @@index([providerId])
+  @@map("quotes")
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  quoteId     String
+  requestId   String
+  providerId  String
+  ownerId     String
+  status      JobStatus @default(pending)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  quote        Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  request      ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider     User           @relation("JobProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  owner        User           @relation("JobOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  conversation Conversation?
+
+  @@index([quoteId])
+  @@index([requestId])
+  @@index([providerId])
+  @@index([ownerId])
+  @@map("jobs")
+}
+
+model Service {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String   @unique
+  description  String?
+  icon         String? // Icon name/emoji
+  isPopular    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("services")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String // 'quote_received' | 'request_updated' | 'booking_confirmed' | 'setup_reminder'
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String? // Optional link to related resource
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String // 'vehicle_added' | 'request_created' | 'quote_received' | 'job_completed'
+  description String
+  metadata    Json? // Additional data about the activity
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("activities")
+}
+
+model MaintenanceRecord {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  serviceType String // e.g., 'Oil Change', 'Tire Rotation', 'Brake Service'
+  serviceDate DateTime
+  mileage     Int?
+  cost        Decimal? @db.Decimal(10, 2)
+  notes       String?
+  performedBy String? // Shop name or provider
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("maintenance_records")
+}
+
+model Conversation {
+  id            String    @id @default(uuid())
+  jobId         String    @unique
+  ownerId       String
+  providerId    String
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  job      Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  owner    User      @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  provider User      @relation("ConversationProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([ownerId])
+  @@index([providerId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String? // User who performed the action
+  entityType String // 'User', 'Vehicle', 'ServiceRequest', 'Quote', 'Job', etc.
+  entityId   String // ID of the affected entity
+  action     String // 'CREATE', 'UPDATE', 'DELETE', 'SOFT_DELETE'
+  changes    Json? // Detailed changes (before/after)
+  metadata   Json? // Additional context (IP, user agent, etc.)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum PartCondition {
+  OEM          // Original Equipment Manufacturer
+  AFTERMARKET  // Aftermarket brand
+  USED         // Used/salvage
+}
+
+model PartInventory {
+  id          String        @id @default(uuid())
+  providerId  String
+  name        String
+  category    String?       // brakes, filters, fluids, etc
+  condition   PartCondition @default(AFTERMARKET)
+  price       Decimal       @db.Decimal(10, 2)
+  notes       String?       // fits 2011 Accord 2.4L, etc
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  provider   User        @relation("ProviderParts", fields: [providerId], references: [id], onDelete: Cascade)
+  quoteParts QuotePart[]
+
+  @@index([providerId])
+  @@index([category])
+  @@map("part_inventory")
+}
+
+model QuotePart {
+  id          String   @id @default(uuid())
+  quoteId     String
+  partId      String?  // Optional - can reference inventory or be custom
+  name        String   // Part name
+  condition   PartCondition
+  price       Decimal  @db.Decimal(10, 2)
+  quantity    Int      @default(1)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quote Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  part  PartInventory? @relation(fields: [partId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([partId])
+  @@map("quote_parts")
+}
+
+model ServiceCategory {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  label       String
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("service_categories")
+}

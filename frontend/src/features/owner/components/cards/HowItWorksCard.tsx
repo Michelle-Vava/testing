@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, Car, FileText, CheckCircle, ShieldCheck } from 'lucide-react';
 
 /**
- * Collapsible card explaining how Shanda works
+ * Collapsible card explaining how Service Connect works
  * 
  * Shows a 4-step process:
  * 1. Add Vehicle
@@ -22,7 +22,7 @@ export function HowItWorksCard() {
       >
         <h3 className="font-semibold text-slate-800 flex items-center gap-2">
           <span className="bg-slate-100 p-1 rounded text-slate-600">ℹ️</span>
-          How Shanda Works
+          How Service Connect Works
         </h3>
         {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
       </div>

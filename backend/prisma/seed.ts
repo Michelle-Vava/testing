@@ -103,10 +103,10 @@ async function main() {
   // Note: With Clerk auth, users are created via Clerk webhooks
   // These seed users use externalAuthId for Clerk user IDs (placeholder values for dev)
   const ownerUser = await prisma.user.upsert({
-    where: { email: 'owner@shanda.com' },
+    where: { email: 'owner@serviceconnect.com' },
     update: {},
     create: {
-      email: 'owner@shanda.com',
+      email: 'owner@serviceconnect.com',
       name: 'John Owner',
       externalAuthId: 'clerk_seed_owner_001',
       authProvider: 'clerk',
@@ -125,10 +125,10 @@ async function main() {
   });
 
   const provider1 = await prisma.user.upsert({
-    where: { email: 'provider@shanda.com' },
+    where: { email: 'provider@serviceconnect.com' },
     update: {},
     create: {
-      email: 'provider@shanda.com',
+      email: 'provider@serviceconnect.com',
       name: 'Mike Thompson',
       externalAuthId: 'clerk_seed_provider_001',
       authProvider: 'clerk',
@@ -162,10 +162,10 @@ async function main() {
   });
 
   const provider2 = await prisma.user.upsert({
-    where: { email: 'mobile@shanda.com' },
+    where: { email: 'mobile@serviceconnect.com' },
     update: {},
     create: {
-      email: 'mobile@shanda.com',
+      email: 'mobile@serviceconnect.com',
       name: 'Sarah Mobile',
       externalAuthId: 'clerk_seed_provider_002',
       authProvider: 'clerk',
@@ -194,10 +194,10 @@ async function main() {
   });
 
   const provider3 = await prisma.user.upsert({
-    where: { email: 'elite@shanda.com' },
+    where: { email: 'elite@serviceconnect.com' },
     update: {},
     create: {
-      email: 'elite@shanda.com',
+      email: 'elite@serviceconnect.com',
       name: 'Tom Richardson',
       externalAuthId: 'clerk_seed_provider_003',
       authProvider: 'clerk',
@@ -230,10 +230,10 @@ async function main() {
   });
 
   const provider4 = await prisma.user.upsert({
-    where: { email: 'quickfix@shanda.com' },
+    where: { email: 'quickfix@serviceconnect.com' },
     update: {},
     create: {
-      email: 'quickfix@shanda.com',
+      email: 'quickfix@serviceconnect.com',
       name: 'David Quick',
       externalAuthId: 'clerk_seed_provider_004',
       authProvider: 'clerk',
@@ -266,10 +266,10 @@ async function main() {
   });
 
   const provider5 = await prisma.user.upsert({
-    where: { email: 'budget@shanda.com' },
+    where: { email: 'budget@serviceconnect.com' },
     update: {},
     create: {
-      email: 'budget@shanda.com',
+      email: 'budget@serviceconnect.com',
       name: 'Bob Miller',
       externalAuthId: 'clerk_seed_provider_005',
       authProvider: 'clerk',

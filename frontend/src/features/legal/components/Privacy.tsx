@@ -106,8 +106,8 @@ export function Privacy() {
         ]} />
         <ContentText className="mt-4">
           To exercise these rights, email us at{' '}
-          <a href="mailto:privacy@shanda.com" className="text-slate-900 hover:text-slate-700 hover:underline font-medium">
-            privacy@shanda.com
+          <a href="mailto:privacy@serviceconnect.com" className="text-slate-900 hover:text-slate-700 hover:underline font-medium">
+            privacy@serviceconnect.com
           </a>
           . We will respond within 30 days.
         </ContentText>
@@ -130,7 +130,7 @@ export function Privacy() {
 
       <ContentSection title="7. Children's Privacy">
         <ContentText>
-          Shanda is not intended for use by individuals under 18 years of age. We do not knowingly collect personal information from children. If you believe we have collected data from a minor, please contact us immediately.
+          Service Connect is not intended for use by individuals under 18 years of age. We do not knowingly collect personal information from children. If you believe we have collected data from a minor, please contact us immediately.
         </ContentText>
       </ContentSection>
 
@@ -144,11 +144,11 @@ export function Privacy() {
         <ContentText>
           If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, contact us at:
           <br /><br />
-          Email: <a href="mailto:privacy@shanda.com" className="text-slate-900 hover:text-slate-700 hover:underline font-medium">
-            privacy@shanda.com
+          Email: <a href="mailto:privacy@serviceconnect.com" className="text-slate-900 hover:text-slate-700 hover:underline font-medium">
+            privacy@serviceconnect.com
           </a>
           <br />
-          Mail: Shanda Technologies Inc., 123 Innovation Drive, Toronto, ON M5A 1A1, Canada
+          Mail: Service Connect Technologies Inc., 123 Innovation Drive, Toronto, ON M5A 1A1, Canada
         </ContentText>
       </ContentSection>
     </ContentPageLayout>

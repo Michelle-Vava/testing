@@ -9,14 +9,14 @@ export const emailVerificationTemplate = (verificationUrl: string) => `
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #0F172A; text-align: center;">Verify Your Email</h1>
         <p>Hello,</p>
-        <p>Thanks for signing up for Shanda! Please verify your email address to activate your account.</p>
+        <p>Thanks for signing up for Service Connect! Please verify your email address to activate your account.</p>
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="${verificationUrl}" style="background-color: #F5B700; color: #0F172A; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify Email</a>
         </div>
         
         <p>If you didn't create an account, you can safely ignore this email.</p>
-        <p>Best regards,<br>The Shanda Team</p>
+        <p>Best regards,<br>The Service Connect Team</p>
         
         <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;">
         <p style="font-size: 12px; color: #666; text-align: center;">

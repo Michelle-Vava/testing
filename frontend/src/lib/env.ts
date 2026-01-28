@@ -5,7 +5,7 @@
 
 export const env = {
   // API
-  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:4201/shanda',
+  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:4201/service-connect',
   
   // Clerk Auth
   CLERK_PUBLISHABLE_KEY: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '',

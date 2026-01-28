@@ -55,7 +55,7 @@ export function AuthSplitLayout({ children, mode, title, subtitle, isSignup = fa
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
              </div>
-             <span className={`text-2xl font-bold ${isProvider ? 'text-white' : 'text-slate-900'}`}>Shanda</span>
+             <span className={`text-2xl font-bold ${isProvider ? 'text-white' : 'text-slate-900'}`}>Service Connect</span>
           </Link>
 
           <motion.div

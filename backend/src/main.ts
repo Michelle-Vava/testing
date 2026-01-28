@@ -30,7 +30,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // Set global API prefix
-  app.setGlobalPrefix('shanda');
+  app.setGlobalPrefix('service-connect');
 
   // Security Headers with CSP configuration for Scalar
   app.use(
@@ -84,30 +84,30 @@ async function bootstrap() {
 
   // Swagger/OpenAPI Configuration
   const config = new DocumentBuilder()
-    .setTitle('Shanda Automotive API')
+    .setTitle('Service Connect Automotive API')
     .setDescription('Marketplace connecting vehicle owners with service providers')
     .setVersion('1.0')
     .addBearerAuth()
     .addServer('http://localhost:4201', 'Local Development')
-    .addServer('https://api.shanda.com', 'Production')
+    .addServer('https://api.serviceconnect.com', 'Production')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Serve Swagger JSON at /shanda/docs
-  SwaggerModule.setup('shanda/docs', app, document);
+  // Serve Swagger JSON at /service-connect/docs
+  SwaggerModule.setup('service-connect/docs', app, document);
 
   // Write OpenAPI spec to YAML file for Orval
   const yamlSpec = yaml.dump(document);
   fs.writeFileSync('./openapi.yaml', yamlSpec, 'utf8');
   console.log('OpenAPI spec written to openapi.yaml');
 
-  // Scalar API Documentation at /shanda/scalar
+  // Scalar API Documentation at /service-connect/scalar
   app.use(
-    '/shanda/scalar',
+    '/service-connect/scalar',
     apiReference({
       spec: {
-        url: '/shanda/docs-json',
+        url: '/service-connect/docs-json',
       },
       theme: 'purple',
     })
@@ -117,9 +117,9 @@ async function bootstrap() {
   const logger = app.get(Logger);
   
   await app.listen(port);
-  logger.log(`Shanda API running on http://localhost:${port}/shanda`);
-  logger.log(`API Documentation (Swagger): http://localhost:${port}/shanda/docs`);
-  logger.log(`API Documentation (Scalar): http://localhost:${port}/shanda/scalar`);
+  logger.log(`Service Connect API running on http://localhost:${port}/service-connect`);
+  logger.log(`API Documentation (Swagger): http://localhost:${port}/service-connect/docs`);
+  logger.log(`API Documentation (Scalar): http://localhost:${port}/service-connect/scalar`);
 }
 
 bootstrap();

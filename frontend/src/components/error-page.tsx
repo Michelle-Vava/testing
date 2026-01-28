@@ -44,7 +44,7 @@ export function ErrorPage({ error, reset }: { error: Error; reset?: () => void }
         <div className="mt-8 text-sm text-gray-500">
           <p>
             If this problem persists, please{' '}
-            <a href="mailto:support@shanda.com" className="text-primary-600 hover:underline">
+            <a href="mailto:support@serviceconnect.com" className="text-primary-600 hover:underline">
               contact support
             </a>
           </p>

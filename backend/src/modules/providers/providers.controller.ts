@@ -7,8 +7,8 @@ import {
   Logger,
   Param,
   Query,
-  UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,9 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { ProvidersService } from './providers.service';
 import { ProviderStatusService } from './provider-status.service';
-import { ProviderStatusGuard, RequireProviderStatus } from '../../shared/guards/provider-status.guard';
 import { AuthenticatedRequest } from '../../shared/types/express-request.interface';
-import { ProviderStatus } from '@prisma/client';
 import { UpdateProviderProfileDto } from './dto/update-provider-profile.dto';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -91,8 +89,6 @@ export class ProvidersController {
   }
 
   @Post('onboarding/complete')
-  @UseGuards(ProviderStatusGuard)
-  @RequireProviderStatus(ProviderStatus.DRAFT, ProviderStatus.NONE)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Complete provider onboarding' })
   async completeOnboarding(@Request() req: AuthenticatedRequest) {
@@ -101,13 +97,9 @@ export class ProvidersController {
 
   @Put('onboarding/start')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Start provider onboarding (NONE → DRAFT)' })
+  @ApiOperation({ summary: 'Start provider onboarding' })
   async startOnboarding(@Request() req: AuthenticatedRequest) {
-    return this.providerStatusService.updateStatus(
-      req.user.id,
-      ProviderStatus.DRAFT,
-      'Started onboarding',
-    );
+    return this.providerStatusService.startOnboarding(req.user.id);
   }
 }
 

@@ -5,10 +5,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { ProviderStatus } from '@prisma/client';
 
 /**
- * Service for managing provider status transitions and onboarding
+ * Simplified service for managing provider onboarding and activation
  */
 @Injectable()
 export class ProviderStatusService {
@@ -17,70 +16,52 @@ export class ProviderStatusService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Update provider status with validation
+   * Start provider onboarding - creates/updates provider profile
    */
-  async updateStatus(
-    userId: string,
-    newStatus: ProviderStatus,
-    reason?: string,
-  ) {
+  async startOnboarding(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        providerProfile: true,
-        ownerProfile: true,
-      },
+      include: { providerProfile: true },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    if (!user.roles.includes('provider')) {
-      throw new BadRequestException('User is not a provider');
+    // Add provider role if not present
+    const hasProviderRole = user.roles.includes('provider');
+    
+    if (!hasProviderRole) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { roles: { push: 'provider' } },
+      });
     }
 
-    const providerProfile = user.providerProfile;
-    if (!providerProfile) {
-       // Create if missing, but typically it should exist if they are provider role
-       // Assume handled
+    // Create provider profile if doesn't exist
+    if (!user.providerProfile) {
+      const profile = await this.prisma.providerProfile.create({
+        data: {
+          userId,
+          isActive: false,
+        },
+      });
+      
+      this.logger.log(`Provider onboarding started for user ${userId}`);
+      return { message: 'Provider onboarding started', profile };
     }
-    const currentStatus = providerProfile?.status || ProviderStatus.NONE;
 
-    // Validate status transitions
-    this.validateStatusTransition(currentStatus, newStatus, providerProfile, user.ownerProfile, user.phone);
-
-    // Update status
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        providerProfile: {
-          update: {
-            status: newStatus,
-            statusReason: reason,
-            statusChangedAt: new Date(),
-          }
-        }
-      },
-      include: { providerProfile: true }
-    });
-
-    this.logger.log(
-      `Provider ${userId} status changed: ${currentStatus} → ${newStatus}`,
-    );
-
-    return updatedUser.providerProfile;
+    return { message: 'Provider profile already exists', profile: user.providerProfile };
   }
 
   /**
-   * Complete provider onboarding and transition to appropriate status
+   * Complete provider onboarding and activate provider
    */
   async completeOnboarding(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         providerProfile: true,
-        ownerProfile: true,
       },
     });
 
@@ -89,38 +70,45 @@ export class ProviderStatusService {
     }
 
     const pp = user.providerProfile;
-    const op = user.ownerProfile;
 
     // Validate required fields
-    const isComplete = this.validateOnboardingComplete(pp, op, user.phone);
+    const isValid = this.validateOnboardingComplete(pp, user, user.phone);
 
-    if (!isComplete) {
+    if (!isValid) {
       throw new BadRequestException(
         'Provider profile incomplete. Please fill all required fields.',
       );
     }
 
-    // Transition from DRAFT or NONE to LIMITED
-    // (admin must manually approve to ACTIVE)
-    const currentStatus = pp?.status || ProviderStatus.NONE;
-    const newStatus =
-      currentStatus === ProviderStatus.NONE ||
-      currentStatus === ProviderStatus.DRAFT
-        ? ProviderStatus.LIMITED
-        : currentStatus;
+    // Mark as active (onboardingComplete field removed)
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        providerProfile: {
+          update: {
+            isActive: true, // Auto-activate after completing onboarding
+          },
+        },
+      },
+      include: { providerProfile: true },
+    });
 
-    return this.updateStatus(userId, newStatus, 'Onboarding completed');
+    this.logger.log(`Provider ${userId} onboarding completed and activated`);
+
+    return {
+      message: 'Provider onboarding complete! You can now submit quotes.',
+      profile: updated.providerProfile,
+    };
   }
 
   /**
-   * Get onboarding status and completion checklist
+   * Get provider onboarding status and checklist
    */
   async getOnboardingStatus(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         providerProfile: true,
-        ownerProfile: true,
       },
     });
 
@@ -128,100 +116,95 @@ export class ProviderStatusService {
       throw new NotFoundException('User not found');
     }
 
-    const pp = user.providerProfile || {} as any;
-    const op = user.ownerProfile || {} as any;
+    const pp = user.providerProfile;
 
-    const checklist = {
-      basicInfo: !!(pp.businessName && op.bio && user.phone),
-      serviceTypes: pp.serviceTypes && pp.serviceTypes.length > 0,
-      location: !!(pp.shopCity && pp.shopState),
-      serviceMethod: pp.isMobileService || pp.isShopService,
-      experience: pp.yearsInBusiness !== null && pp.yearsInBusiness !== undefined,
-    };
+    // Build onboarding checklist
+    const checklist = [
+      {
+        id: 'business_name',
+        label: 'Business Name',
+        completed: !!pp?.businessName,
+      },
+      {
+        id: 'service_types',
+        label: 'Service Types',
+        completed: (pp?.serviceTypes?.length || 0) > 0,
+      },
+      {
+        id: 'location',
+        label: 'Shop Location',
+        completed: !!(pp?.shopAddress && pp?.shopCity && pp?.shopState && pp?.shopZipCode),
+      },
+      {
+        id: 'contact',
+        label: 'Contact Info',
+        completed: !!(user.phone && user.email),
+      },
+      {
+        id: 'personal_info',
+        label: 'Personal Info',
+        completed: !!(user.address && user.city && user.state && user.zipCode),
+      },
+    ];
 
-    const completionPercent =
-      (Object.values(checklist).filter(Boolean).length /
-        Object.values(checklist).length) *
-      100;
+    const completedCount = checklist.filter((item) => item.completed).length;
+    const totalCount = checklist.length;
+    const isComplete = completedCount === totalCount;
 
     return {
-      status: pp.status || ProviderStatus.NONE,
-      completionPercent: Math.round(completionPercent),
+      isActive: pp?.isActive || false,
       checklist,
-      canSubmit: Object.values(checklist).every(Boolean),
+      progress: {
+        completed: completedCount,
+        total: totalCount,
+        percentage: Math.round((completedCount / totalCount) * 100),
+      },
+      canActivate: isComplete,
     };
   }
 
   /**
-   * Validate status transitions
+   * Validate if onboarding is complete
    */
-  private validateStatusTransition(
-    currentStatus: ProviderStatus,
-    newStatus: ProviderStatus,
-    providerProfile: any,
-    ownerProfile: any,
-    phone: string | null,
-  ) {
-    // NONE → DRAFT (start onboarding)
-    if (
-      currentStatus === ProviderStatus.NONE &&
-      newStatus === ProviderStatus.DRAFT
-    ) {
-      return; // Always allowed
-    }
+  private validateOnboardingComplete(
+    pp: any,
+    user: any,
+    phone?: string | null,
+  ): boolean {
+    if (!pp) return false;
 
-    // DRAFT → LIMITED (complete onboarding)
-    if (
-      currentStatus === ProviderStatus.DRAFT &&
-      newStatus === ProviderStatus.LIMITED
-    ) {
-      if (!this.validateOnboardingComplete(providerProfile, ownerProfile, phone)) {
-        throw new BadRequestException('Onboarding not complete');
-      }
-      return;
-    }
+    // Required provider fields
+    const hasBusinessInfo = pp.businessName && pp.serviceTypes?.length > 0;
+    const hasLocation = pp.shopAddress && pp.shopCity && pp.shopState && pp.shopZipCode;
+    const hasContact = phone;
 
-    // LIMITED → ACTIVE (admin approval)
-    if (
-      currentStatus === ProviderStatus.LIMITED &&
-      newStatus === ProviderStatus.ACTIVE
-    ) {
-      return; // Requires admin approval (checked in controller)
-    }
+    // Required personal fields (from user model)
+    const hasPersonalInfo = user?.address && user?.city && user?.state && user?.zipCode;
 
-    // ACTIVE → SUSPENDED (admin action)
-    if (
-      currentStatus === ProviderStatus.ACTIVE &&
-      newStatus === ProviderStatus.SUSPENDED
-    ) {
-      return; // Requires admin approval (checked in controller)
-    }
-
-    // SUSPENDED → ACTIVE (admin reinstatement)
-    if (
-      currentStatus === ProviderStatus.SUSPENDED &&
-      newStatus === ProviderStatus.ACTIVE
-    ) {
-      return; // Requires admin approval (checked in controller)
-    }
-
-    throw new BadRequestException(
-      `Invalid status transition: ${currentStatus} → ${newStatus}`,
-    );
+    return !!(hasBusinessInfo && hasLocation && hasContact && hasPersonalInfo);
   }
 
   /**
-   * Validate onboarding completion
+   * Deactivate a provider (admin function or suspension)
    */
-  private validateOnboardingComplete(providerProfile: any, ownerProfile: any, phone: string | null): boolean {
-    if (!providerProfile) return false;
-    return !!(
-      providerProfile.businessName &&
-      providerProfile.serviceTypes &&
-      providerProfile.serviceTypes.length > 0 &&
-      providerProfile.shopCity &&
-      providerProfile.shopState &&
-      (providerProfile.isMobileService || providerProfile.isShopService)
-    );
+  async deactivateProvider(userId: string, reason?: string) {
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        providerProfile: {
+          update: {
+            isActive: false,
+          },
+        },
+      },
+      include: { providerProfile: true },
+    });
+
+    this.logger.warn(`Provider ${userId} deactivated. Reason: ${reason || 'Not specified'}`);
+
+    return {
+      message: 'Provider deactivated',
+      profile: updated.providerProfile,
+    };
   }
 }

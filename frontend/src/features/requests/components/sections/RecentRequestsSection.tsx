@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { LoadingState } from '@/components/ui/loading-state';
 import { motion } from 'framer-motion';
 import { QuoteSubmissionDrawer } from '../modals/QuoteSubmissionDrawer';
 import { useState } from 'react';
@@ -39,7 +40,7 @@ export function RecentRequestsSection({ requests, loading, error, getUrgencyColo
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-slate-900">Recent Service Requests</h2>
-              <p className="text-slate-600 mt-2">Live and pilot service requests on Shanda</p>
+              <p className="text-slate-600 mt-2">Live and pilot service requests on Service Connect</p>
             </div>
           </div>
 

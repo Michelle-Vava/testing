@@ -36,18 +36,8 @@ export class PlatformService {
   }
 
   async getActivity() {
-    return this.db.activity.findMany({
-      take: 20,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          }
-        }
-      }
-    });
+    // Activity model removed - returning empty array
+    return [];
   }
 
   async getSettings() {
@@ -63,11 +53,11 @@ export class PlatformService {
         saturday: { open: '10:00', close: '16:00', timezone: 'PST' },
         sunday: { open: null, close: null, closed: true },
       },
-      supportEmail: 'support@shanda.com',
+      supportEmail: 'support@serviceconnect.com',
       socialMedia: {
-        twitter: 'https://twitter.com/shanda',
-        facebook: 'https://facebook.com/shanda',
-        linkedin: 'https://linkedin.com/company/shanda',
+        twitter: 'https://twitter.com/serviceconnect',
+        facebook: 'https://facebook.com/serviceconnect',
+        linkedin: 'https://linkedin.com/company/serviceconnect',
       },
       features: {
         liveChatEnabled: false,

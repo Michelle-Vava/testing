@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
-          name: 'Shanda Automotive',
-          short_name: 'Shanda',
+          name: 'Service Connect Automotive',
+          short_name: 'Service Connect',
           description: 'Automotive Service Marketplace',
           theme_color: '#ffffff',
           icons: [

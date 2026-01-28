@@ -29,7 +29,7 @@ export function MechanicSection() {
             Are you a provider or auto shop?
           </h2>
           <p className="text-lg text-slate-600 mb-8">
-            Join Shanda to receive verified service requests and send quotes directly to drivers.
+            Join Service Connect to receive verified service requests and send quotes directly to drivers.
           </p>
           <button
             onClick={handleApplyClick}

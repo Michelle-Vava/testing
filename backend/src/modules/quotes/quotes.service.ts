@@ -44,23 +44,11 @@ export class QuotesService {
             providerProfile: { select: { businessName: true } }
           },
         },
-        quoteParts: {
-          include: {
-            part: true,
-          },
-        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return quotes.map(quote => {
-      const provider = {
-        ...quote.provider,
-        businessName: quote.provider.providerProfile?.businessName,
-        providerProfile: undefined
-      };
-      return new QuoteEntity({ ...quote, provider });
-    });
+    return quotes;
   }
 
   async create(userId: string, userRoles: string[], quoteData: CreateQuoteDto) {
@@ -80,27 +68,11 @@ export class QuotesService {
       throw new BadRequestException(`Service request ${quoteData.requestId} is no longer accepting quotes (status: ${request.status})`);
     }
 
-    // Extract parts data before creating quote
-    const { parts, ...quoteDataWithoutParts } = quoteData;
-
     const quote = await this.prisma.quote.create({
       data: {
-        ...quoteDataWithoutParts,
+        ...quoteData,
         providerId: userId,
         status: 'pending',
-        // Create parts if provided
-        ...(parts && parts.length > 0 && {
-          quoteParts: {
-            create: parts.map(part => ({
-              partId: part.partId,
-              name: part.name,
-              condition: part.condition,
-              price: part.price,
-              quantity: part.quantity,
-              notes: part.notes,
-            })),
-          },
-        }),
       },
       include: {
         provider: {
@@ -109,11 +81,6 @@ export class QuotesService {
             name: true,
             phone: true,
             providerProfile: { select: { businessName: true } }
-          },
-        },
-        quoteParts: {
-          include: {
-            part: true,
           },
         },
       },
@@ -136,12 +103,6 @@ export class QuotesService {
       `/requests/${request.id}`
     );
      
-    const provider = {
-      ...quote.provider,
-      businessName: quote.provider.providerProfile?.businessName,
-      providerProfile: undefined
-    };
-
     // Send email notification to owner
     const owner = await this.prisma.user.findUnique({
       where: { id: request.ownerId },
@@ -160,7 +121,7 @@ export class QuotesService {
       });
     }
 
-    return new QuoteEntity({ ...quote, provider });
+    return quote;
   }
 
   async accept(quoteId: string, userId: string) {

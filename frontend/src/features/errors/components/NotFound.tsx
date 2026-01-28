@@ -19,7 +19,7 @@ export function NotFound() {
             Go Home
           </Link>
           <div className="text-sm text-gray-500">
-            <p>Need help? <a href="mailto:support@shanda.com" className="text-primary-600 hover:underline">Contact Support</a></p>
+            <p>Need help? <a href="mailto:support@serviceconnect.com" className="text-primary-600 hover:underline">Contact Support</a></p>
           </div>
         </div>
         {/* Helpful Links */}

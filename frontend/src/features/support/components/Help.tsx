@@ -23,11 +23,11 @@ export function Help() {
       category: 'Getting Started',
       questions: [
         {
-          q: 'How does Shanda work?',
-          a: 'Shanda connects vehicle owners with trusted service providers. Post your service request, receive competing quotes, and choose the best provider for your needs.',
+          q: 'How does Service Connect work?',
+          a: 'Service Connect connects vehicle owners with trusted service providers. Post your service request, receive competing quotes, and choose the best provider for your needs.',
         },
         {
-          q: 'Is Shanda free to use?',
+          q: 'Is Service Connect free to use?',
           a: 'Yes! Creating an account and receiving quotes is completely free. We only charge a small platform fee when a job is completed.',
         },
         {
@@ -61,12 +61,12 @@ export function Help() {
           a: 'Click "Become a Provider" in your account menu, complete the onboarding with your business information, and start receiving job requests!',
         },
         {
-          q: 'What fees does Shanda charge?',
+          q: 'What fees does Service Connect charge?',
           a: 'We charge a 5% platform fee on completed jobs. No monthly fees, no hidden costs. You only pay when you get paid.',
         },
         {
           q: 'Can I set my own prices?',
-          a: 'Absolutely! You provide quotes based on your assessment. Shanda never dictates pricing - you\'re in control.',
+          a: 'Absolutely! You provide quotes based on your assessment. Service Connect never dictates pricing - you\'re in control.',
         },
       ],
     },

@@ -1,15 +1,12 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { DashboardShell } from '@/components/layout/DashboardShell';
-import { requireOnboarding } from '@/features/auth/utils/guards';
+import { requireOwner } from '@/features/auth/utils/auth-utils';
 import { LayoutDashboard, Car, FileText, Wrench, Settings, MessageSquare } from 'lucide-react';
 
 export const Route = createFileRoute('/owner/_layout')({
   beforeLoad: () => {
-    const user = requireOnboarding();
-    if (!user.roles?.includes('owner')) {
-      throw redirect({ to: '/unauthorized' });
-    }
+    requireOwner(); // Simple - just checks for owner role
   },
   component: OwnerLayout,
 });

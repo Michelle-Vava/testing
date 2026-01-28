@@ -27,7 +27,7 @@ export function ClerkAuthPage({ mode, isLogin = true }: ClerkAuthPageProps) {
       ];
 
   const title = mode === 'provider'
-    ? (isLogin ? "Welcome back, Provider" : "Start earning with Shanda")
+    ? (isLogin ? "Welcome back, Provider" : "Start earning with Service Connect")
     : (isLogin ? "View your quotes and requests" : "Stop overpaying for car repairs");
 
   const subtitle = mode === 'provider'
@@ -45,7 +45,7 @@ export function ClerkAuthPage({ mode, isLogin = true }: ClerkAuthPageProps) {
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-2xl font-bold">Shanda</span>
+            <span className="text-2xl font-bold">Service Connect</span>
           </Link>
 
           <h1 className="text-4xl font-bold mb-4">{title}</h1>
@@ -64,7 +64,7 @@ export function ClerkAuthPage({ mode, isLogin = true }: ClerkAuthPageProps) {
         </div>
 
         <div className="text-sm text-slate-400">
-          © 2026 Shanda Automotive. All rights reserved.
+          © 2026 Service Connect Automotive. All rights reserved.
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export function ClerkAuthPage({ mode, isLogin = true }: ClerkAuthPageProps) {
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-xl font-bold">Shanda</span>
+            <span className="text-xl font-bold">Service Connect</span>
           </Link>
         </div>
 
@@ -97,7 +97,7 @@ export function ClerkAuthPage({ mode, isLogin = true }: ClerkAuthPageProps) {
           {/* Page title */}
           <div className="w-full max-w-md mb-6">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              {isLogin ? 'Welcome back' : `Join Shanda as ${mode === 'provider' ? 'a Provider' : 'an Owner'}`}
+              {isLogin ? 'Welcome back' : `Join Service Connect as ${mode === 'provider' ? 'a Provider' : 'an Owner'}`}
             </h1>
             <p className="text-slate-600">
               {isLogin 

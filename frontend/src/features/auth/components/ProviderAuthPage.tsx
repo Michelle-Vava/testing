@@ -71,7 +71,7 @@ export function ProviderAuthPage({ isLogin = true }: { isLogin?: boolean }) {
         <p className="text-slate-600 mt-2">
           {isLogin 
             ? 'Sign in to manage your quotes and jobs.' 
-            : 'Grow your business with verified leads on Shanda.'}
+            : 'Grow your business with verified leads on Service Connect.'}
         </p>
       </div>
 
@@ -84,7 +84,7 @@ export function ProviderAuthPage({ isLogin = true }: { isLogin?: boolean }) {
       <div className="mt-6 text-center text-sm text-slate-400">
         {isLogin ? (
           <>
-            New to Shanda?{' '}
+            New to Service Connect?{' '}
             <Link to="/auth/signup" search={{ mode: 'provider' }} className="text-[#F5B700] font-semibold hover:underline">
               Apply now
             </Link>

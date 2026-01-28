@@ -54,7 +54,7 @@ export const AppHeader: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900">Shanda</span>
+              <span className="text-xl font-bold text-gray-900">Service Connect</span>
             </div>
           </Link>
 

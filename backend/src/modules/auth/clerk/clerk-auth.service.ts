@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
-import { User, ProviderStatus } from '@prisma/client';
+import { User } from '@prisma/client';
 
 /**
  * DTO for creating a user from external auth provider (Clerk, Auth0, etc.)
@@ -124,22 +124,15 @@ export class ClerkAuthService {
         avatarUrl: data.avatarUrl,
         phone: data.phone,
         roles,
-        ownerProfile: {
-          create: {
-            onboardingComplete: false,
-          },
-        },
         providerProfile: isProvider
           ? {
               create: {
-                status: ProviderStatus.NONE,
-                onboardingComplete: false,
+                isActive: false,
               },
             }
           : undefined,
       },
       include: {
-        ownerProfile: true,
         providerProfile: true,
       },
     });
@@ -183,23 +176,18 @@ export class ClerkAuthService {
    * Handles both User fields and OwnerProfile fields
    */
   async updateProfile(userId: string, data: UpdateProfileDto) {
-    // Separate user fields, owner profile fields, and provider profile fields
+    // Separate user fields and provider profile fields
     const userFields: Partial<User> = {};
-    const ownerProfileFields: Record<string, any> = {};
     const providerProfileFields: Record<string, any> = {};
 
-    // User-level fields
+    // User-level fields (including address fields)
     if (data.name !== undefined) userFields.name = data.name;
     if (data.phone !== undefined) userFields.phone = data.phone;
     if (data.avatarUrl !== undefined) userFields.avatarUrl = data.avatarUrl;
-
-    // Owner profile fields
-    if (data.address !== undefined) ownerProfileFields.address = data.address;
-    if (data.city !== undefined) ownerProfileFields.city = data.city;
-    if (data.state !== undefined) ownerProfileFields.state = data.state;
-    if (data.zipCode !== undefined) ownerProfileFields.zipCode = data.zipCode;
-    if (data.bio !== undefined) ownerProfileFields.bio = data.bio;
-    if (data.onboardingComplete !== undefined) ownerProfileFields.onboardingComplete = data.onboardingComplete;
+    if (data.address !== undefined) userFields.address = data.address;
+    if (data.city !== undefined) userFields.city = data.city;
+    if (data.state !== undefined) userFields.state = data.state;
+    if (data.zipCode !== undefined) userFields.zipCode = data.zipCode;
 
     // Provider profile fields
     if (data.businessName !== undefined) providerProfileFields.businessName = data.businessName;
@@ -210,11 +198,8 @@ export class ClerkAuthService {
     if (data.shopState !== undefined) providerProfileFields.shopState = data.shopState;
     if (data.shopZipCode !== undefined) providerProfileFields.shopZipCode = data.shopZipCode;
     if (data.serviceArea !== undefined) providerProfileFields.serviceArea = data.serviceArea;
-    if (data.isMobileService !== undefined) providerProfileFields.isMobileService = data.isMobileService;
-    if (data.isShopService !== undefined) providerProfileFields.isShopService = data.isShopService;
     if (data.hourlyRate !== undefined) providerProfileFields.hourlyRate = data.hourlyRate;
     if (data.website !== undefined) providerProfileFields.website = data.website;
-    if (data.onboardingComplete !== undefined) providerProfileFields.onboardingComplete = data.onboardingComplete;
 
     // Update user and profiles in a transaction
     return this.prisma.$transaction(async (tx) => {
@@ -226,30 +211,15 @@ export class ClerkAuthService {
         });
       }
 
-      // Update owner profile fields if any
-      if (Object.keys(ownerProfileFields).length > 0) {
-        await tx.ownerProfile.upsert({
-          where: { userId },
-          update: ownerProfileFields,
-          create: {
-            userId,
-            ...ownerProfileFields,
-            onboardingComplete: ownerProfileFields.onboardingComplete ?? false,
-          },
-        });
-      }
-
       // Update provider profile fields if any
       if (Object.keys(providerProfileFields).length > 0) {
-        const isOnboardingComplete = providerProfileFields.onboardingComplete ?? false;
         await tx.providerProfile.upsert({
           where: { userId },
           update: providerProfileFields,
           create: {
             userId,
-            status: isOnboardingComplete ? ProviderStatus.ACTIVE : ProviderStatus.DRAFT,
+            isActive: false,
             ...providerProfileFields,
-            onboardingComplete: isOnboardingComplete,
           },
         });
       }
@@ -258,7 +228,6 @@ export class ClerkAuthService {
       return tx.user.findUnique({
         where: { id: userId },
         include: {
-          ownerProfile: true,
           providerProfile: true,
         },
       });
@@ -282,8 +251,7 @@ export class ClerkAuthService {
         await this.prisma.providerProfile.create({
           data: {
             userId,
-            status: ProviderStatus.NONE,
-            onboardingComplete: false,
+            isActive: false,
           },
         });
       }
@@ -293,7 +261,6 @@ export class ClerkAuthService {
       where: { id: userId },
       data: { roles },
       include: {
-        ownerProfile: true,
         providerProfile: true,
       },
     });

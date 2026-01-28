@@ -37,11 +37,6 @@ export class UpdateProfileDto {
   @IsString()
   avatarUrl?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  bio?: string;
-
   // Provider-specific fields
   @ApiProperty({ required: false })
   @IsOptional()
@@ -87,16 +82,6 @@ export class UpdateProfileDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsBoolean()
-  isMobileService?: boolean;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsBoolean()
-  isShopService?: boolean;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
   @IsNumber()
   hourlyRate?: number;
 
@@ -104,8 +89,4 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   website?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  onboardingComplete?: boolean;
 }

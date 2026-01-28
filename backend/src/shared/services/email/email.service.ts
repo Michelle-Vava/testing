@@ -174,12 +174,12 @@ export class EmailService {
             
             <p style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">
               Best regards,<br>
-              <strong>The Shanda Team</strong>
+              <strong>The Service Connect Team</strong>
             </p>
           </div>
           
           <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-            <p>You received this email because you have a service request on Shanda.</p>
+            <p>You received this email because you have a service request on Service Connect.</p>
           </div>
         </body>
       </html>
@@ -246,12 +246,12 @@ export class EmailService {
             
             <p style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">
               Best regards,<br>
-              <strong>The Shanda Team</strong>
+              <strong>The Service Connect Team</strong>
             </p>
           </div>
           
           <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-            <p>You received this email because you're a service provider on Shanda.</p>
+            <p>You received this email because you're a service provider on Service Connect.</p>
           </div>
         </body>
       </html>
@@ -324,12 +324,12 @@ export class EmailService {
             
             <p style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">
               Best regards,<br>
-              <strong>The Shanda Team</strong>
+              <strong>The Service Connect Team</strong>
             </p>
           </div>
           
           <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-            <p>You received this email about your job on Shanda.</p>
+            <p>You received this email about your job on Service Connect.</p>
           </div>
         </body>
       </html>
@@ -389,12 +389,12 @@ export class EmailService {
             
             <p style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">
               Best regards,<br>
-              <strong>The Shanda Team</strong>
+              <strong>The Service Connect Team</strong>
             </p>
           </div>
           
           <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-            <p>You received this email because you have a conversation on Shanda.</p>
+            <p>You received this email because you have a conversation on Service Connect.</p>
           </div>
         </body>
       </html>
@@ -455,12 +455,12 @@ export class EmailService {
             
             <p style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">
               Best regards,<br>
-              <strong>The Shanda Team</strong>
+              <strong>The Service Connect Team</strong>
             </p>
           </div>
           
           <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-            <p>You received this email because you recently completed a job on Shanda.</p>
+            <p>You received this email because you recently completed a job on Service Connect.</p>
           </div>
         </body>
       </html>
