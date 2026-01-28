@@ -46,12 +46,12 @@ export function About() {
   ];
 
   return (
-    <ContentPageLayout title="About" titleHighlight="Shanda" showBackLink>
+    <ContentPageLayout title="About" titleHighlight="Service Connect" showBackLink>
       <div className="space-y-16">
         {/* Hero */}
         <div className="text-center space-y-4">
           <ContentText className="text-xl">
-            Shanda is a platform connecting vehicle owners with trusted mechanics across Canada. We believe car maintenance should be transparent, competitive, and convenient.
+            Service Connect is a platform connecting vehicle owners with trusted mechanics across Canada. We believe car maintenance should be transparent, competitive, and convenient.
           </ContentText>
         </div>
 
@@ -71,7 +71,7 @@ export function About() {
             We're building the future of vehicle maintenance in Canada. Too many drivers overpay for basic services or don't know where to turn when their check engine light comes on.
           </ContentText>
           <ContentText>
-            Shanda puts power back in your hands—compare quotes, read reviews, and book with confidence.
+            Service Connect puts power back in your hands—compare quotes, read reviews, and book with confidence.
           </ContentText>
         </ContentSection>
 
@@ -104,7 +104,7 @@ export function About() {
         <div className="bg-slate-50 -mx-8 -mb-8 px-8 py-12 rounded-b-lg text-center">
           <h3 className="text-2xl font-bold text-slate-900 mb-4">Ready to Get Started?</h3>
           <ContentText className="mb-6 max-w-2xl mx-auto">
-            Join thousands of Canadians who've found better prices and better service on Shanda.
+            Join thousands of Canadians who've found better prices and better service on Service Connect.
           </ContentText>
           <Link to="/auth/signup" search={{ mode: 'owner' }}>
             <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-slate-900">

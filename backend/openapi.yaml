@@ -1,6 +1,6 @@
 openapi: 3.0.0
 paths:
-  /shanda/auth/webhook:
+  /service-connect/auth/webhook:
     post:
       operationId: ClerkAuthController_handleClerkWebhook
       parameters:
@@ -25,7 +25,7 @@ paths:
       summary: Clerk webhook handler
       tags: &ref_0
         - auth
-  /shanda/auth/me:
+  /service-connect/auth/me:
     get:
       operationId: ClerkAuthController_getCurrentUser
       parameters: []
@@ -40,7 +40,7 @@ paths:
         - bearer: []
       summary: Get current user profile
       tags: *ref_0
-  /shanda/auth/profile:
+  /service-connect/auth/profile:
     put:
       operationId: ClerkAuthController_updateProfile
       parameters: []
@@ -61,7 +61,7 @@ paths:
         - bearer: []
       summary: Update user profile
       tags: *ref_0
-  /shanda/auth/roles:
+  /service-connect/auth/roles:
     put:
       operationId: ClerkAuthController_updateRoles
       parameters: []
@@ -76,7 +76,7 @@ paths:
         - bearer: []
       summary: Update user roles
       tags: *ref_0
-  /shanda/auth/update-roles:
+  /service-connect/auth/update-roles:
     put:
       operationId: ClerkAuthController_updateRolesAlt
       parameters: []
@@ -91,7 +91,7 @@ paths:
         - bearer: []
       summary: Update user roles (alternative endpoint)
       tags: *ref_0
-  /shanda/auth/set-primary-role:
+  /service-connect/auth/set-primary-role:
     put:
       operationId: ClerkAuthController_setPrimaryRole
       parameters: []
@@ -106,7 +106,7 @@ paths:
         - bearer: []
       summary: Set primary role by reordering roles array
       tags: *ref_0
-  /shanda/vehicles:
+  /service-connect/vehicles:
     get:
       operationId: VehiclesController_findAll
       parameters:
@@ -162,7 +162,7 @@ paths:
       security: *ref_1
       summary: Create a new vehicle
       tags: *ref_2
-  /shanda/vehicles/{id}:
+  /service-connect/vehicles/{id}:
     get:
       operationId: VehiclesController_findOne
       parameters:
@@ -219,7 +219,7 @@ paths:
       security: *ref_1
       summary: Delete a vehicle
       tags: *ref_2
-  /shanda/vehicles/{id}/mileage:
+  /service-connect/vehicles/{id}/mileage:
     patch:
       operationId: VehiclesController_updateMileage
       parameters:
@@ -244,7 +244,7 @@ paths:
       security: *ref_1
       summary: Update vehicle mileage
       tags: *ref_2
-  /shanda/vehicles/{id}/images:
+  /service-connect/vehicles/{id}/images:
     post:
       operationId: VehiclesController_uploadImages
       parameters:
@@ -283,7 +283,7 @@ paths:
       security: *ref_1
       summary: Delete an image from a vehicle
       tags: *ref_2
-  /shanda/requests/public/recent:
+  /service-connect/requests/public/recent:
     get:
       operationId: RequestsController_findPublicRecent
       parameters: []
@@ -293,7 +293,7 @@ paths:
       summary: Get recent public service requests (no auth required)
       tags: &ref_3
         - requests
-  /shanda/requests:
+  /service-connect/requests:
     get:
       operationId: RequestsController_findAll
       parameters:
@@ -366,7 +366,7 @@ paths:
         - bearer: []
       summary: Create a new service request
       tags: *ref_3
-  /shanda/requests/{id}:
+  /service-connect/requests/{id}:
     get:
       operationId: RequestsController_findOne
       parameters:
@@ -415,7 +415,7 @@ paths:
         - bearer: []
       summary: Update a service request
       tags: *ref_3
-  /shanda/requests/{id}/images:
+  /service-connect/requests/{id}/images:
     post:
       operationId: RequestsController_uploadImages
       parameters:
@@ -456,7 +456,7 @@ paths:
         - bearer: []
       summary: Delete an image from a service request
       tags: *ref_3
-  /shanda/quotes/request/{requestId}:
+  /service-connect/quotes/request/{requestId}:
     get:
       operationId: QuotesController_findByRequest
       parameters:
@@ -479,7 +479,7 @@ paths:
       summary: Get all quotes for a service request
       tags: &ref_5
         - quotes
-  /shanda/quotes:
+  /service-connect/quotes:
     post:
       operationId: QuotesController_create
       parameters: []
@@ -499,7 +499,7 @@ paths:
       security: *ref_4
       summary: Create a new quote (active providers only)
       tags: *ref_5
-  /shanda/quotes/{id}/accept:
+  /service-connect/quotes/{id}/accept:
     post:
       operationId: QuotesController_accept
       parameters:
@@ -514,7 +514,7 @@ paths:
       security: *ref_4
       summary: Accept a quote (creates a job)
       tags: *ref_5
-  /shanda/quotes/{id}/reject:
+  /service-connect/quotes/{id}/reject:
     post:
       operationId: QuotesController_reject
       parameters:
@@ -529,7 +529,7 @@ paths:
       security: *ref_4
       summary: Reject a quote
       tags: *ref_5
-  /shanda/notifications:
+  /service-connect/notifications:
     get:
       operationId: NotificationsController_findAll
       parameters: []
@@ -541,7 +541,7 @@ paths:
       summary: Get all notifications for current user
       tags: &ref_7
         - notifications
-  /shanda/notifications/unread-count:
+  /service-connect/notifications/unread-count:
     get:
       operationId: NotificationsController_getUnreadCount
       parameters: []
@@ -551,7 +551,7 @@ paths:
       security: *ref_6
       summary: Get unread notification count
       tags: *ref_7
-  /shanda/notifications/{id}/read:
+  /service-connect/notifications/{id}/read:
     put:
       operationId: NotificationsController_markAsRead
       parameters:
@@ -566,7 +566,7 @@ paths:
       security: *ref_6
       summary: Mark notification as read
       tags: *ref_7
-  /shanda/notifications/read-all:
+  /service-connect/notifications/read-all:
     put:
       operationId: NotificationsController_markAllAsRead
       parameters: []
@@ -580,7 +580,7 @@ paths:
       security: *ref_6
       summary: Mark all notifications as read
       tags: *ref_7
-  /shanda/jobs:
+  /service-connect/jobs:
     get:
       operationId: JobsController_findAll
       parameters:
@@ -617,7 +617,7 @@ paths:
       summary: Get all jobs (owners see theirs, providers see theirs)
       tags: &ref_9
         - jobs
-  /shanda/jobs/{id}:
+  /service-connect/jobs/{id}:
     get:
       operationId: JobsController_findOne
       parameters:
@@ -640,7 +640,7 @@ paths:
       security: *ref_8
       summary: Get a specific job by ID
       tags: *ref_9
-  /shanda/jobs/{id}/status:
+  /service-connect/jobs/{id}/status:
     put:
       operationId: JobsController_updateStatus
       parameters:
@@ -669,7 +669,7 @@ paths:
       security: *ref_8
       summary: Update job status (providers only)
       tags: *ref_9
-  /shanda/providers/public/featured:
+  /service-connect/providers/public/featured:
     get:
       operationId: ProvidersController_findFeatured
       parameters: []
@@ -679,7 +679,7 @@ paths:
       summary: Get featured providers (no auth required)
       tags: &ref_10
         - providers
-  /shanda/providers:
+  /service-connect/providers:
     get:
       operationId: ProvidersController_findAll
       parameters:
@@ -713,7 +713,7 @@ paths:
           description: ''
       summary: Get all providers with optional filters
       tags: *ref_10
-  /shanda/providers/{id}:
+  /service-connect/providers/{id}:
     get:
       operationId: ProvidersController_findOne
       parameters:
@@ -727,7 +727,7 @@ paths:
           description: ''
       summary: Get provider by ID with full profile
       tags: *ref_10
-  /shanda/providers/profile:
+  /service-connect/providers/profile:
     put:
       operationId: ProvidersController_updateProfile
       parameters: []
@@ -744,7 +744,7 @@ paths:
         - bearer: []
       summary: Update provider profile
       tags: *ref_10
-  /shanda/providers/onboarding/status:
+  /service-connect/providers/onboarding/status:
     get:
       operationId: ProvidersController_getOnboardingStatus
       parameters: []
@@ -755,7 +755,7 @@ paths:
         - bearer: []
       summary: Get provider onboarding status and checklist
       tags: *ref_10
-  /shanda/providers/onboarding/complete:
+  /service-connect/providers/onboarding/complete:
     post:
       operationId: ProvidersController_completeOnboarding
       parameters: []
@@ -766,7 +766,7 @@ paths:
         - bearer: []
       summary: Complete provider onboarding
       tags: *ref_10
-  /shanda/providers/onboarding/start:
+  /service-connect/providers/onboarding/start:
     put:
       operationId: ProvidersController_startOnboarding
       parameters: []
@@ -777,7 +777,7 @@ paths:
         - bearer: []
       summary: Start provider onboarding
       tags: *ref_10
-  /shanda/messages/conversations:
+  /service-connect/messages/conversations:
     get:
       operationId: MessagesController_getConversations
       parameters: []
@@ -789,7 +789,7 @@ paths:
       summary: Get all conversations for the authenticated user
       tags: &ref_12
         - messages
-  /shanda/messages/conversations/{jobId}:
+  /service-connect/messages/conversations/{jobId}:
     get:
       operationId: MessagesController_getConversation
       parameters:
@@ -804,7 +804,7 @@ paths:
       security: *ref_11
       summary: Get messages for a specific job conversation
       tags: *ref_12
-  /shanda/messages:
+  /service-connect/messages:
     post:
       operationId: MessagesController_sendMessage
       parameters: []
@@ -820,7 +820,7 @@ paths:
       security: *ref_11
       summary: Send a message in a conversation
       tags: *ref_12
-  /shanda/messages/conversations/{conversationId}/read:
+  /service-connect/messages/conversations/{conversationId}/read:
     post:
       operationId: MessagesController_markAsRead
       parameters:
@@ -835,7 +835,7 @@ paths:
       security: *ref_11
       summary: Mark all messages in a conversation as read
       tags: *ref_12
-  /shanda/health:
+  /service-connect/health:
     get:
       operationId: HealthController_check
       parameters: []
@@ -849,7 +849,7 @@ paths:
       summary: Health check endpoint
       tags:
         - health
-  /shanda/platform/settings:
+  /service-connect/platform/settings:
     get:
       operationId: PlatformController_getSettings
       parameters: []
@@ -860,7 +860,7 @@ paths:
       tags:
         - platform
 info:
-  title: Shanda Automotive API
+  title: Service Connect Automotive API
   description: Marketplace connecting vehicle owners with service providers
   version: '1.0'
   contact: {}
@@ -868,7 +868,7 @@ tags: []
 servers:
   - url: http://localhost:4201
     description: Local Development
-  - url: https://api.shanda.com
+  - url: https://api.serviceconnect.com
     description: Production
 components:
   securitySchemes:

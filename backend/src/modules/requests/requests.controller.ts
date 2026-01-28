@@ -168,7 +168,7 @@ export class RequestsController {
     }
 
     // Upload images to Cloudinary
-    const imageUrls = await this.uploadService.uploadImages(files, 'shanda/requests');
+    const imageUrls = await this.uploadService.uploadImages(files, 'service-connect/requests');
 
     // Update request with new image URLs
     return this.requestsService.addImages(id, imageUrls);

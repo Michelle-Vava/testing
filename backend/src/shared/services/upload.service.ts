@@ -22,7 +22,7 @@ export class UploadService {
    */
   async uploadImage(
     file: Express.Multer.File,
-    folder: string = 'shanda',
+    folder: string = 'service-connect',
   ): Promise<string> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -84,7 +84,7 @@ export class UploadService {
    */
   async uploadImages(
     files: Express.Multer.File[],
-    folder: string = 'shanda',
+    folder: string = 'service-connect',
   ): Promise<string[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');

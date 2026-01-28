@@ -1,8 +1,8 @@
 #!/bin/bash
-# Shanda Backend Setup Script
+# Service Connect Backend Setup Script
 # Run this in Git Bash: ./setup-backend.sh
 
-echo "🚀 Setting up Shanda Backend with Prisma..."
+echo "🚀 Setting up Service Connect Backend with Prisma..."
 echo ""
 
 # Navigate to backend directory
@@ -70,14 +70,14 @@ echo ""
 echo "   npm start"
 echo ""
 echo "API will be available at:"
-echo "   http://localhost:4201/shanda"
+echo "   http://localhost:4201/service-connect"
 echo ""
 echo "API Documentation:"
-echo "   http://localhost:4201/shanda/reference"
+echo "   http://localhost:4201/service-connect/reference"
 echo ""
 echo "Test accounts created:"
-echo "   Owner:    owner@shanda.com / password123"
-echo "   Provider: provider@shanda.com / password123"
+echo "   Owner:    owner@serviceconnect.com / password123"
+echo "   Provider: provider@serviceconnect.com / password123"
 echo ""
 echo "To view database:"
 echo "   npx prisma studio"

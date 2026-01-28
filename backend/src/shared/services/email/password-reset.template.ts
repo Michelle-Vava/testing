@@ -10,7 +10,7 @@ export const passwordResetTemplate = (resetUrl: string) => `
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #0F172A; text-align: center;">Reset Your Password</h1>
         <p>Hello,</p>
-        <p>We received a request to reset your password for your Shanda account.</p>
+        <p>We received a request to reset your password for your Service Connect account.</p>
         <p>Click the button below to reset it. This link is valid for 1 hour.</p>
         
         <div style="text-align: center; margin: 30px 0;">
@@ -18,7 +18,7 @@ export const passwordResetTemplate = (resetUrl: string) => `
         </div>
         
         <p>If you didn't request this, you can safely ignore this email.</p>
-        <p>Best regards,<br>The Shanda Team</p>
+        <p>Best regards,<br>The Service Connect Team</p>
         
         <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;">
         <p style="font-size: 12px; color: #666; text-align: center;">

@@ -98,13 +98,13 @@ export function Contact() {
     {
       icon: '📧',
       title: 'Email',
-      value: settings?.contactEmail || 'support@shanda.com',
-      link: `mailto:${settings?.contactEmail || 'support@shanda.com'}`,
+      value: settings?.contactEmail || 'support@serviceconnect.com',
+      link: `mailto:${settings?.contactEmail || 'support@serviceconnect.com'}`,
     },
     {
       icon: '📞',
       title: 'Phone',
-      value: settings?.contactPhone || '1-800-SHANDA',
+      value: settings?.contactPhone || '1-800-SERVICE',
       link: `tel:${settings?.contactPhone || '1-800-742-6321'}`,
     },
     {

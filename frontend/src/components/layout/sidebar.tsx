@@ -39,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             "font-bold text-xl text-[#FFFFFF] transition-all duration-300 origin-left whitespace-nowrap",
             isPinned ? "opacity-100 w-auto" : "opacity-0 w-0"
           )}>
-            Shanda
+            Service Connect
           </span>
         </div>
       </div>

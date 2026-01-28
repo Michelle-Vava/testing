@@ -171,7 +171,7 @@ export class VehiclesController {
     }
 
     // Upload images to Cloudinary
-    const imageUrls = await this.uploadService.uploadImages(files, 'shanda/vehicles');
+    const imageUrls = await this.uploadService.uploadImages(files, 'service-connect/vehicles');
 
     // Update vehicle with new image URLs
     return this.vehiclesService.addImages(id, imageUrls);

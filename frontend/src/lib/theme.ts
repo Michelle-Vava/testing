@@ -1,5 +1,5 @@
 /**
- * Shanda Brand Theme Tokens
+ * Service Connect Brand Theme Tokens
  * Single source of truth for all colors, spacing, and design tokens.
  * DO NOT use arbitrary colors outside this system.
  */

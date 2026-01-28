@@ -10,7 +10,7 @@ export interface CancellablePromise<T> extends Promise<T> {
 }
 
 const getBaseUrl = () => {
-  return env.API_URL || 'http://localhost:4201/shanda';
+  return env.API_URL || 'http://localhost:4201/service-connect';
 };
 
 export const AXIOS_INSTANCE = axios.create({

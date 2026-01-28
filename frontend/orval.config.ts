@@ -1,5 +1,5 @@
 export default {
-  shanda: {
+  serviceConnect: {
     output: {
       mode: 'tags-split',
       target: 'src/services/generated',
@@ -11,7 +11,7 @@ export default {
           name: 'customInstance',
         },
         operations: {
-          // Remove /shanda prefix since it's already in baseURL
+          // Remove /service-connect prefix since it's already in baseURL
           pathParamsSerializer: (params: any) => params,
         },
       },
@@ -20,10 +20,10 @@ export default {
       target: '../backend/openapi.yaml',
       override: {
         transformer: (spec: any) => {
-          // Remove /shanda prefix from all paths
+          // Remove /service-connect prefix from all paths
           const newPaths: any = {};
           Object.keys(spec.paths).forEach((path) => {
-            const newPath = path.replace(/^\/shanda/, '');
+            const newPath = path.replace(/^\/service-connect/, '');
             newPaths[newPath] = spec.paths[path];
           });
           spec.paths = newPaths;

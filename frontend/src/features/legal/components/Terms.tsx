@@ -10,13 +10,13 @@ export function Terms() {
     >
       <ContentSection title="1. Agreement to Terms">
         <ContentText>
-          By accessing or using Shanda ("the Platform"), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
+          By accessing or using Service Connect ("the Platform"), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
         </ContentText>
       </ContentSection>
 
       <ContentSection title="2. Use of Service">
         <ContentText className="mb-4">
-          Shanda is a digital marketplace platform that connects vehicle owners with independent automotive service providers. We facilitate introductions and transactions but do not provide vehicle maintenance or repair services directly.
+          Service Connect is a digital marketplace platform that connects vehicle owners with independent automotive service providers. We facilitate introductions and transactions but do not provide vehicle maintenance or repair services directly.
         </ContentText>
         <ContentText className="mb-4">By using our platform, you agree to:</ContentText>
         <ContentList items={[
@@ -31,16 +31,16 @@ export function Terms() {
 
       <ContentSection title="3. Provider Relationships">
         <ContentText className="mb-4">
-          All service providers on Shanda are independent contractors and not employees or agents of Shanda. Providers set their own rates, schedules, and service offerings.
+          All service providers on Service Connect are independent contractors and not employees or agents of Service Connect. Providers set their own rates, schedules, and service offerings.
         </ContentText>
         <ContentText>
-          Shanda performs verification checks on providers but is not responsible for the quality, timeliness, safety, or outcome of services performed. Any disputes regarding service quality should be resolved directly between the customer and provider, with Shanda available for mediation if needed.
+          Service Connect performs verification checks on providers but is not responsible for the quality, timeliness, safety, or outcome of services performed. Any disputes regarding service quality should be resolved directly between the customer and provider, with Service Connect available for mediation if needed.
         </ContentText>
       </ContentSection>
 
       <ContentSection title="4. Payments and Fees">
         <ContentText className="mb-4">
-          All payments are processed securely through our payment partner, Stripe. Shanda charges the following fees:
+          All payments are processed securely through our payment partner, Stripe. Service Connect charges the following fees:
         </ContentText>
         <ContentList items={[
           'Service fee: 8% on completed jobs (charged to providers)',
@@ -74,7 +74,7 @@ export function Terms() {
 
       <ContentSection title="6. Dispute Resolution and Arbitration">
         <ContentText className="mb-4">
-          Any disputes arising from use of Shanda shall be resolved through binding arbitration in accordance with the laws of Ontario, Canada. Both parties agree to waive their right to a trial by jury.
+          Any disputes arising from use of Service Connect shall be resolved through binding arbitration in accordance with the laws of Ontario, Canada. Both parties agree to waive their right to a trial by jury.
         </ContentText>
         <ContentText>
           For disputes under $5,000 CAD, we encourage resolution through our internal dispute resolution process before pursuing arbitration.
@@ -83,7 +83,7 @@ export function Terms() {
 
       <ContentSection title="7. Limitation of Liability">
         <ContentText className="mb-4">
-          TO THE MAXIMUM EXTENT PERMITTED BY LAW, SHANDA SHALL NOT BE LIABLE FOR:
+          TO THE MAXIMUM EXTENT PERMITTED BY LAW, SERVICE CONNECT SHALL NOT BE LIABLE FOR:
         </ContentText>
         <ContentList items={[
           'Any damages to your vehicle resulting from provider services',
@@ -93,7 +93,7 @@ export function Terms() {
           'Indirect, incidental, or consequential damages',
         ]} />
         <ContentText className="mt-4">
-          Our total liability shall not exceed the fees paid by you to Shanda in the past 12 months, or $100 CAD, whichever is less.
+          Our total liability shall not exceed the fees paid by you to Service Connect in the past 12 months, or $100 CAD, whichever is less.
         </ContentText>
       </ContentSection>
 
@@ -112,8 +112,8 @@ export function Terms() {
       <ContentSection title="10. Contact">
         <ContentText>
           For questions about these Terms, contact us at:{' '}
-          <a href="mailto:legal@shanda.com" className="text-slate-900 hover:text-slate-700 hover:underline font-medium">
-            legal@shanda.com
+          <a href="mailto:legal@serviceconnect.com" className="text-slate-900 hover:text-slate-700 hover:underline font-medium">
+            legal@serviceconnect.com
           </a>
         </ContentText>
       </ContentSection>

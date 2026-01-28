@@ -1,4 +1,4 @@
-# Shanda Automotive Marketplace
+# Service Connect Automotive Marketplace
 
 A modern automotive services marketplace connecting vehicle owners with service providers.
 

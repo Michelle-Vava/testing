@@ -122,7 +122,7 @@ function AuthCallback() {
           {/* Main Message */}
           <div className="text-center">
             <h1 className="text-2xl font-bold text-[#F8FAFC] mb-2">
-              Welcome to Shanda
+              Welcome to Service Connect
             </h1>
             <p className="text-[#94A3B8] text-sm">
               Just a moment while we get everything ready...

@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: shanda_db
+      POSTGRES_DB: service_connect_db
     ports:
       - "5432:5432"
     volumes:
@@ -17,7 +17,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://postgres:password@postgres:5432/shanda_db
+      DATABASE_URL: postgres://postgres:password@postgres:5432/service_connect_db
       JWT_SECRET: dev_secret_key_change_in_prod
       PORT: 3000
       # Add other env vars here (STRIPE_KEY, etc.)

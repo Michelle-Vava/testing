@@ -1,7 +1,7 @@
 {
-  "name": "shanda-backend",
+  "name": "service-connect-backend",
   "version": "1.0.0",
-  "description": "Shanda Automotive NestJS API",
+  "description": "Service Connect Automotive NestJS API",
   "main": "dist/src/main.js",
   "scripts": {
     "build": "nest build",
